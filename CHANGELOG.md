@@ -1,5 +1,11 @@
 # @mynameistito/oc-ctrl-enter-force-import
 
+## 1.0.0-beta.0
+
+### Major Changes
+
+- 035c229: Add the OpenCode v2-compatible plugin implementation for the beta release line.
+
 ## 0.1.2
 
 ### Patch Changes
