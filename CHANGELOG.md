@@ -1,5 +1,11 @@
 # @mynameistito/oc-ctrl-enter-force-import
 
+## 1.0.0-beta.1
+
+### Patch Changes
+
+- b513182: Fix the OpenCode v2 package manifest so the server and TUI plugin entrypoints load correctly.
+
 ## 1.0.0-beta.0
 
 ### Major Changes
