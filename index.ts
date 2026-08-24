@@ -1,46 +1,54 @@
-import type { TuiPlugin, TuiPluginModule } from "@opencode-ai/plugin/tui";
+import { Plugin } from "@opencode-ai/plugin/tui";
+import type { Context } from "@opencode-ai/plugin/tui/context";
 
-/** Stable plugin ID required by OpenCode for file-based TUI plugins. */
-const PLUGIN_ID = "oc-ctrl-enter-force-import";
+/** OpenCode v2 plugin identifier. */
+const PLUGIN_ID = "mynameistito.oc-ctrl-enter-force-import";
 
 /** OpenCode command registered by this plugin for Ctrl+Enter force-submit. */
 const FORCE_SUBMIT_COMMAND = "oc-ctrl-enter.force-submit";
 
-/** Key sequences commonly emitted for Ctrl+Enter across OpenCode/OpenTUI environments. */
-const CTRL_ENTER_BINDINGS = [
-  { cmd: FORCE_SUBMIT_COMMAND, key: "ctrl+return" },
-  { cmd: FORCE_SUBMIT_COMMAND, key: "ctrl+enter" },
+/** Key sequences commonly emitted for Ctrl+Enter across terminal environments. */
+const FORCE_SUBMIT_COMMANDS = [
+  { bind: "ctrl+return", id: `${FORCE_SUBMIT_COMMAND}.return` },
+  { bind: "ctrl+enter", id: `${FORCE_SUBMIT_COMMAND}.enter` },
 ] as const;
 
+type ForceSubmitKeymap = Pick<Context["keymap"], "dispatch" | "layer">;
+
+/** Dispatches OpenCode's guarded interrupt flow before submitting the prompt. */
+export const forceSubmit = (dispatch: (command: string) => void): void => {
+  dispatch("session.interrupt");
+  dispatch("session.interrupt");
+  dispatch("session.interrupt");
+  dispatch("prompt.submit");
+};
+
 /**
- * Registers a high-priority Ctrl+Enter binding that interrupts the active
- * OpenCode session before submitting the current prompt.
+ * Registers the v2 keymap layer for force-submit.
+ *
+ * @param context - The v2 plugin context supplied by OpenCode.
  */
-export const tui = ((api) => {
-  const dispose = api.keymap.registerLayer({
-    bindings: CTRL_ENTER_BINDINGS,
-    commands: [
-      {
-        category: "Prompt",
-        hidden: true,
-        name: FORCE_SUBMIT_COMMAND,
-        run: (context) => {
-          // Run through OpenCode's native commands so the prompt lifecycle stays intact.
-          api.keymap.dispatchCommand("session.interrupt", context);
-          api.keymap.dispatchCommand("session.interrupt", context);
-          api.keymap.dispatchCommand("session.interrupt", context);
-          api.keymap.dispatchCommand("prompt.submit", context);
-        },
-        title: "Force submit prompt",
-      },
-    ],
-    name: "oc-ctrl-enter",
+/** Registers the force-submit commands on a v2 keymap. */
+export const registerForceSubmitLayer = (keymap: ForceSubmitKeymap): void => {
+  keymap.layer(() => ({
+    commands: FORCE_SUBMIT_COMMANDS.map(({ bind, id }) => ({
+      bind,
+      group: "Prompt",
+      id,
+      run: () => forceSubmit((command) => keymap.dispatch(command)),
+      title: "Force submit prompt",
+    })),
     priority: 1000,
-  });
+  }));
+};
 
-  api.lifecycle.onDispose(dispose);
-  return Promise.resolve();
-}) satisfies TuiPlugin;
+/** Initializes the OpenCode v2 TUI plugin. */
+export const setup = (context: Context): void => {
+  registerForceSubmitLayer(context.keymap);
+};
 
-/** OpenCode plugin module entrypoint. */
-export default { id: PLUGIN_ID, tui } satisfies TuiPluginModule;
+/** OpenCode v2 plugin module entrypoint. */
+export default Plugin.define({
+  id: PLUGIN_ID,
+  setup,
+});

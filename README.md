@@ -1,110 +1,94 @@
 # oc-ctrl-enter-force-import
 
-OpenCode TUI plugin that force-submits the current prompt with `Ctrl+Enter`.
+OpenCode TUI plugin that interrupts the active run and force-submits the current prompt with `Ctrl+Enter`.
 
-It interrupts the active OpenCode run first, then submits the prompt so the message does not sit behind the current generation queue.
+## Release Tracks
 
-## Install
+| Track | Branch | npm tag | OpenCode CLI |
+| --- | --- | --- | --- |
+| Stable | `main` | `latest` | `opencode` |
+| OpenCode v2 beta | `v2` | `beta` | `opencode2` from `@opencode-ai/cli@beta` |
 
-Add the plugin package to `~/.config/opencode/tui.json`:
+Do not mix the plugin and CLI tracks. The v2 plugin uses the v2 plugin API and is not intended for stable OpenCode.
 
-```json
-{
-  "$schema": "https://opencode.ai/tui.json",
-  "plugin": ["@mynameistito/oc-ctrl-enter-force-import"]
-}
-```
+## Stable OpenCode
 
-OpenCode will install the package when the TUI starts. Restart OpenCode after changing plugin config.
-
-For local testing, clone the plugin somewhere stable:
+Install the stable plugin globally:
 
 ```powershell
-git clone https://github.com/mynameistito/oc-ctrl-enter-force-import.git
+opencode plugin "@mynameistito/oc-ctrl-enter-force-import@latest" -g
 ```
 
-Build it:
+OpenCode writes the plugin to `~/.config/opencode/tui.json`. Verify it is installed with:
 
 ```powershell
-bun install
-bun run build
+opencode plugin list -g
 ```
 
-Add the built TUI plugin file to `~/.config/opencode/tui.json`:
+Update or reinstall it with `--force`:
+
+```powershell
+opencode plugin "@mynameistito/oc-ctrl-enter-force-import@latest" -g --force
+```
+
+Uninstall it with:
+
+```powershell
+opencode plugin "@mynameistito/oc-ctrl-enter-force-import" -g --remove
+```
+
+## OpenCode v2 Beta
+
+Install the beta CLI and beta plugin:
+
+```powershell
+bun add --global @opencode-ai/cli@beta
+opencode2 plugin "@mynameistito/oc-ctrl-enter-force-import@beta" -g
+```
+
+Verify the CLI and plugin:
+
+```powershell
+opencode2 --version
+opencode2 plugin list -g
+```
+
+Update or reinstall the beta plugin with `--force`:
+
+```powershell
+opencode2 plugin "@mynameistito/oc-ctrl-enter-force-import@beta" -g --force
+```
+
+Switch stable to beta by removing the stable plugin and installing the beta CLI/plugin. Switch back by removing the beta plugin and installing the stable plugin; do not leave both entries in the same `tui.json`.
+
+To clear a cached package before reinstalling:
+
+```powershell
+Remove-Item -LiteralPath "$HOME\.cache\opencode\packages\@mynameistito\oc-ctrl-enter-force-import@latest" -Recurse -Force -ErrorAction SilentlyContinue
+Remove-Item -LiteralPath "$HOME\.cache\opencode\packages\@mynameistito\oc-ctrl-enter-force-import@beta" -Recurse -Force -ErrorAction SilentlyContinue
+```
+
+The plugin can also be configured manually in `~/.config/opencode/tui.json`:
 
 ```json
 {
   "$schema": "https://opencode.ai/tui.json",
-  "plugin": ["file:///C:/path/to/oc-ctrl-enter-force-import/dist/tui.mjs"]
+  "plugin": ["@mynameistito/oc-ctrl-enter-force-import@latest"]
 }
 ```
 
-Restart OpenCode after changing plugin config.
-
-For standalone testing from `~/.config/opencode/plugins`, add the file to `~/.config/opencode/tui.json` as a TUI plugin:
-
-```json
-{
-  "$schema": "https://opencode.ai/tui.json",
-  "plugin": [
-    "file:///C:/Users/you/.config/opencode/plugins/oc-ctrl-enter-force-import.ts"
-  ]
-}
-```
-
-OpenCode's default `input_newline` binding includes `ctrl+return`, which can make Ctrl+Enter insert a newline before this plugin sees it. Remove `ctrl+return` from `input_newline` in your `tui.json`:
-
-```json
-{
-  "$schema": "https://opencode.ai/tui.json",
-  "keybinds": {
-    "input_newline": "shift+return,alt+return,ctrl+j"
-  }
-}
-```
+For beta, replace `@latest` with `@beta`.
 
 ## Behavior
 
-The plugin registers high-priority TUI keybindings for `ctrl+return` and `ctrl+enter`, both mapped to a custom command that:
+The plugin registers high-priority v2 keymap commands for `ctrl+return` and `ctrl+enter`. Each command dispatches `session.interrupt` twice, then `prompt.submit`, preserving OpenCode's guarded abort flow.
 
-1. Dispatches OpenCode's built-in `session.interrupt` command.
-2. Repeats `session.interrupt` to pass OpenCode's guarded abort flow when a generation is active.
-3. Dispatches OpenCode's built-in `prompt.submit` command.
+Remove `ctrl+return` from `input_newline` in `tui.json` if it is also configured as a newline binding:
 
-It does not change your `tui.json`, so any existing `input_submit` or `input_newline` preferences stay intact.
-
-Because OpenCode's managed textarea keybinds run on the focused prompt, `ctrl+return` must not also be bound to `input_newline`.
+```json
+{ "keybinds": { "input_newline": "shift+return,alt+return,ctrl+j" } }
+```
 
 ## Windows Terminal
 
-Many terminals send plain `Enter` for `Ctrl+Enter` unless configured. In Windows Terminal, add this action to the root-level `actions` array:
-
-```json
-{
-  "command": {
-    "action": "sendInput",
-    "input": "\u001b[13;5u"
-  },
-  "id": "User.sendInput.CtrlEnterCustom"
-}
-```
-
-Then add this keybinding to the root-level `keybindings` array:
-
-```json
-{
-  "keys": "ctrl+enter",
-  "id": "User.sendInput.CtrlEnterCustom"
-}
-```
-
-Open a new Windows Terminal tab after saving the settings.
-
-## Credits
-
-Built on OpenCode's plugin and TUI keymap APIs:
-
-- [OpenCode](https://opencode.ai/)
-- [OpenCode plugins documentation](https://opencode.ai/docs/plugins/)
-- [OpenCode keybinds documentation](https://opencode.ai/docs/keybinds/)
-- [OpenTUI keymap](https://github.com/anomalyco/opentui)
+If Windows Terminal sends plain Enter for Ctrl+Enter, configure a `sendInput` action for `\u001b[13;5u` and bind it to `ctrl+enter` in the terminal settings.

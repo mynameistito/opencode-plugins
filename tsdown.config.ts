@@ -3,7 +3,11 @@ import { defineConfig } from "tsdown";
 export default defineConfig({
   clean: true,
   deps: {
-    neverBundle: ["@opencode-ai/plugin/tui"],
+    neverBundle: [
+      "@opencode-ai/plugin",
+      "@opencode-ai/plugin/tui",
+      "@opencode-ai/plugin/tui/context",
+    ],
   },
   dts: {
     sourcemap: true,
