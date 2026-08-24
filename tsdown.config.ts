@@ -13,7 +13,8 @@ export default defineConfig({
     sourcemap: true,
   },
   entry: {
-    tui: "./index.ts",
+    index: "./index.ts",
+    tui: "./tui.ts",
   },
   format: ["esm"],
   outDir: "dist",

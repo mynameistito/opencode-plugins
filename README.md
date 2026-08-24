@@ -43,23 +43,24 @@ Install the beta CLI and beta plugin:
 
 ```powershell
 bun add --global @opencode-ai/cli@beta
-opencode2 plugin "@mynameistito/oc-ctrl-enter-force-import@beta" -g
+opencode2 plugin add "@mynameistito/oc-ctrl-enter-force-import@beta"
 ```
 
 Verify the CLI and plugin:
 
 ```powershell
 opencode2 --version
-opencode2 plugin list -g
+opencode2 plugin list
 ```
 
 Update or reinstall the beta plugin with `--force`:
 
 ```powershell
-opencode2 plugin "@mynameistito/oc-ctrl-enter-force-import@beta" -g --force
+opencode2 plugin remove "@mynameistito/oc-ctrl-enter-force-import@beta"
+opencode2 plugin add "@mynameistito/oc-ctrl-enter-force-import@beta"
 ```
 
-Switch stable to beta by removing the stable plugin and installing the beta CLI/plugin. Switch back by removing the beta plugin and installing the stable plugin; do not leave both entries in the same `tui.json`.
+Switch stable to beta by removing the stable plugin from `opencode.json`, installing the beta CLI, and running the beta `plugin add` command. Switch back by removing the beta plugin and adding the stable package; do not leave both entries in the same `opencode.json`.
 
 To clear a cached package before reinstalling:
 
@@ -68,16 +69,16 @@ Remove-Item -LiteralPath "$HOME\.cache\opencode\packages\@mynameistito\oc-ctrl-e
 Remove-Item -LiteralPath "$HOME\.cache\opencode\packages\@mynameistito\oc-ctrl-enter-force-import@beta" -Recurse -Force -ErrorAction SilentlyContinue
 ```
 
-The plugin can also be configured manually in `~/.config/opencode/tui.json`:
+The v2 package can also be configured manually in `~/.config/opencode/opencode.json`:
 
 ```json
 {
   "$schema": "https://opencode.ai/tui.json",
-  "plugin": ["@mynameistito/oc-ctrl-enter-force-import@latest"]
+  "plugins": ["@mynameistito/oc-ctrl-enter-force-import@beta"]
 }
 ```
 
-For beta, replace `@latest` with `@beta`.
+For stable OpenCode, use `opencode.json` with `@latest` and the stable `opencode` CLI instead.
 
 ## Behavior
 

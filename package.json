@@ -25,13 +25,13 @@
     "README.md"
   ],
   "type": "module",
-  "main": "./dist/tui.mjs",
-  "module": "./dist/tui.mjs",
-  "types": "./dist/tui.d.mts",
+  "main": "./dist/index.mjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
   "exports": {
     ".": {
-      "types": "./dist/tui.d.mts",
-      "import": "./dist/tui.mjs"
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
     },
     "./tui": {
       "types": "./dist/tui.d.mts",
