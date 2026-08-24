@@ -58,7 +58,7 @@
     "@types/node": "^26.1.1"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.31.1",
+    "@changesets/cli": "^3.0.1",
     "@opencode-ai/cli": "0.0.0-beta-18050",
     "@opentui/core": "0.5.7",
     "@opentui/solid": "0.5.7",
