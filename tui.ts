@@ -24,6 +24,7 @@ type ForceSubmitKeymap = Pick<Context["keymap"], "dispatch" | "layer">;
 /** Registers the force-submit commands on a v2 keymap. */
 export const registerForceSubmitLayer = (keymap: ForceSubmitKeymap): void => {
   keymap.layer(() => ({
+    bindings: FORCE_SUBMIT_COMMANDS.map(({ id }) => id),
     commands: FORCE_SUBMIT_COMMANDS.map(({ bind, id }) => ({
       bind,
       group: "Prompt",

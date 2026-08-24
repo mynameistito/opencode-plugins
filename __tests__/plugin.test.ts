@@ -29,7 +29,12 @@ describe("force submit", () => {
 
     registerForceSubmitLayer(keymap);
 
-    const commands = layers[0]?.().commands ?? [];
+    const layer = layers[0]?.();
+    const commands = layer?.commands ?? [];
+    expect(layer?.bindings).toEqual([
+      "oc-ctrl-enter.force-submit.return",
+      "oc-ctrl-enter.force-submit.enter",
+    ]);
     expect(commands.map((command) => command.bind)).toEqual([
       "ctrl+return",
       "ctrl+enter",
