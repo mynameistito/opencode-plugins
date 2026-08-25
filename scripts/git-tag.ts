@@ -19,9 +19,12 @@ if (!outputPath) {
 }
 
 const existingTags = new Set(
-  execFileSync("git", ["tag", "--list"], { encoding: "utf-8" })
+  execFileSync("git", ["ls-remote", "--tags", "origin"], {
+    encoding: "utf-8",
+  })
     .split("\n")
-    .filter(Boolean)
+    .map((line) => line.match(/refs\/tags\/(.+)$/)?.[1])
+    .filter((tag): tag is string => tag !== undefined && !tag.endsWith("^{}"))
 );
 
 execFileSync("bunx", ["changeset", "git-tag"], {
