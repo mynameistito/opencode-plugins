@@ -1,5 +1,12 @@
 # @mynameistito/opencode-force-input
 
+## 1.0.1
+
+### Patch Changes
+
+- 9e04b8d: Fix Ultracite diagnostics across plugin and release scripts
+- c723818: Expose `opencode-force-input` only as a TUI plugin so it no longer appears as a server plugin.
+
 ## 1.0.0-beta.6
 
 ### Patch Changes

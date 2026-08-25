@@ -1,6 +1,6 @@
 {
   "name": "@mynameistito/opencode-usage-limits",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "OpenCode TUI plugin that shows Codex, ZAI, Synthetic, and MiniMax Token Plan usage limits in the sidebar and prompt footer.",
   "keywords": [
     "codex",

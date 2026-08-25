@@ -1,5 +1,11 @@
 # @mynameistito/opencode-usage-limits
 
+## 1.0.2
+
+### Patch Changes
+
+- b8b9551: Prevent empty OpenTUI text nodes when usage slots have no content
+
 ## 1.0.1
 
 ### Patch Changes
