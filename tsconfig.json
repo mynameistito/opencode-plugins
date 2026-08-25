@@ -27,6 +27,6 @@
     "noUnusedParameters": false,
     "noPropertyAccessFromIndexSignature": false
   },
-  "include": ["index.ts", "tui.ts", "__tests__/**/*.ts", "scripts/**/*.ts"],
+  "include": ["index.ts", "tui.tsx", "__tests__/**/*.ts", "scripts/**/*.ts"],
   "exclude": ["dist"]
 }

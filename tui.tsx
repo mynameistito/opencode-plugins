@@ -1,3 +1,5 @@
+/* @jsxImportSource @opentui/solid */
+
 import { Plugin } from "@opencode-ai/plugin/tui";
 import type { Context } from "@opencode-ai/plugin/tui/context";
 
@@ -36,10 +38,21 @@ export const registerForceSubmitLayer = (keymap: ForceSubmitKeymap): void => {
   }));
 };
 
-/** Initializes the OpenCode v2 TUI plugin. */
-export const setup = (context: Context): void => {
-  registerForceSubmitLayer(context.keymap);
+interface ForceSubmitLayerProps {
+  readonly context: Context;
+}
+
+const ForceSubmitLayer = (props: ForceSubmitLayerProps): null => {
+  registerForceSubmitLayer(props.context.keymap);
+  return null;
 };
+
+/** Initializes the OpenCode v2 TUI plugin. */
+export const setup = (context: Context): (() => void) =>
+  context.ui.slot({
+    append: "sidebar.content",
+    render: () => <ForceSubmitLayer context={context} />,
+  });
 
 /** OpenCode v2 TUI plugin module entrypoint. */
 export default Plugin.define({

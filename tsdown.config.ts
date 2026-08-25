@@ -7,6 +7,11 @@ export default defineConfig({
       "@opencode-ai/plugin",
       "@opencode-ai/plugin/tui",
       "@opencode-ai/plugin/tui/context",
+      "@opentui/core",
+      "@opentui/solid",
+      "@opentui/solid/jsx-runtime",
+      "solid-js",
+      "solid-js/web",
     ],
   },
   dts: {
@@ -14,7 +19,7 @@ export default defineConfig({
   },
   entry: {
     index: "./index.ts",
-    tui: "./tui.ts",
+    tui: "./tui.tsx",
   },
   format: ["esm"],
   outDir: "dist",
