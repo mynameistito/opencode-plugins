@@ -69,8 +69,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Stage packages on npm
         if: steps.changesets.outputs.has-changesets == 'false'
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           for package_dir in packages/*; do
             package_name=$(node --print "require('./$package_dir/package.json').name")
