@@ -12,6 +12,7 @@
 - **Depends on**: none
 - **Category**: migration
 - **Planned at**: source commits `06f1453` and `26d5723`, 2026-08-25
+- **Implemented**: PRs #3, #4, #5, #6, and #7 on `main`
 
 ## Why This Matters
 
