@@ -62,13 +62,14 @@ for (const directory of readdirSync("packages", { withFileTypes: true })) {
         "latest",
         "--provenance",
       ],
-      { cwd: packageDirectory, stdio: "inherit" }
+      { cwd: packageDirectory, stdio: ["ignore", "inherit", "pipe"] }
     );
   } catch (error) {
     const details =
       error && typeof error === "object" && "stderr" in error
         ? String(error.stderr)
         : "";
+    process.stderr.write(details);
     const message = `${error instanceof Error ? error.message : String(error)} ${details}`;
     if (
       !message.includes("E409") &&
