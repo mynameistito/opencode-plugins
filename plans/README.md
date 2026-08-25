@@ -6,13 +6,21 @@ This plan was generated on 2026-08-25 after surveying the empty destination dire
 
 | Plan | Title | Priority | Effort | Depends on | Status |
 |------|-------|----------|--------|------------|--------|
-| 001 | Create the combined OpenCode plugins monorepo on `main` | P1 | L | — | TODO |
+| 001 | Create the combined OpenCode plugins monorepo on `main` | P1 | L | — | DONE |
 
 Status values: `TODO`, `IN PROGRESS`, `DONE`, `BLOCKED` with a one-line reason, or `REJECTED` with a one-line rationale.
 
 ## Dependency Notes
 
 - The migration must be completed as one atomic repository bootstrap because both package manifests, the root workspace, Changesets configuration, lockfile, CI, release automation, and documentation must agree before pushing `main`.
+
+## Implemented PR Stack
+
+- PR #3: imported `oc-ctrl-enter-force-import@v2` into `packages/opencode-force-input`.
+- PR #4: imported `oc-usage-limits-plugin@opencode-v2` and consolidated the root workspace/tooling.
+- PR #5: added shared root CI/release workflows.
+- PR #6: unified package release documentation around `main` and npm `latest`.
+- PR #7: fixed Changesets Action input names after the first post-merge release run.
 
 ## Assumptions To Confirm Before Execution
 
