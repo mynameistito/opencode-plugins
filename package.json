@@ -11,12 +11,20 @@
     "build": "bun run scripts/run-workspaces.ts build",
     "check": "bun run scripts/run-workspaces.ts check",
     "fix": "bun run scripts/run-workspaces.ts fix",
-    "knip": "bun run scripts/run-workspaces.ts knip",
+    "knip": "bunx knip@latest",
     "test": "bun run scripts/run-workspaces.ts test",
     "test:package": "bun run scripts/run-workspaces.ts test:package",
     "typecheck": "bun run scripts/run-workspaces.ts typecheck",
     "changeset": "changeset",
     "changeset-add": "bun run scripts/changeset-add.ts"
+  },
+  "knip": {
+    "ignoreDependencies": [
+      "@opentui/core",
+      "@opentui/solid",
+      "lefthook",
+      "@opencode-ai/cli"
+    ]
   },
   "devDependencies": {
     "@changesets/cli": "^3.0.1",
