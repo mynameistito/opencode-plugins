@@ -1,5 +1,11 @@
 # @mynameistito/oc-ctrl-enter-force-import
 
+## 1.0.0-beta.6
+
+### Patch Changes
+
+- 06f1453: Register the v2 Ctrl+Enter keymap from the prompt footer so it remains active when the sidebar is hidden.
+
 ## 1.0.0-beta.5
 
 ### Patch Changes
