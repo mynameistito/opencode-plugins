@@ -12,6 +12,7 @@
     "check": "bun run scripts/run-workspaces.ts check",
     "fix": "bun run scripts/run-workspaces.ts fix",
     "knip": "bunx knip@latest",
+    "release:stage": "bun scripts/stage-packages.ts",
     "version-pr-title": "bun scripts/version-pr-title.ts",
     "test": "bun run scripts/run-workspaces.ts test",
     "test:package": "bun run scripts/run-workspaces.ts test:package",
