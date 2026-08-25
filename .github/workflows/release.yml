@@ -58,28 +58,15 @@ jobs:
         run: |
           title=$(bun run version-pr-title)
           echo "title=$title" >> "$GITHUB_OUTPUT"
+      - name: Stage packages on npm
+        run: bun run release:stage
       - name: Create release pull request or publish
         id: changesets
         uses: changesets/action@8488615a623b1b9c987934bb89eae8af6a946ac1 # v2.1.1
         with:
           version-script: bunx changeset version
+          publish-script: bunx changeset tag
           pr-title: ${{ steps.version-title.outputs.title }}
           commit-message: "chore: release packages"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Stage packages on npm
-        if: steps.changesets.outputs.has-changesets == 'false'
-        run: |
-          for package_dir in packages/*; do
-            package_name=$(node --print "require('./$package_dir/package.json').name")
-            package_version=$(node --print "require('./$package_dir/package.json').version")
-            package_spec="$package_name@$package_version"
-
-            if npm view "$package_spec" version >/dev/null 2>&1; then
-              echo "$package_spec is already published"
-              continue
-            fi
-
-            echo "Staging $package_spec with npm latest"
-            (cd "$package_dir" && npm stage publish --access public --tag latest --provenance)
-          done

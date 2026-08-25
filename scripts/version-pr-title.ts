@@ -7,11 +7,14 @@ for (const file of readdirSync(".changeset")) {
     continue;
   }
 
-  const content = readFileSync(`.changeset/${file}`, "utf8");
-  for (const match of content.matchAll(/^['\"]([^'\"]+)['\"]\s*:/gm)) {
-    packageNames.add(match[1]);
+  const content = readFileSync(`.changeset/${file}`, "utf-8");
+  for (const match of content.matchAll(/^['"](?<name>[^'"]+)['"]\s*:/gmu)) {
+    const name = match.groups?.name;
+    if (name) {
+      packageNames.add(name);
+    }
   }
 }
 
-const names = [...packageNames].sort();
+const names = [...packageNames].toSorted();
 console.log(`Version Package - ${names.join(", ") || "workspace"}`);
