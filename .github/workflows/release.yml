@@ -43,10 +43,10 @@ jobs:
       - name: Create release pull request or publish
         uses: changesets/action@198f833dd7d863100ea6e28967bc9a9fdefadb0a # v2.1.0
         with:
-          version: bunx changeset version
-          publish: bunx changeset publish
-          title: "chore: release packages"
-          commit: "chore: release packages"
+          version-script: bunx changeset version
+          publish-script: bunx changeset publish
+          pr-title: "chore: release packages"
+          commit-message: "chore: release packages"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_CONFIG_PROVENANCE: true
