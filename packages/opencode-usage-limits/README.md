@@ -20,7 +20,7 @@ OpenCode TUI plugin that shows Codex, OpenCode GO, ZAI, Synthetic, MiniMax Token
 This package contains the OpenCode v2 TUI plugin and is published from the monorepo `main` branch using npm's `latest` dist-tag. Install it globally with:
 
 ```bash
-opencode plugin @mynameistito/opencode-usage-limits -g
+opencode plugin @mynameistito/opencode-usage-limits@latest -g
 ```
 
 - `-g` / `--global` installs to `~/.config/opencode/tui.json`.
