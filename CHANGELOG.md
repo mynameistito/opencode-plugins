@@ -1,5 +1,11 @@
 # @mynameistito/oc-ctrl-enter-force-import
 
+## 1.0.0-beta.4
+
+### Patch Changes
+
+- 1143b86: Make the force-submit keymap active while the prompt is focused.
+
 ## 1.0.0-beta.3
 
 ### Patch Changes
