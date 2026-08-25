@@ -1,33 +1,24 @@
 {
   "name": "opencode-plugins",
   "private": true,
-  "type": "module",
   "description": "OpenCode plugins maintained in a Bun workspace.",
-  "packageManager": "bun@1.4.0",
   "workspaces": [
     "packages/*"
   ],
+  "type": "module",
   "scripts": {
     "build": "bun run scripts/run-workspaces.ts build",
-    "check": "bun run scripts/run-workspaces.ts check",
-    "fix": "bun run scripts/run-workspaces.ts fix",
+    "check": "ultracite check",
+    "fix": "ultracite fix",
     "knip": "bunx knip@latest",
     "release:tag": "bun scripts/git-tag.ts",
     "release:stage": "bun scripts/stage-packages.ts",
     "version-pr-title": "bun scripts/version-pr-title.ts",
     "test": "bun run scripts/run-workspaces.ts test",
     "test:package": "bun run scripts/run-workspaces.ts test:package",
-    "typecheck": "bun run scripts/run-workspaces.ts typecheck",
+    "typecheck": "bun run --filter '*' typecheck",
     "changeset": "changeset",
     "changeset-add": "bun run scripts/changeset-add.ts"
-  },
-  "knip": {
-    "ignoreDependencies": [
-      "@opentui/core",
-      "@opentui/solid",
-      "lefthook",
-      "@opencode-ai/cli"
-    ]
   },
   "devDependencies": {
     "@changesets/cli": "^3.0.1",
@@ -43,5 +34,14 @@
     "tsdown": "^0.22.14",
     "typescript": "npm:@typescript/typescript6@^6.0.2",
     "ultracite": "7.10.6"
+  },
+  "packageManager": "bun@1.4.0",
+  "knip": {
+    "ignoreDependencies": [
+      "@opentui/core",
+      "@opentui/solid",
+      "lefthook",
+      "@opencode-ai/cli"
+    ]
   }
 }

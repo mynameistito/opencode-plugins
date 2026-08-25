@@ -5,7 +5,7 @@ This plan was generated on 2026-08-25 after surveying the empty destination dire
 ## Execution Order & Status
 
 | Plan | Title | Priority | Effort | Depends on | Status |
-|------|-------|----------|--------|------------|--------|
+| --- | --- | --- | --- | --- | --- |
 | 001 | Create the combined OpenCode plugins monorepo on `main` | P1 | L | — | DONE |
 
 Status values: `TODO`, `IN PROGRESS`, `DONE`, `BLOCKED` with a one-line reason, or `REJECTED` with a one-line rationale.
