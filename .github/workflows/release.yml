@@ -53,12 +53,17 @@ jobs:
           bun run typecheck
           bun run check
           bun run build
+      - name: Determine version PR title
+        id: version-title
+        run: |
+          title=$(bun run version-pr-title)
+          echo "title=$title" >> "$GITHUB_OUTPUT"
       - name: Create release pull request or publish
         id: changesets
         uses: changesets/action@8488615a623b1b9c987934bb89eae8af6a946ac1 # v2.1.1
         with:
           version-script: bunx changeset version
-          pr-title: "chore: release packages"
+          pr-title: ${{ steps.version-title.outputs.title }}
           commit-message: "chore: release packages"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
