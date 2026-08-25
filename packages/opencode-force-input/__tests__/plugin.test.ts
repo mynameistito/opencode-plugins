@@ -1,12 +1,9 @@
 import { describe, expect, test } from "bun:test";
 
-import type {
-  Context,
-  KeymapLayer,
-  SlotClaim,
-} from "@opencode-ai/plugin/tui/context";
+import type { KeymapLayer, SlotClaim } from "@opencode-ai/plugin/tui/context";
 
 import { forceSubmit, registerForceSubmitLayer, setup } from "../tui";
+import type { ForceSubmitContext } from "../tui";
 
 describe("force submit", () => {
   test("interrupts three times before submitting", () => {
@@ -59,7 +56,7 @@ describe("force submit", () => {
           return () => {};
         },
       },
-    } as unknown as Context;
+    } satisfies ForceSubmitContext;
 
     setup(context);
 

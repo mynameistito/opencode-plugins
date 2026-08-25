@@ -18,8 +18,14 @@ if (!outputPath) {
   throw new Error("CHANGESETS_OUTPUT is required by the Changesets action");
 }
 
+const gitPath = Bun.which("git");
+const bunxPath = Bun.which("bunx");
+if (!gitPath || !bunxPath) {
+  throw new Error("git and bunx are required to create release tags");
+}
+
 const existingTags = new Set(
-  execFileSync("git", ["ls-remote", "--tags", "origin"], {
+  execFileSync(gitPath, ["ls-remote", "--tags", "origin"], {
     encoding: "utf-8",
   })
     .split("\n")
@@ -27,7 +33,7 @@ const existingTags = new Set(
     .filter((tag): tag is string => tag !== undefined && !tag.endsWith("^{}"))
 );
 
-execFileSync("bunx", ["changeset", "git-tag"], {
+execFileSync(bunxPath, ["changeset", "git-tag"], {
   stdio: "inherit",
 });
 
@@ -37,9 +43,9 @@ for (const directory of readdirSync("packages", { withFileTypes: true })) {
     continue;
   }
 
-  const manifest = JSON.parse(
+  const manifest: PackageManifest = JSON.parse(
     readFileSync(path.join("packages", directory.name, "package.json"), "utf-8")
-  ) as PackageManifest;
+  );
   const tag = `${manifest.name}@${manifest.version}`;
 
   if (!existingTags.has(tag)) {

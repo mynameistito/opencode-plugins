@@ -11,7 +11,12 @@ const supportedTasks = [
   "typecheck",
 ] as const;
 
-if (!supportedTasks.includes(task as (typeof supportedTasks)[number])) {
+const isSupportedTask = (
+  value: string | undefined
+): value is (typeof supportedTasks)[number] =>
+  supportedTasks.some((supportedTask) => supportedTask === value);
+
+if (!isSupportedTask(task)) {
   console.error(
     `Usage: bun run scripts/run-workspaces.ts <${supportedTasks.join("|")}>`
   );
