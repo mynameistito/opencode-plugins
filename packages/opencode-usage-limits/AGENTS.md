@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-`oc-usage-limits-plugin` is an OpenCode TUI plugin in TypeScript. It surfaces Codex and ZAI usage limits in the sidebar and prompt footer.
+`@mynameistito/opencode-usage-limits` is an OpenCode TUI plugin in TypeScript. It surfaces Codex and ZAI usage limits in the sidebar and prompt footer.
 
 ## Repo Layout
 

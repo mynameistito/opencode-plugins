@@ -1,4 +1,4 @@
-# oc-usage-limits-plugin
+# @mynameistito/opencode-usage-limits
 
 ## 2.0.0-next.3
 

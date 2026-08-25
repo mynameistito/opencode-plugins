@@ -1,4 +1,4 @@
-# oc-ctrl-enter-force-import
+# @mynameistito/opencode-force-input
 
 OpenCode TUI plugin that interrupts the active run and force-submits the current prompt with `Ctrl+Enter`.
 
@@ -16,7 +16,7 @@ Do not mix the plugin and CLI tracks. The v2 plugin uses the v2 plugin API and i
 Install the stable plugin globally:
 
 ```powershell
-opencode plugin "@mynameistito/oc-ctrl-enter-force-import@latest" -g
+opencode plugin "@mynameistito/opencode-force-input@latest" -g
 ```
 
 OpenCode writes the plugin to `~/.config/opencode/tui.json`. Verify it is installed with:
@@ -28,13 +28,13 @@ opencode plugin list -g
 Update or reinstall it with `--force`:
 
 ```powershell
-opencode plugin "@mynameistito/oc-ctrl-enter-force-import@latest" -g --force
+opencode plugin "@mynameistito/opencode-force-input@latest" -g --force
 ```
 
 Uninstall it with:
 
 ```powershell
-opencode plugin "@mynameistito/oc-ctrl-enter-force-import" -g --remove
+opencode plugin "@mynameistito/opencode-force-input" -g --remove
 ```
 
 ## OpenCode v2 Beta
@@ -43,7 +43,7 @@ Install the beta CLI and beta TUI plugin:
 
 ```powershell
 bun add --global @opencode-ai/cli@beta
-opencode2 plugin add "@mynameistito/oc-ctrl-enter-force-import@beta" -g
+opencode2 plugin add "@mynameistito/opencode-force-input@latest" -g
 ```
 
 Verify the CLI and plugin:
@@ -56,8 +56,8 @@ opencode2 plugin list
 Update or reinstall the beta plugin with `--force`:
 
 ```powershell
-opencode2 plugin remove "@mynameistito/oc-ctrl-enter-force-import@beta" -g
-opencode2 plugin add "@mynameistito/oc-ctrl-enter-force-import@beta" -g
+opencode2 plugin remove "@mynameistito/opencode-force-input@latest" -g
+opencode2 plugin add "@mynameistito/opencode-force-input@latest" -g
 ```
 
 Switch stable to beta by removing the stable plugin from `opencode.json`, installing the beta CLI, and running the beta `plugin add` command. Switch back by removing the beta plugin and adding the stable package; do not leave both entries in the same `opencode.json`.
@@ -65,8 +65,7 @@ Switch stable to beta by removing the stable plugin from `opencode.json`, instal
 To clear a cached package before reinstalling:
 
 ```powershell
-Remove-Item -LiteralPath "$HOME\.cache\opencode\packages\@mynameistito\oc-ctrl-enter-force-import@latest" -Recurse -Force -ErrorAction SilentlyContinue
-Remove-Item -LiteralPath "$HOME\.cache\opencode\packages\@mynameistito\oc-ctrl-enter-force-import@beta" -Recurse -Force -ErrorAction SilentlyContinue
+Remove-Item -LiteralPath "$HOME\.cache\opencode\packages\@mynameistito\opencode-force-input@latest" -Recurse -Force -ErrorAction SilentlyContinue
 ```
 
 The v2 package can also be configured manually in `~/.config/opencode/tui.json`:
@@ -74,7 +73,7 @@ The v2 package can also be configured manually in `~/.config/opencode/tui.json`:
 ```json
 {
   "$schema": "https://opencode.ai/tui.json",
-  "plugin": ["@mynameistito/oc-ctrl-enter-force-import@beta"]
+  "plugin": ["@mynameistito/opencode-force-input@latest"]
 }
 ```
 

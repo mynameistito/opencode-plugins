@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for helping with `oc-usage-limits-plugin`.
+Thanks for helping with `@mynameistito/opencode-usage-limits`.
 
 AI-assisted contributions are welcome. Keep generated issue and PR text concise, accurate, and human-readable.
 
@@ -33,8 +33,7 @@ bun run knip
 
 - Work on a branch.
 - Keep changes small and focused.
-- Put standard OpenCode changes on `main`; put OpenCode v2 host/API changes on `opencode-v2` and keep their release work in the v2 `next` lane.
-- Do not mix stable and v2 changesets casually. If a change belongs in both lanes, create or port changesets deliberately.
+- Target the monorepo `main` branch. Both packages currently contain OpenCode v2 code and release from `main` using npm `latest`.
 - Use TypeScript-first code with no default exports.
 - Add or update tests under `__tests__/` for non-trivial behavior.
 - Run the relevant checks before opening a PR.
@@ -66,20 +65,7 @@ bun run changeset-add patch "short summary"
 
 Use `minor` for new features and `major` for breaking changes.
 
-Stable releases use normal Changesets mode on `main`. The v2 branch uses Changesets prerelease mode and publishes the resulting versions with the npm `next` dist-tag automatically when changes land on `opencode-v2`:
-
-```bash
-bunx changeset pre enter next
-bun run version
-```
-
-Commit the generated `.changeset/pre.json` and version/changelog changes on `opencode-v2`. Exit prerelease mode only for an intentional promotion:
-
-```bash
-bunx changeset pre exit
-```
-
-Do not manually edit package versions or consume the same pending changeset independently from both release lanes.
+Changesets live at the repository root and releases are coordinated from `main` using npm `latest`. Do not manually edit package versions or create prerelease metadata.
 
 ## Pull Requests
 

@@ -10,10 +10,10 @@ const serverPlugin = serverModule.default;
 const tuiPlugin = tuiModule.default;
 
 if (
-  serverPlugin?.id !== "mynameistito.oc-ctrl-enter-force-import" ||
+  serverPlugin?.id !== "mynameistito.opencode-force-input" ||
   serverPlugin.tui !== true ||
   typeof serverPlugin.setup !== "function" ||
-  tuiPlugin?.id !== "mynameistito.oc-ctrl-enter-force-import" ||
+  tuiPlugin?.id !== "mynameistito.opencode-force-input" ||
   typeof tuiPlugin.setup !== "function"
 ) {
   throw new Error(

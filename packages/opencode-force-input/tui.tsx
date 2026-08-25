@@ -4,7 +4,7 @@ import { Plugin } from "@opencode-ai/plugin/tui";
 import type { Context } from "@opencode-ai/plugin/tui/context";
 
 /** OpenCode v2 TUI plugin identifier. */
-const PLUGIN_ID = "mynameistito.oc-ctrl-enter-force-import";
+const PLUGIN_ID = "mynameistito.opencode-force-input";
 /** OpenCode command registered by this plugin for Ctrl+Enter force-submit. */
 const FORCE_SUBMIT_COMMAND = "oc-ctrl-enter.force-submit";
 /** Key sequences commonly emitted for Ctrl+Enter across terminal environments. */

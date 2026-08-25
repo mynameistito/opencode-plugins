@@ -1,4 +1,4 @@
-# oc-usage-limits-plugin
+# @mynameistito/opencode-usage-limits
 
 OpenCode TUI plugin that shows Codex, OpenCode GO, ZAI, Synthetic, MiniMax Token Plan, and Qwen usage limits in the sidebar and prompt footer.
 
@@ -20,19 +20,19 @@ OpenCode TUI plugin that shows Codex, OpenCode GO, ZAI, Synthetic, MiniMax Token
 Standard OpenCode uses the stable package from npm's `latest` dist-tag. Install it globally with:
 
 ```bash
-opencode plugin oc-usage-limits-plugin -g
+opencode plugin @mynameistito/opencode-usage-limits -g
 ```
 
 - `-g` / `--global` installs to `~/.config/opencode/tui.json`.
 - Without `-g`, installs locally to `<project>/.opencode/tui.json` (requires a git worktree).
 - `--force` replaces an existing pinned version.
 
-The CLI installs the `latest` package and updates the TUI plugin config for you. The package entrypoint is `oc-usage-limits-plugin/tui`.
+The CLI installs the `latest` package and updates the TUI plugin config for you. The package entrypoint is `@mynameistito/opencode-usage-limits/tui`.
 
 OpenCode v2 uses the preview package from npm's `next` dist-tag. Install it globally with OpenCode v2 only:
 
 ```bash
-opencode plugin oc-usage-limits-plugin@next -g
+opencode plugin @mynameistito/opencode-usage-limits@latest -g
 ```
 
 The v2 package is built and released from the `opencode-v2` branch. It is preview/beta software until validation against the v2 host is complete. Do not use `@next` with standard OpenCode, and do not use the stable package with OpenCode v2.
@@ -42,7 +42,7 @@ To configure it manually instead, add the plugin to `~/.config/opencode/tui.json
 ```jsonc
 {
   "$schema": "https://opencode.ai/tui.json",
-  "plugin": ["oc-usage-limits-plugin"],
+  "plugin": ["@mynameistito/opencode-usage-limits"],
 }
 ```
 
@@ -61,13 +61,13 @@ For standard OpenCode (`@latest`):
 PowerShell:
 
 ```powershell
-Remove-Item -LiteralPath "$HOME\.cache\opencode\packages\oc-usage-limits-plugin@latest" -Recurse -Force
+Remove-Item -LiteralPath "$HOME\.cache\opencode\packages\@mynameistito\opencode-usage-limits@latest" -Recurse -Force
 ```
 
 macOS/Linux:
 
 ```bash
-rm -rf ~/.cache/opencode/packages/oc-usage-limits-plugin@latest
+rm -rf ~/.cache/opencode/packages/@mynameistito/opencode-usage-limits@latest
 ```
 
 For OpenCode v2 (`@next`):
@@ -75,19 +75,19 @@ For OpenCode v2 (`@next`):
 PowerShell:
 
 ```powershell
-Remove-Item -LiteralPath "$HOME\.cache\opencode\packages\oc-usage-limits-plugin@next" -Recurse -Force
+Remove-Item -LiteralPath "$HOME\.cache\opencode\packages\@mynameistito\opencode-usage-limits@latest" -Recurse -Force
 ```
 
 macOS/Linux:
 
 ```bash
-rm -rf ~/.cache/opencode/packages/oc-usage-limits-plugin@next
+rm -rf ~/.cache/opencode/packages/@mynameistito/opencode-usage-limits@latest
 ```
 
 Start OpenCode again and it will reinstall the plugin from the existing `tui.json` entry. If the plugin is no longer configured, run the install command again:
 
 ```bash
-opencode plugin oc-usage-limits-plugin -g
+opencode plugin @mynameistito/opencode-usage-limits -g
 ```
 
 - **Dependency conflicts involving `@opencode-ai/plugin`** usually mean OpenCode's package cache contains an older plugin API package. Update OpenCode, clear the cached plugin as above, then retry the install. This package does not publish OpenCode runtime packages as peer dependencies.
@@ -97,7 +97,7 @@ opencode plugin oc-usage-limits-plugin -g
 
 - Stable releases come from `main`, use the `latest` npm dist-tag, and are intended for standard OpenCode.
 - OpenCode v2 previews come from `opencode-v2`, use the `next` npm dist-tag, and are intended only for OpenCode v2.
-- Both lanes use the same package name and `oc-usage-limits-plugin/tui` entrypoint.
+- The package uses the `@mynameistito/opencode-usage-limits/tui` entrypoint.
 - Releases are staged on npm for manual approval before publication. Stable releases create normal GitHub releases; v2 previews create GitHub prerelease tags/releases.
 - The v2 lane remains preview/beta until the package has been validated against the v2 host.
 
@@ -116,7 +116,7 @@ Create `~/.config/opencode/usage-limits.jsonc`. The same file lives at [`example
 
 ```jsonc
 {
-  "$schema": "https://raw.githubusercontent.com/mynameistito/oc-usage-limits-plugin/main/usage-limits.schema.json",
+  "$schema": "https://raw.githubusercontent.com/mynameistito/opencode-plugins/main/packages/opencode-usage-limits/usage-limits.schema.json",
   "enabled": true,
   "refreshIntervalSeconds": 60,
   "requestTimeoutMs": 10000,
@@ -156,7 +156,7 @@ If you only need Codex and ZAI with auto-discovered credentials:
 
 ```jsonc
 {
-  "$schema": "https://raw.githubusercontent.com/mynameistito/oc-usage-limits-plugin/main/usage-limits.schema.json",
+  "$schema": "https://raw.githubusercontent.com/mynameistito/opencode-plugins/main/packages/opencode-usage-limits/usage-limits.schema.json",
   "providers": {
     "codex": { "enabled": true },
     "zai": { "enabled": true, "authorizationScheme": "raw" },
@@ -264,7 +264,7 @@ bun run check
 bun run build
 ```
 
-The package exposes a TUI entrypoint at `oc-usage-limits-plugin/tui` for OpenCode's package plugin loader.
+The package exposes a TUI entrypoint at `@mynameistito/opencode-usage-limits/tui` for OpenCode's package plugin loader.
 
 ## Notes
 

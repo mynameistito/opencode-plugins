@@ -1,4 +1,4 @@
-# @mynameistito/oc-ctrl-enter-force-import
+# @mynameistito/opencode-force-input
 
 ## 1.0.0-beta.6
 
