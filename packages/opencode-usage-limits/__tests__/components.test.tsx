@@ -1,0 +1,406 @@
+/* @jsxImportSource @opentui/solid */
+import { describe, expect, test } from "bun:test";
+
+import { RGBA } from "@opentui/core";
+import { testRender } from "@opentui/solid";
+import { Result } from "effect";
+
+import { CompactStatusLine, UsageLimitsPanel } from "@/components.tsx";
+import type {
+  ProviderDisplayConfig,
+  ProviderState,
+  ProviderUsage,
+  UsageWindow,
+} from "@/types.ts";
+import { parseUsagePercentage, percentageQuota } from "@/usage.ts";
+
+const color = RGBA.fromValues(1, 2, 3, 255);
+
+const theme = {
+  text: {
+    default: color,
+    feedback: {
+      error: { default: color },
+      success: { default: color },
+      warning: { default: color },
+    },
+    subdued: color,
+  },
+};
+
+const usageWindow = (overrides: Partial<UsageWindow> = {}): UsageWindow => ({
+  kind: "rolling",
+  label: "5h",
+  quota: percentageQuota(Result.getOrThrow(parseUsagePercentage(42))),
+  resetsAt: new Date("2026-06-23T12:00:00.000Z"),
+  ...overrides,
+});
+
+const usage = (overrides: Partial<ProviderUsage> = {}): ProviderUsage => ({
+  capturedAt: new Date("2026-06-23T11:00:00.000Z"),
+  id: "codex",
+  label: "Codex",
+  windows: [usageWindow()],
+  ...overrides,
+});
+
+const renderPanelText = async (
+  states: ProviderState[],
+  showErrors: boolean,
+  lastRefreshAt: Date | null = null,
+  providerDisplays: Readonly<
+    Partial<Record<ProviderState["id"], ProviderDisplayConfig>>
+  > = {}
+): Promise<string> => {
+  const setup = await testRender(
+    () => (
+      <UsageLimitsPanel
+        showErrors={showErrors}
+        states={states}
+        theme={theme}
+        lastRefreshAt={lastRefreshAt}
+        providerDisplays={providerDisplays}
+      />
+    ),
+    { height: 12, width: 80 }
+  );
+
+  try {
+    await setup.flush();
+    return setup.captureCharFrame();
+  } finally {
+    setup.renderer.destroy();
+  }
+};
+
+describe("UsageLimitsPanel", () => {
+  test("renders ready provider windows", async () => {
+    const text = await renderPanelText(
+      [
+        {
+          data: usage(),
+          id: "codex",
+          label: "Codex",
+          stale: false,
+          status: "ready",
+        },
+      ],
+      true
+    );
+
+    expect(text).toContain("Usage Limits");
+    expect(text).toContain("Codex");
+    expect(text).toContain("5h");
+    expect(text).toContain("42%");
+    expect(text).toContain("[█████░░░░░░░]");
+  });
+
+  test("filters windows by the provider sidebar window", async () => {
+    const text = await renderPanelText(
+      [
+        {
+          data: usage({
+            windows: [
+              usageWindow(),
+              usageWindow({ kind: "weekly", label: "weekly" }),
+            ],
+          }),
+          id: "codex",
+          label: "Codex",
+          stale: false,
+          status: "ready",
+        },
+      ],
+      true,
+      null,
+      {
+        codex: {
+          footerWindow: "auto",
+          showFooterBar: true,
+          showSidebarBar: true,
+          sidebarWindow: "weekly",
+        },
+      }
+    );
+
+    expect(text).toContain("weekly");
+    expect(text).not.toContain("5h");
+  });
+
+  test("keeps sidebar provider text and percentage when its bar is hidden", async () => {
+    const text = await renderPanelText(
+      [
+        {
+          data: usage(),
+          id: "codex",
+          label: "Codex",
+          stale: false,
+          status: "ready",
+        },
+      ],
+      true,
+      null,
+      {
+        codex: {
+          footerWindow: "auto",
+          showFooterBar: true,
+          showSidebarBar: false,
+          sidebarWindow: "all",
+        },
+      }
+    );
+
+    expect(text).toContain("Codex");
+    expect(text).toContain("42% used");
+    expect(text).not.toContain("[█████░░░░░░░]");
+  });
+
+  test("renders previous windows and error text when errors are visible", async () => {
+    const text = await renderPanelText(
+      [
+        {
+          id: "codex",
+          label: "Codex",
+          message: "provider unavailable",
+          previous: usage(),
+          status: "error",
+        },
+      ],
+      true
+    );
+
+    expect(text).toContain("Codex cached");
+    expect(text).toContain("5h");
+    expect(text).toContain("42%");
+    expect(text).toContain("provider unavailable");
+  });
+
+  test("renders previous windows without error text when errors are hidden", async () => {
+    const text = await renderPanelText(
+      [
+        {
+          id: "codex",
+          label: "Codex",
+          message: "provider unavailable",
+          previous: usage(),
+          status: "error",
+        },
+      ],
+      false
+    );
+
+    expect(text).toContain("Codex cached");
+    expect(text).toContain("5h");
+    expect(text).toContain("42%");
+    expect(text).not.toContain("provider unavailable");
+  });
+
+  test("hides error-only providers when errors are hidden", async () => {
+    const text = await renderPanelText(
+      [
+        {
+          id: "codex",
+          label: "Codex",
+          message: "provider unavailable",
+          status: "error",
+        },
+      ],
+      false
+    );
+
+    expect(text).not.toContain("Usage Limits");
+    expect(text).not.toContain("Codex");
+    expect(text).not.toContain("provider unavailable");
+    expect(text).not.toContain("42%");
+  });
+
+  test("hides missing credential providers without previous usage", async () => {
+    const text = await renderPanelText(
+      [
+        {
+          errorKind: "missing_credentials",
+          id: "synthetic",
+          label: "Synthetic",
+          message: "missing Synthetic key",
+          status: "error",
+        },
+      ],
+      true
+    );
+
+    expect(text).not.toContain("Usage Limits");
+    expect(text).not.toContain("Synthetic");
+    expect(text).not.toContain("missing Synthetic key");
+  });
+
+  test("renders tier badge when provider has tierName", async () => {
+    const text = await renderPanelText(
+      [
+        {
+          data: usage({ tierName: "Pro" }),
+          id: "codex",
+          label: "Codex",
+          stale: false,
+          status: "ready",
+        },
+      ],
+      true
+    );
+
+    expect(text).toContain("Codex [Pro]");
+  });
+
+  test("renders cached tier badge from previous data on error state", async () => {
+    const text = await renderPanelText(
+      [
+        {
+          id: "codex",
+          label: "Codex",
+          message: "provider unavailable",
+          previous: usage({ tierName: "Pro" }),
+          status: "error",
+        },
+      ],
+      true
+    );
+
+    expect(text).toContain("Codex [Pro]");
+  });
+
+  test("renders updated timestamp when lastRefreshAt is provided", async () => {
+    const text = await renderPanelText(
+      [
+        {
+          data: usage(),
+          id: "codex",
+          label: "Codex",
+          stale: false,
+          status: "ready",
+        },
+      ],
+      true,
+      new Date(2026, 5, 25, 14, 32, 0, 0)
+    );
+
+    expect(text).toContain("Updated 14:32");
+  });
+});
+
+describe("CompactStatusLine", () => {
+  const renderStatusLine = async (states: ProviderState[]): Promise<string> => {
+    const setup = await testRender(
+      () => <CompactStatusLine states={states} theme={theme} />,
+      { height: 1, width: 80 }
+    );
+
+    try {
+      await setup.flush();
+      return setup.captureCharFrame();
+    } finally {
+      setup.renderer.destroy();
+    }
+  };
+
+  test("renders single provider with percentage", async () => {
+    const text = await renderStatusLine([
+      {
+        data: usage(),
+        id: "codex",
+        label: "Codex",
+        stale: false,
+        status: "ready",
+      },
+    ]);
+
+    expect(text).toContain("Codex 42%");
+  });
+
+  test("renders multiple providers separated by pipe", async () => {
+    const text = await renderStatusLine([
+      {
+        data: usage({ id: "codex", label: "Codex" }),
+        id: "codex",
+        label: "Codex",
+        stale: false,
+        status: "ready",
+      },
+      {
+        data: usage({
+          id: "zai",
+          label: "ZAI",
+          windows: [
+            usageWindow({
+              quota: percentageQuota(
+                Result.getOrThrow(parseUsagePercentage(75))
+              ),
+            }),
+          ],
+        }),
+        id: "zai",
+        label: "ZAI",
+        stale: false,
+        status: "ready",
+      },
+    ]);
+
+    expect(text).toContain("Codex 42%");
+    expect(text).toContain("ZAI 75%");
+    expect(text).toContain("|");
+  });
+
+  test("renders cached provider with previous data", async () => {
+    const text = await renderStatusLine([
+      {
+        id: "codex",
+        label: "Codex",
+        message: "provider unavailable",
+        previous: usage(),
+        status: "error",
+      },
+    ]);
+
+    expect(text).toContain("Codex 42%");
+  });
+
+  test("renders unknown percentage as question mark", async () => {
+    const text = await renderStatusLine([
+      {
+        data: usage({
+          windows: [usageWindow({ quota: { _tag: "Unknown" } })],
+        }),
+        id: "codex",
+        label: "Codex",
+        stale: false,
+        status: "ready",
+      },
+    ]);
+
+    expect(text).toContain("Codex ?");
+  });
+
+  test("returns null when no active providers", async () => {
+    const text = await renderStatusLine([
+      {
+        id: "codex",
+        label: "Codex",
+        status: "disabled",
+      },
+    ]);
+
+    expect(text).not.toContain("Codex");
+  });
+
+  test("returns null when providers have no windows", async () => {
+    const text = await renderStatusLine([
+      {
+        data: usage({ windows: [] }),
+        id: "codex",
+        label: "Codex",
+        stale: false,
+        status: "ready",
+      },
+    ]);
+
+    expect(text).not.toContain("Codex");
+  });
+});

@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/mynameistito/oc-usage-limits-plugin/main/usage-limits.schema.json",
+  "title": "OpenCode Usage Limits Plugin Config",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "enabled": { "type": "boolean" },
+    "refreshIntervalSeconds": { "type": "number", "minimum": 15 },
+    "requestTimeoutMs": { "type": "number", "minimum": 1000 },
+    "showErrors": { "type": "boolean" },
+    "providers": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "codex": { "$ref": "#/$defs/provider" },
+        "minimax": { "$ref": "#/$defs/provider" },
+        "opencode-go": { "$ref": "#/$defs/provider" },
+        "qwen": { "$ref": "#/$defs/provider" },
+        "synthetic": { "$ref": "#/$defs/provider" },
+        "zai": { "$ref": "#/$defs/provider" }
+      }
+    }
+  },
+  "$defs": {
+    "provider": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "showSidebarBar": { "type": "boolean", "default": true },
+        "showFooterBar": { "type": "boolean", "default": true },
+        "sidebarWindow": {
+          "enum": [
+            "all",
+            "rolling",
+            "daily",
+            "weekly",
+            "monthly",
+            "credits",
+            "other"
+          ],
+          "default": "all"
+        },
+        "footerWindow": {
+          "enum": [
+            "auto",
+            "rolling",
+            "daily",
+            "weekly",
+            "monthly",
+            "credits",
+            "other"
+          ],
+          "default": "auto"
+        },
+        "label": { "type": "string" },
+        "authPath": {
+          "type": "string",
+          "description": "Optional override path to a provider auth file. Omit to use auto-discovery from OpenCode auth and provider defaults."
+        },
+        "apiKey": {
+          "type": "string",
+          "description": "Optional literal API key or {env:NAME} fallback when auth files do not contain a key."
+        },
+        "authorizationScheme": { "enum": ["raw", "bearer"] },
+        "baseUrl": { "type": "string" }
+      }
+    }
+  }
+}
