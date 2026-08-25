@@ -1,5 +1,11 @@
 # @mynameistito/opencode-usage-limits
 
+## 1.0.3
+
+### Patch Changes
+
+- d659387: Document the published package entrypoints and align the npm package description with its supported providers.
+
 ## 1.0.2
 
 ### Patch Changes
