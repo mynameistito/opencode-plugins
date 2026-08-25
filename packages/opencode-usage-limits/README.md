@@ -17,7 +17,7 @@ OpenCode TUI plugin that shows Codex, OpenCode GO, ZAI, Synthetic, MiniMax Token
 
 ## Install
 
-Standard OpenCode uses the stable package from npm's `latest` dist-tag. Install it globally with:
+This package contains the OpenCode v2 TUI plugin and is published from the monorepo `main` branch using npm's `latest` dist-tag. Install it globally with:
 
 ```bash
 opencode plugin @mynameistito/opencode-usage-limits -g
@@ -28,14 +28,6 @@ opencode plugin @mynameistito/opencode-usage-limits -g
 - `--force` replaces an existing pinned version.
 
 The CLI installs the `latest` package and updates the TUI plugin config for you. The package entrypoint is `@mynameistito/opencode-usage-limits/tui`.
-
-OpenCode v2 uses the preview package from npm's `next` dist-tag. Install it globally with OpenCode v2 only:
-
-```bash
-opencode plugin @mynameistito/opencode-usage-limits@latest -g
-```
-
-The v2 package is built and released from the `opencode-v2` branch. It is preview/beta software until validation against the v2 host is complete. Do not use `@next` with standard OpenCode, and do not use the stable package with OpenCode v2.
 
 To configure it manually instead, add the plugin to `~/.config/opencode/tui.json`:
 
@@ -70,20 +62,6 @@ macOS/Linux:
 rm -rf ~/.cache/opencode/packages/@mynameistito/opencode-usage-limits@latest
 ```
 
-For OpenCode v2 (`@next`):
-
-PowerShell:
-
-```powershell
-Remove-Item -LiteralPath "$HOME\.cache\opencode\packages\@mynameistito\opencode-usage-limits@latest" -Recurse -Force
-```
-
-macOS/Linux:
-
-```bash
-rm -rf ~/.cache/opencode/packages/@mynameistito/opencode-usage-limits@latest
-```
-
 Start OpenCode again and it will reinstall the plugin from the existing `tui.json` entry. If the plugin is no longer configured, run the install command again:
 
 ```bash
@@ -93,22 +71,9 @@ opencode plugin @mynameistito/opencode-usage-limits -g
 - **Dependency conflicts involving `@opencode-ai/plugin`** usually mean OpenCode's package cache contains an older plugin API package. Update OpenCode, clear the cached plugin as above, then retry the install. This package does not publish OpenCode runtime packages as peer dependencies.
 - **`No versions available`** right after a release means a supply-chain cooldown policy (e.g. `min-release-age`) is blocking the fresh version. Wait for the cooldown window to pass, or install a previously vetted version instead.
 
-## Release Lanes
+## Releases
 
-- Stable releases come from `main`, use the `latest` npm dist-tag, and are intended for standard OpenCode.
-- OpenCode v2 previews come from `opencode-v2`, use the `next` npm dist-tag, and are intended only for OpenCode v2.
-- The package uses the `@mynameistito/opencode-usage-limits/tui` entrypoint.
-- Releases are staged on npm for manual approval before publication. Stable releases create normal GitHub releases; v2 previews create GitHub prerelease tags/releases.
-- The v2 lane remains preview/beta until the package has been validated against the v2 host.
-
-The v2 branch must carry its own Changesets prerelease metadata. Set it up with:
-
-```bash
-git switch -c opencode-v2 main
-bunx changeset pre enter next
-```
-
-Commit `.changeset/pre.json` and v2 Changesets on that branch before pushing. Do not run prerelease mode on `main` or consume the same pending changeset independently from both release lanes.
+Both packages release from the monorepo `main` branch using normal root Changesets and npm's `latest` dist-tag. The package entrypoint is `@mynameistito/opencode-usage-limits/tui`.
 
 ## Usage Config
 

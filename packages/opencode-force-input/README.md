@@ -2,65 +2,32 @@
 
 OpenCode TUI plugin that interrupts the active run and force-submits the current prompt with `Ctrl+Enter`.
 
-## Release Tracks
+## Install
 
-| Track | Branch | npm tag | OpenCode CLI |
-| --- | --- | --- | --- |
-| Stable | `main` | `latest` | `opencode` |
-| OpenCode v2 beta | `v2` | `beta` | `opencode2` from `@opencode-ai/cli@beta` |
-
-Do not mix the plugin and CLI tracks. The v2 plugin uses the v2 plugin API and is not intended for stable OpenCode.
-
-## Stable OpenCode
-
-Install the stable plugin globally:
+This package contains the OpenCode v2 TUI plugin and is published from the monorepo `main` branch using npm's `latest` dist-tag.
 
 ```powershell
-opencode plugin "@mynameistito/opencode-force-input@latest" -g
+opencode2 plugin add "@mynameistito/opencode-force-input@latest" -g
 ```
 
 OpenCode writes the plugin to `~/.config/opencode/tui.json`. Verify it is installed with:
 
 ```powershell
-opencode plugin list -g
-```
-
-Update or reinstall it with `--force`:
-
-```powershell
-opencode plugin "@mynameistito/opencode-force-input@latest" -g --force
-```
-
-Uninstall it with:
-
-```powershell
-opencode plugin "@mynameistito/opencode-force-input" -g --remove
-```
-
-## OpenCode v2 Beta
-
-Install the beta CLI and beta TUI plugin:
-
-```powershell
-bun add --global @opencode-ai/cli@beta
-opencode2 plugin add "@mynameistito/opencode-force-input@latest" -g
-```
-
-Verify the CLI and plugin:
-
-```powershell
-opencode2 --version
 opencode2 plugin list
 ```
 
-Update or reinstall the beta plugin with `--force`:
+Update or reinstall it by removing and adding the package again:
 
 ```powershell
 opencode2 plugin remove "@mynameistito/opencode-force-input@latest" -g
 opencode2 plugin add "@mynameistito/opencode-force-input@latest" -g
 ```
 
-Switch stable to beta by removing the stable plugin from `opencode.json`, installing the beta CLI, and running the beta `plugin add` command. Switch back by removing the beta plugin and adding the stable package; do not leave both entries in the same `opencode.json`.
+Uninstall it with:
+
+```powershell
+opencode2 plugin remove "@mynameistito/opencode-force-input@latest" -g
+```
 
 To clear a cached package before reinstalling:
 
@@ -78,8 +45,6 @@ The v2 package can also be configured manually in `~/.config/opencode/tui.json`:
 ```
 
 Do not put this package in the server `plugins` list in `opencode.json` or `cli.json`. That loads the package root server entrypoint and will show the plugin under **Server**, not **TUI**. The TUI loader resolves the package's `/tui` export.
-
-For stable OpenCode, use `opencode.json` with `@latest` and the stable `opencode` CLI instead.
 
 ## Behavior
 
