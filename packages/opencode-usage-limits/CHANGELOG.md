@@ -1,5 +1,11 @@
 # @mynameistito/opencode-usage-limits
 
+## 1.0.1
+
+### Patch Changes
+
+- 250012e: Document the explicit `latest` install tag for the usage-limits package.
+
 ## 2.0.0-next.3
 
 ### Patch Changes
