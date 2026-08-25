@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
-import { resolve } from "node:path";
+import path from "node:path";
 
 const packages = new Map([
   ["force-input", "@mynameistito/opencode-force-input"],
@@ -19,11 +19,11 @@ if (!packageName || !type || !types.has(type) || !summary) {
 }
 
 const filename = `${randomBytes(4).toString("hex")}.md`;
-const changesetDirectory = resolve(".changeset");
+const changesetDirectory = path.resolve(".changeset");
 await mkdir(changesetDirectory, { recursive: true });
 await writeFile(
-  resolve(changesetDirectory, filename),
+  path.resolve(changesetDirectory, filename),
   `---\n"${packageName}": ${type}\n---\n\n${summary}\n`,
-  "utf8"
+  "utf-8"
 );
 console.log(`Created .changeset/${filename} for ${packageName}`);

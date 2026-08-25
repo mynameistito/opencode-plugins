@@ -50,12 +50,12 @@ Names that must change everywhere in tracked files:
 Run commands from `C:\Users\mynameistito\code\opencode-plugins` unless a command explicitly names a source directory.
 
 | Purpose | Command | Expected on success |
-|---------|---------|---------------------|
+| --- | --- | --- |
 | Verify source tips | `git -C C:\Users\mynameistito\code\oc-ctrl-enter-force-import rev-parse v2` and `git -C C:\Users\mynameistito\code\oc-usage-limits-plugin rev-parse opencode-v2` | Expected commits `06f1453...` and `26d5723...` |
 | Create repository | `git init -b main` | Exit 0; current branch is `main` |
 | Install workspace | `bun install` | Exit 0 and creates a root `bun.lock` |
 | Root checks | `bun run typecheck`, `bun run check`, `bun test`, `bun run build`, `bun run test:package`, `bun run knip` | Exit 0 for both packages; no missing workspace or stale-name errors |
-| Search old names | `rg -n --hidden --glob '!node_modules/**' --glob '!dist/**' 'oc-ctrl-enter-force-import|oc-usage-limits-plugin' .` | No matches except an explicitly documented migration note, if one is intentionally retained |
+| Search old names | `rg -n --hidden --glob '!node_modules/**' --glob '!dist/**' 'oc-ctrl-enter-force-import | oc-usage-limits-plugin' .` | No matches except an explicitly documented migration note, if one is intentionally retained |
 | Validate Changesets | `bunx changeset status` | Both workspace package names resolve and no malformed frontmatter is reported |
 | Inspect package tarballs | `npm pack --dry-run --workspace packages/opencode-force-input` and the equivalent usage package command | Only intended files are included and names are the new scoped names |
 | Verify remote | `gh repo view mynameistito/opencode-plugins --json nameWithOwner,defaultBranchRef` | Repository exists and default branch is `main` |

@@ -1,6 +1,6 @@
-import { resolve } from "node:path";
+import path from "node:path";
 
-const task = process.argv[2];
+const [task] = process.argv.slice(2);
 const supportedTasks = [
   "build",
   "check",
@@ -12,16 +12,21 @@ const supportedTasks = [
 ] as const;
 
 if (!supportedTasks.includes(task as (typeof supportedTasks)[number])) {
-  console.error(`Usage: bun run scripts/run-workspaces.ts <${supportedTasks.join("|")}>`);
+  console.error(
+    `Usage: bun run scripts/run-workspaces.ts <${supportedTasks.join("|")}>`
+  );
   process.exit(1);
 }
 
-const packages = ["packages/opencode-force-input", "packages/opencode-usage-limits"];
+const packages = [
+  "packages/opencode-force-input",
+  "packages/opencode-usage-limits",
+];
 
 for (const packageDirectory of packages) {
   console.log(`\n==> ${packageDirectory} ${task}`);
   const result = Bun.spawnSync(["bun", "run", task], {
-    cwd: resolve(packageDirectory),
+    cwd: path.resolve(packageDirectory),
     stderr: "inherit",
     stdout: "inherit",
   });
