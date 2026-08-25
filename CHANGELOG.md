@@ -1,5 +1,11 @@
 # @mynameistito/oc-ctrl-enter-force-import
 
+## 1.0.0-beta.3
+
+### Patch Changes
+
+- e008560: Register the force-submit keymap inside the v2 TUI provider lifecycle.
+
 ## 1.0.0-beta.2
 
 ### Patch Changes

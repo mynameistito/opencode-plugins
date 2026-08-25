@@ -1,6 +1,6 @@
 {
   "name": "@mynameistito/oc-ctrl-enter-force-import",
-  "version": "1.0.0-beta.2",
+  "version": "1.0.0-beta.3",
   "description": "OpenCode TUI plugin that interrupts the active run and submits the prompt with Ctrl+Enter.",
   "keywords": [
     "ctrl-enter",
