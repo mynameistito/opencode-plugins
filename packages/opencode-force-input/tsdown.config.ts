@@ -18,7 +18,6 @@ export default defineConfig({
     sourcemap: true,
   },
   entry: {
-    index: "./index.ts",
     tui: "./tui.tsx",
   },
   format: ["esm"],
