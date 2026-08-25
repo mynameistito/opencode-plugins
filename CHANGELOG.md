@@ -1,5 +1,11 @@
 # @mynameistito/oc-ctrl-enter-force-import
 
+## 1.0.0-beta.5
+
+### Patch Changes
+
+- 4083b95: Register force-submit even when the sidebar is hidden.
+
 ## 1.0.0-beta.4
 
 ### Patch Changes
