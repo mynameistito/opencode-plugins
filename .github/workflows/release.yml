@@ -33,6 +33,19 @@ jobs:
           package-manager-cache: false
       - name: Upgrade npm
         run: npm install --global npm@latest
+      - name: Verify npm staged publishing support
+        run: |
+          node --input-type=module <<'EOF'
+          import { execFileSync } from "node:child_process";
+
+          const version = execFileSync("npm", ["--version"], { encoding: "utf8" }).trim();
+          const [major = 0, minor = 0, patch = 0] = version.split(".").map(Number);
+          const supported = major > 11 || (major === 11 && (minor > 15 || (minor === 15 && patch >= 0)));
+
+          if (!supported) {
+            throw new Error(`npm ${version} does not support staged publishing. Use npm >= 11.15.0.`);
+          }
+          EOF
       - name: Install dependencies
         run: bun install --frozen-lockfile
       - name: Verify packages
@@ -41,12 +54,27 @@ jobs:
           bun run check
           bun run build
       - name: Create release pull request or publish
+        id: changesets
         uses: changesets/action@8488615a623b1b9c987934bb89eae8af6a946ac1 # v2.1.1
         with:
           version-script: bunx changeset version
-          publish-script: bunx changeset publish
           pr-title: "chore: release packages"
           commit-message: "chore: release packages"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_CONFIG_PROVENANCE: true
+      - name: Stage packages on npm
+        if: steps.changesets.outputs.has-changesets == 'false'
+        run: |
+          for package_dir in packages/*; do
+            package_name=$(node --print "require('./$package_dir/package.json').name")
+            package_version=$(node --print "require('./$package_dir/package.json').version")
+            package_spec="$package_name@$package_version"
+
+            if npm view "$package_spec" version >/dev/null 2>&1; then
+              echo "$package_spec is already published"
+              continue
+            fi
+
+            echo "Staging $package_spec with npm latest"
+            (cd "$package_dir" && npm stage publish --access public --tag latest --provenance)
+          done
