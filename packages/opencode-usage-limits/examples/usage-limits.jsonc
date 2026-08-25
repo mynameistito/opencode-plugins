@@ -1,0 +1,42 @@
+{
+  "$schema": "https://raw.githubusercontent.com/mynameistito/opencode-plugins/main/packages/opencode-usage-limits/usage-limits.schema.json",
+  "enabled": true,
+  "refreshIntervalSeconds": 60,
+  "requestTimeoutMs": 10000,
+  "showErrors": true,
+  "providers": {
+    "codex": {
+      "enabled": true,
+      "label": "Codex",
+      "showSidebarBar": true,
+      "showFooterBar": true,
+      "sidebarWindow": "all",
+      "footerWindow": "auto",
+    },
+    "zai": {
+      "enabled": true,
+      "label": "ZAI",
+      "apiKey": "{env:OC_ZAI_API_KEY}", // Optional fallback when OpenCode auth has no ZAI key
+      "authorizationScheme": "raw",
+    },
+    "synthetic": {
+      "enabled": true,
+      "label": "Synthetic",
+      "apiKey": "{env:OC_SYNTHETIC_API_KEY}", // Optional fallback when OpenCode auth has no Synthetic key
+    },
+    "minimax": {
+      "enabled": true,
+      "label": "MiniMax",
+      "apiKey": "{env:OC_MINIMAX_TOKEN_PLAN_KEY}", // Optional fallback when OpenCode auth has no MiniMax key
+    },
+    "qwen": {
+      "enabled": false,
+      "label": "Qwen",
+    },
+    "opencode-go": {
+      "enabled": true,
+      "label": "OpenCode GO",
+      "apiKey": "{env:OPENCODE_API_KEY}", // Optional fallback when OpenCode auth has no key
+    },
+  },
+}

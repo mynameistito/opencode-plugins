@@ -1,0 +1,36 @@
+{
+  "name": "opencode-plugins",
+  "private": true,
+  "type": "module",
+  "description": "OpenCode plugins maintained in a Bun workspace.",
+  "packageManager": "bun@1.4.0",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "bun run scripts/run-workspaces.ts build",
+    "check": "bun run scripts/run-workspaces.ts check",
+    "fix": "bun run scripts/run-workspaces.ts fix",
+    "knip": "bun run scripts/run-workspaces.ts knip",
+    "test": "bun run scripts/run-workspaces.ts test",
+    "test:package": "bun run scripts/run-workspaces.ts test:package",
+    "typecheck": "bun run scripts/run-workspaces.ts typecheck",
+    "changeset": "changeset",
+    "changeset-add": "bun run scripts/changeset-add.ts"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^3.0.1",
+    "@opentui/core": "0.5.7",
+    "@opentui/solid": "0.5.7",
+    "@types/bun": "1.4.0",
+    "@types/node": "26.2.0",
+    "@typescript/native": "npm:typescript@^7.0.2",
+    "lefthook": "^2.1.10",
+    "oxfmt": "^0.65.0",
+    "oxlint": "^1.80.0",
+    "solid-js": "1.9.12",
+    "tsdown": "^0.22.14",
+    "typescript": "npm:@typescript/typescript6@^6.0.2",
+    "ultracite": "7.10.6"
+  }
+}
