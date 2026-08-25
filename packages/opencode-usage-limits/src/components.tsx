@@ -1,6 +1,6 @@
 /* @jsxImportSource @opentui/solid */
 import type { RGBA } from "@opentui/core";
-import { createMemo, For, Show } from "solid-js";
+import { createMemo, For } from "solid-js";
 
 import {
   bottomWindowMainText,
@@ -208,73 +208,75 @@ export const UsageLimitsPanel = (props: {
     })
   );
 
-  return (
-    <Show when={visibleStates().length > 0}>
-      <box flexDirection="column">
-        <text fg={colors.text}>
-          <b>Usage Limits</b>
-        </text>
-        <For each={visibleStates()}>
-          {(state) => {
-            let tierName: string | undefined;
-            if (state.status === "ready") {
-              ({ tierName } = state.data);
-            } else if (state.status === "error" && state.previous) {
-              ({ tierName } = state.previous);
-            }
-            const isStale = state.status === "ready" && state.stale;
-            const isCached =
-              state.status === "error" && state.previous !== undefined;
+  if (visibleStates().length === 0) {
+    return null;
+  }
 
-            return (
-              <box flexDirection="column">
-                <text fg={colors.text}>
-                  {state.label}
-                  {tierName ? (
-                    <span style={{ fg: colors.subdued }}>
-                      {" ["}
-                      {tierName}
-                      {"]"}
-                    </span>
-                  ) : null}
-                  {isStale ? (
-                    <span style={{ fg: colors.warning }}> stale</span>
-                  ) : null}
-                  {isCached ? (
-                    <span style={{ fg: colors.warning }}> cached</span>
-                  ) : null}
-                </text>
-                {state.status === "loading" ? (
-                  <text fg={colors.subdued}> loading...</text>
+  return (
+    <box flexDirection="column">
+      <text fg={colors.text}>
+        <b>Usage Limits</b>
+      </text>
+      <For each={visibleStates()}>
+        {(state) => {
+          let tierName: string | undefined;
+          if (state.status === "ready") {
+            ({ tierName } = state.data);
+          } else if (state.status === "error" && state.previous) {
+            ({ tierName } = state.previous);
+          }
+          const isStale = state.status === "ready" && state.stale;
+          const isCached =
+            state.status === "error" && state.previous !== undefined;
+
+          return (
+            <box flexDirection="column">
+              <text fg={colors.text}>
+                {state.label}
+                {tierName ? (
+                  <span style={{ fg: colors.subdued }}>
+                    {" ["}
+                    {tierName}
+                    {"]"}
+                  </span>
                 ) : null}
-                {state.status === "ready" ? (
-                  <UsageWindowRows
-                    showBar={displayConfigFor(state).showSidebarBar}
-                    theme={colors}
-                    windows={filteredWindowsFor(state, state.data.windows)}
-                  />
+                {isStale ? (
+                  <span style={{ fg: colors.warning }}> stale</span>
                 ) : null}
-                {state.status === "error" && state.previous ? (
-                  <UsageWindowRows
-                    showBar={displayConfigFor(state).showSidebarBar}
-                    theme={colors}
-                    windows={filteredWindowsFor(state, state.previous.windows)}
-                  />
+                {isCached ? (
+                  <span style={{ fg: colors.warning }}> cached</span>
                 ) : null}
-                {state.status === "error" && props.showErrors ? (
-                  <text fg={colors.error}> {state.message}</text>
-                ) : null}
-              </box>
-            );
-          }}
-        </For>
-        {props.lastRefreshAt ? (
-          <text fg={colors.subdued}>
-            Updated {formatTimestamp(props.lastRefreshAt)}
-          </text>
-        ) : null}
-      </box>
-    </Show>
+              </text>
+              {state.status === "loading" ? (
+                <text fg={colors.subdued}> loading...</text>
+              ) : null}
+              {state.status === "ready" ? (
+                <UsageWindowRows
+                  showBar={displayConfigFor(state).showSidebarBar}
+                  theme={colors}
+                  windows={filteredWindowsFor(state, state.data.windows)}
+                />
+              ) : null}
+              {state.status === "error" && state.previous ? (
+                <UsageWindowRows
+                  showBar={displayConfigFor(state).showSidebarBar}
+                  theme={colors}
+                  windows={filteredWindowsFor(state, state.previous.windows)}
+                />
+              ) : null}
+              {state.status === "error" && props.showErrors ? (
+                <text fg={colors.error}> {state.message}</text>
+              ) : null}
+            </box>
+          );
+        }}
+      </For>
+      {props.lastRefreshAt ? (
+        <text fg={colors.subdued}>
+          Updated {formatTimestamp(props.lastRefreshAt)}
+        </text>
+      ) : null}
+    </box>
   );
 };
 
@@ -290,29 +292,29 @@ export const BottomUsage = (props: {
   theme: UsageTheme;
 }) => {
   const colors = resolveTheme(props.theme);
+  if (!props.window) {
+    return null;
+  }
+
   return (
-    <Show when={props.window}>
-      {(window) => (
-        <text>
-          {props.showBar ? (
-            <span
-              style={{
-                fg: dotColor(quotaUsedPercent(window().quota), colors),
-              }}
-            >
-              {percentBar(quotaUsedPercent(window().quota), 8)}
-            </span>
-          ) : null}
-          <span style={{ fg: colors.text }}>
-            {" "}
-            {bottomWindowMainText(window())}
-          </span>
-          <span style={{ fg: colors.subdued }}>
-            {windowResetText(window())}
-          </span>
-        </text>
-      )}
-    </Show>
+    <text>
+      {props.showBar ? (
+        <span
+          style={{
+            fg: dotColor(quotaUsedPercent(props.window.quota), colors),
+          }}
+        >
+          {percentBar(quotaUsedPercent(props.window.quota), 8)}
+        </span>
+      ) : null}
+      <span style={{ fg: colors.text }}>
+        {" "}
+        {bottomWindowMainText(props.window)}
+      </span>
+      <span style={{ fg: colors.subdued }}>
+        {windowResetText(props.window)}
+      </span>
+    </text>
   );
 };
 
