@@ -39,11 +39,11 @@ opencode plugin "@mynameistito/oc-ctrl-enter-force-import" -g --remove
 
 ## OpenCode v2 Beta
 
-Install the beta CLI and beta plugin:
+Install the beta CLI and beta TUI plugin:
 
 ```powershell
 bun add --global @opencode-ai/cli@beta
-opencode2 plugin add "@mynameistito/oc-ctrl-enter-force-import@beta"
+opencode2 plugin add "@mynameistito/oc-ctrl-enter-force-import@beta" -g
 ```
 
 Verify the CLI and plugin:
@@ -56,8 +56,8 @@ opencode2 plugin list
 Update or reinstall the beta plugin with `--force`:
 
 ```powershell
-opencode2 plugin remove "@mynameistito/oc-ctrl-enter-force-import@beta"
-opencode2 plugin add "@mynameistito/oc-ctrl-enter-force-import@beta"
+opencode2 plugin remove "@mynameistito/oc-ctrl-enter-force-import@beta" -g
+opencode2 plugin add "@mynameistito/oc-ctrl-enter-force-import@beta" -g
 ```
 
 Switch stable to beta by removing the stable plugin from `opencode.json`, installing the beta CLI, and running the beta `plugin add` command. Switch back by removing the beta plugin and adding the stable package; do not leave both entries in the same `opencode.json`.
@@ -69,20 +69,22 @@ Remove-Item -LiteralPath "$HOME\.cache\opencode\packages\@mynameistito\oc-ctrl-e
 Remove-Item -LiteralPath "$HOME\.cache\opencode\packages\@mynameistito\oc-ctrl-enter-force-import@beta" -Recurse -Force -ErrorAction SilentlyContinue
 ```
 
-The v2 package can also be configured manually in `~/.config/opencode/opencode.json`:
+The v2 package can also be configured manually in `~/.config/opencode/tui.json`:
 
 ```json
 {
   "$schema": "https://opencode.ai/tui.json",
-  "plugins": ["@mynameistito/oc-ctrl-enter-force-import@beta"]
+  "plugin": ["@mynameistito/oc-ctrl-enter-force-import@beta"]
 }
 ```
+
+Do not put this package in the server `plugins` list in `opencode.json` or `cli.json`. That loads the package root server entrypoint and will show the plugin under **Server**, not **TUI**. The TUI loader resolves the package's `/tui` export.
 
 For stable OpenCode, use `opencode.json` with `@latest` and the stable `opencode` CLI instead.
 
 ## Behavior
 
-The plugin registers high-priority v2 keymap commands for `ctrl+return` and `ctrl+enter`. Each command dispatches `session.interrupt` twice, then `prompt.submit`, preserving OpenCode's guarded abort flow.
+The plugin registers high-priority v2 keymap commands for `ctrl+return` and `ctrl+enter`. Each command dispatches `session.interrupt` three times, then `prompt.submit`, preserving OpenCode's guarded abort flow.
 
 Remove `ctrl+return` from `input_newline` in `tui.json` if it is also configured as a newline binding:
 

@@ -1,11 +1,15 @@
 import { describe, expect, test } from "bun:test";
 
-import type { KeymapLayer } from "@opencode-ai/plugin/tui/context";
+import type {
+  Context,
+  KeymapLayer,
+  SlotClaim,
+} from "@opencode-ai/plugin/tui/context";
 
-import { forceSubmit, registerForceSubmitLayer } from "../tui";
+import { forceSubmit, registerForceSubmitLayer, setup } from "../tui";
 
 describe("force submit", () => {
-  test("interrupts twice before submitting", () => {
+  test("interrupts three times before submitting", () => {
     const commands: string[] = [];
 
     forceSubmit((command) => commands.push(command));
@@ -40,5 +44,25 @@ describe("force submit", () => {
       "ctrl+return",
       "ctrl+enter",
     ]);
+  });
+
+  test("mounts registration in the prompt footer", () => {
+    const claims: SlotClaim[] = [];
+    const context = {
+      keymap: {
+        dispatch: () => {},
+        layer: () => {},
+      },
+      ui: {
+        slot: (claim: SlotClaim) => {
+          claims.push(claim);
+          return () => {};
+        },
+      },
+    } as unknown as Context;
+
+    setup(context);
+
+    expect(claims[0]?.append).toBe("prompt.footer.status");
   });
 });
