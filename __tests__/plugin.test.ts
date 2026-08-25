@@ -31,6 +31,7 @@ describe("force submit", () => {
 
     const layer = layers[0]?.();
     const commands = layer?.commands ?? [];
+    expect(layer?.mode).toBe("global");
     expect(layer?.bindings).toEqual([
       "oc-ctrl-enter.force-submit.return",
       "oc-ctrl-enter.force-submit.enter",

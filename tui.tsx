@@ -34,6 +34,7 @@ export const registerForceSubmitLayer = (keymap: ForceSubmitKeymap): void => {
       run: () => forceSubmit((command) => keymap.dispatch(command)),
       title: "Force submit prompt",
     })),
+    mode: "global",
     priority: 1000,
   }));
 };
