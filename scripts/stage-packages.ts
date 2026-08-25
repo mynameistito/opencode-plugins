@@ -1,5 +1,5 @@
-import { readdirSync, readFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
+import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 
 interface PackageManifest {
@@ -35,7 +35,13 @@ for (const directory of readdirSync("packages", { withFileTypes: true })) {
   try {
     execFileSync(
       "npm",
-      ["view", packageSpec, "version", "--prefer-online", "--min-release-age=0"],
+      [
+        "view",
+        packageSpec,
+        "version",
+        "--prefer-online",
+        "--min-release-age=0",
+      ],
       { stdio: "ignore" }
     );
     console.log(`${packageSpec} is already published`);
@@ -44,10 +50,29 @@ for (const directory of readdirSync("packages", { withFileTypes: true })) {
     console.log(`Staging ${packageSpec} with npm latest`);
   }
 
-  execFileSync(
-    "npm",
-    ["stage", "publish", "--access", "public", "--tag", "latest", "--provenance"],
-    { cwd: packageDirectory, stdio: "inherit" }
-  );
+  try {
+    execFileSync(
+      "npm",
+      [
+        "stage",
+        "publish",
+        "--access",
+        "public",
+        "--tag",
+        "latest",
+        "--provenance",
+      ],
+      { cwd: packageDirectory, stdio: "inherit" }
+    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (
+      !message.includes("E409") &&
+      !message.includes("previously published")
+    ) {
+      throw error;
+    }
 
+    console.log(`${packageSpec} is already staged`);
+  }
 }
