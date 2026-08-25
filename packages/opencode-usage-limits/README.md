@@ -42,6 +42,12 @@ OpenCode TUI plugins are configured in `tui.json`, not `opencode.jsonc`.
 
 Restart OpenCode after changing TUI plugin config.
 
+### Published package contents
+
+- `@mynameistito/opencode-usage-limits/tui` is the TUI plugin entrypoint.
+- `@mynameistito/opencode-usage-limits/schema` is the JSON schema for the usage-limits configuration.
+- `examples/usage-limits.jsonc` is an annotated configuration example.
+
 ### Troubleshooting
 
 #### Reinstall or refresh the cached plugin
