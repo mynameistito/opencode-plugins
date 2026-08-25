@@ -44,7 +44,7 @@ The v2 package can also be configured manually in `~/.config/opencode/tui.json`:
 }
 ```
 
-Do not put this package in the server `plugins` list in `opencode.json` or `cli.json`. That loads the package root server entrypoint and will show the plugin under **Server**, not **TUI**. The TUI loader resolves the package's `/tui` export.
+This package only exposes the `/tui` entrypoint. It does not provide a server plugin.
 
 ## Behavior
 
