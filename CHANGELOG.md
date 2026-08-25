@@ -1,5 +1,11 @@
 # @mynameistito/oc-ctrl-enter-force-import
 
+## 1.0.0-beta.2
+
+### Patch Changes
+
+- 5428987: Activate the v2 keymap bindings for the force-submit commands.
+
 ## 1.0.0-beta.1
 
 ### Patch Changes
