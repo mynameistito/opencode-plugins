@@ -65,7 +65,11 @@ for (const directory of readdirSync("packages", { withFileTypes: true })) {
       { cwd: packageDirectory, stdio: "inherit" }
     );
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const details =
+      error && typeof error === "object" && "stderr" in error
+        ? String(error.stderr)
+        : "";
+    const message = `${error instanceof Error ? error.message : String(error)} ${details}`;
     if (
       !message.includes("E409") &&
       !message.includes("previously published")
