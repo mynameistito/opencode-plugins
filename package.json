@@ -27,6 +27,8 @@
     "@types/bun": "1.4.0",
     "@types/node": "26.2.0",
     "@typescript/native": "npm:typescript@^7.0.2",
+    "eslint-plugin-github": "6.1.2",
+    "eslint-plugin-sonarjs": "^4.2.0",
     "lefthook": "^2.1.10",
     "oxfmt": "^0.65.0",
     "oxlint": "^1.80.0",
@@ -40,6 +42,8 @@
     "ignoreDependencies": [
       "@opentui/core",
       "@opentui/solid",
+      "eslint-plugin-github",
+      "eslint-plugin-sonarjs",
       "lefthook",
       "@opencode-ai/cli"
     ]
