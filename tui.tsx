@@ -51,7 +51,7 @@ const ForceSubmitLayer = (props: ForceSubmitLayerProps): null => {
 /** Initializes the OpenCode v2 TUI plugin. */
 export const setup = (context: Context): (() => void) =>
   context.ui.slot({
-    append: "sidebar.content",
+    append: "prompt.footer.status",
     render: () => <ForceSubmitLayer context={context} />,
   });
 
