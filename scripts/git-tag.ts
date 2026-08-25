@@ -23,7 +23,7 @@ const existingTags = new Set(
     encoding: "utf-8",
   })
     .split("\n")
-    .map((line) => line.match(/refs\/tags\/(.+)$/)?.[1])
+    .map((line) => line.match(/refs\/tags\/(?<tag>.+)$/u)?.groups?.tag)
     .filter((tag): tag is string => tag !== undefined && !tag.endsWith("^{}"))
 );
 
