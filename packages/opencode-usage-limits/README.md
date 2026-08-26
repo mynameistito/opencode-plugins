@@ -23,22 +23,22 @@ This package contains the OpenCode v2 TUI plugin and is published from the monor
 opencode plugin @mynameistito/opencode-usage-limits@latest -g
 ```
 
-- `-g` / `--global` installs to `~/.config/opencode/tui.json`.
-- Without `-g`, installs locally to `<project>/.opencode/tui.json` (requires a git worktree).
+- `-g` / `--global` installs to `~/.config/opencode/cli.json`.
+- Without `-g`, installs locally to `<project>/.opencode/cli.json` (requires a git worktree).
 - `--force` replaces an existing pinned version.
 
 The CLI installs the `latest` package and updates the TUI plugin config for you. The package entrypoint is `@mynameistito/opencode-usage-limits/tui`.
 
-To configure it manually instead, add the plugin to `~/.config/opencode/tui.json`:
+To configure it manually instead, add the plugin to `~/.config/opencode/cli.json`:
 
 ```jsonc
 {
-  "$schema": "https://opencode.ai/tui.json",
-  "plugin": ["@mynameistito/opencode-usage-limits"],
+  "$schema": "https://opencode.ai/v2/cli.json",
+  "plugins": ["@mynameistito/opencode-usage-limits"],
 }
 ```
 
-OpenCode TUI plugins are configured in `tui.json`, not `opencode.jsonc`.
+OpenCode CLI/TUI plugins are configured in `cli.json`.
 
 Restart OpenCode after changing TUI plugin config.
 
@@ -52,7 +52,7 @@ Restart OpenCode after changing TUI plugin config.
 
 #### Reinstall or refresh the cached plugin
 
-If the plugin is stale, broken, or needs a clean reinstall, quit OpenCode and remove the cache for the lane you installed. OpenCode caches immutable package versions, so clearing the cache is required when a `tui.json` entry still resolves to an older version.
+If the plugin is stale, broken, or needs a clean reinstall, quit OpenCode and remove the cache for the lane you installed. OpenCode caches immutable package versions, so clearing the cache is required when a `cli.json` entry still resolves to an older version.
 
 For standard OpenCode (`@latest`):
 
@@ -68,7 +68,7 @@ macOS/Linux:
 rm -rf ~/.cache/opencode/packages/@mynameistito/opencode-usage-limits@latest
 ```
 
-Start OpenCode again and it will reinstall the plugin from the existing `tui.json` entry. If the plugin is no longer configured, run the install command again:
+Start OpenCode again and it will reinstall the plugin from the existing `cli.json` entry. If the plugin is no longer configured, run the install command again:
 
 ```bash
 opencode plugin @mynameistito/opencode-usage-limits -g
