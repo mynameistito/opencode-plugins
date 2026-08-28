@@ -80,13 +80,7 @@ const safePublish = (
   dependencies: UsageCoordinatorDependencies,
   snapshot: CoordinatorSnapshot
 ): Effect.Effect<void> =>
-  dependencies
-    .publish(snapshot)
-    .pipe(
-      Effect.catchCause((cause) =>
-        Cause.hasInterruptsOnly(cause) ? Effect.failCause(cause) : Effect.void
-      )
-    );
+  dependencies.publish(snapshot).pipe(Effect.catchDefect(() => Effect.void));
 
 const safeFetchProvider = <ID extends ProviderID>(
   dependencies: UsageCoordinatorDependencies,
@@ -96,16 +90,14 @@ const safeFetchProvider = <ID extends ProviderID>(
   timeoutMs: number
 ): Effect.Effect<ProviderUsage<ID>, ProviderError> =>
   dependencies.fetchProvider(id, provider, auth, timeoutMs).pipe(
-    Effect.catchCause((cause) =>
-      Cause.hasInterruptsOnly(cause)
-        ? Effect.failCause(cause)
-        : Effect.fail(
-            new ProviderTransportError({
-              cause: "unknown",
-              operation: "fetch-usage",
-              providerID: id,
-            })
-          )
+    Effect.catchDefect(() =>
+      Effect.fail(
+        new ProviderTransportError({
+          cause: "unknown",
+          operation: "fetch-usage",
+          providerID: id,
+        })
+      )
     )
   );
 

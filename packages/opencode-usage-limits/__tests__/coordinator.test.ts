@@ -183,7 +183,10 @@ describe("usage coordinator", () => {
       if (loads === 1) {
         throw new Error("config loader failure");
       }
-      return Result.succeed(config);
+      return Result.succeed({
+        ...config,
+        providers: { codex: { enabled: true }, zai: { enabled: false } },
+      });
     });
     const fiber = Effect.runFork(
       Effect.scoped(usageCoordinator(harness.dependencies))
