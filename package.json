@@ -44,8 +44,7 @@
       "eslint-plugin-github",
       "eslint-plugin-sonarjs",
       "lefthook",
-      "@opencode-ai/cli",
-      "wrangler"
+      "@opencode-ai/cli"
     ]
   }
 }

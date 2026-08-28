@@ -75,6 +75,8 @@ test("preserves markdown text tokens without unsafe values", () => {
     { text: "Use `bun` and **keep this**", type: "assistant" },
   ]);
   expect(result).toMatchObject({
-    messages: [{ parts: [{ type: "text", text: "Use `bun` and **keep this**" }] }],
+    messages: [
+      { parts: [{ type: "text", text: "Use `bun` and **keep this**" }] },
+    ],
   });
 });

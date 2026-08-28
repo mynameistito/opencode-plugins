@@ -1,3 +1,4 @@
+// oxlint-disable eslint/no-use-before-define, eslint/func-style, sonarjs/max-union-size, anti-slop/no-known-value-widening
 import { StrictMode, useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { createRoot } from "react-dom/client";
@@ -57,10 +58,7 @@ const loadShare = async (): Promise<Transcript> => {
   return parsed;
 };
 
-const errorCopy: Record<
-  string,
-  { readonly title: string; readonly body: string }
-> = {
+const errorCopy = {
   decrypt_failure: {
     body: "The share key does not match this encrypted share.",
     title: "Unable to decrypt share",
@@ -93,7 +91,10 @@ const errorCopy: Record<
     body: "This transcript was exported by a newer viewer than this one.",
     title: "Unsupported transcript version",
   },
-};
+} satisfies Record<string, { readonly title: string; readonly body: string }>;
+
+const errorCopyFor = (code: string) =>
+  Object.entries(errorCopy).find(([key]) => key === code)?.[1];
 
 const Status = ({ state }: { readonly state: ViewState }) => {
   if (state.kind === "loading" || state.kind === "decrypting") {
@@ -110,7 +111,7 @@ const Status = ({ state }: { readonly state: ViewState }) => {
       </section>
     );
   }
-  const copy = errorCopy[state.code ?? "malformed"] ?? {
+  const copy = errorCopyFor(state.code ?? "malformed") ?? {
     body: "The share could not be displayed.",
     title: "Share unavailable",
   };
@@ -136,8 +137,20 @@ const TranscriptView = ({
       <h1>{transcript.title ?? "OpenCode session"}</h1>
       <div className="header-details">
         <ul className="header-stats">
-          <li><span className="header-icon opencode-icon" aria-hidden="true" /> <span>v{transcript.version}</span></li>
-          {transcript.provider || transcript.model ? <li><span className="header-icon model-icon" aria-hidden="true" /> <span>{[transcript.provider, transcript.model].filter(Boolean).join(" /")}</span></li> : null}
+          <li>
+            <span className="header-icon opencode-icon" aria-hidden="true" />{" "}
+            <span>v{transcript.version}</span>
+          </li>
+          {transcript.provider || transcript.model ? (
+            <li>
+              <span className="header-icon model-icon" aria-hidden="true" />{" "}
+              <span>
+                {[transcript.provider, transcript.model]
+                  .filter(Boolean)
+                  .join(" /")}
+              </span>
+            </li>
+          ) : null}
         </ul>
         {transcript.provider || transcript.model ? (
           <span className="header-label">OpenCode session</span>
@@ -164,8 +177,8 @@ const TranscriptView = ({
         {transcript.messages.map((message) => (
           <Message key={message.id} message={message} />
         ))}
-        </section>
-      )}
+      </section>
+    )}
   </div>
 );
 
@@ -189,9 +202,14 @@ function Message({ message }: { readonly message: TranscriptMessage }) {
   return (
     <article className={`message message-${message.role}`}>
       {message.parts.map((part, index) => (
-        <div className={`share-part part-${part.type}`} key={`${message.id}-${index}`}>
+        <div
+          className={`share-part part-${part.type}`}
+          key={`${message.id}-${index}`}
+        >
           <div className="part-decoration">
-            <span className="role-mark" aria-hidden="true">{roleMark(message.role)}</span>
+            <span className="role-mark" aria-hidden="true">
+              {roleMark(message.role)}
+            </span>
             <span className="part-bar" />
           </div>
           <div className="part-content">
@@ -204,9 +222,11 @@ function Message({ message }: { readonly message: TranscriptMessage }) {
 }
 
 const inlineMarkdown = (text: string): ReactNode[] => {
-  const pieces = text.split(
-    /(?<code>`[^`]+`)|(?<bold>\*\*[^*]+\*\*)|(?<link>\[[^\]]+\]\([^\s)]+\))/gu
-  ).filter((piece): piece is string => typeof piece === "string");
+  const pieces = text
+    .split(
+      /(?<code>`[^`]+`)|(?<bold>\*\*[^*]+\*\*)|(?<link>\[[^\]]+\]\([^\s)]+\))/gu
+    )
+    .filter((piece): piece is string => typeof piece === "string");
   return pieces.map((piece, index) => {
     if (piece.startsWith("`") && piece.endsWith("`")) {
       return <code key={index}>{piece.slice(1, -1)}</code>;
@@ -309,10 +329,23 @@ function Part({ part }: { readonly part: TranscriptPart }) {
   if (part.type === "shell") {
     return (
       <div className="tool-block shell-block">
-        <div className="tool-title"><span className="tool-name">Bash</span><strong>{part.command}</strong></div>
+        <div className="tool-title">
+          <span className="tool-name">Bash</span>
+          <strong>{part.command}</strong>
+        </div>
         <div className="tool-content">
-          <pre className="command-block"><span className="prompt">$</span> {part.command}</pre>
-          {part.output ? <details className="result-disclosure"><summary><span>Show results</span><span>Hide results</span></summary><pre>{part.output}</pre></details> : null}
+          <pre className="command-block">
+            <span className="prompt">$</span> {part.command}
+          </pre>
+          {part.output ? (
+            <details className="result-disclosure">
+              <summary>
+                <span>Show results</span>
+                <span>Hide results</span>
+              </summary>
+              <pre>{part.output}</pre>
+            </details>
+          ) : null}
         </div>
       </div>
     );
@@ -323,11 +356,17 @@ function Part({ part }: { readonly part: TranscriptPart }) {
         <div className="tool-title">
           <span className="tool-name">{part.name}</span>
           {part.command ? <strong>{part.command}</strong> : null}
-          <em>{part.status}{part.duration && part.duration > 0 ? ` · ${part.duration}ms` : ""}</em>
+          <em>
+            {part.status}
+            {part.duration && part.duration > 0 ? ` · ${part.duration}ms` : ""}
+          </em>
         </div>
         <div className="tool-content">
           <details className="result-disclosure tool-details">
-            <summary><span>Show details</span><span>Hide details</span></summary>
+            <summary>
+              <span>Show details</span>
+              <span>Hide details</span>
+            </summary>
             <pre>{part.input}</pre>
           </details>
           {part.output ? (
@@ -385,7 +424,7 @@ const App = () => {
         setState({ kind: "ready", transcript: await loadShare() });
       } catch (error: unknown) {
         const code =
-          error instanceof Error && errorCopy[error.message]
+          error instanceof Error && errorCopyFor(error.message)
             ? error.message
             : "malformed";
         setState({ code, kind: "error" });

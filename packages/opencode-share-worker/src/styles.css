@@ -472,60 +472,267 @@ details:not([open]) > summary::before {
 }
 
 /* Keep the share page aligned with OpenCode's part-by-part viewer layout. */
-.main-content { max-width: none; padding: 0; }
-.share-viewer { display: flex; flex-direction: column; gap: 40px; line-height: 1; padding: 24px; }
-.share-header { display: flex; flex-direction: column; gap: 16px; }
-.share-header h1 { display: -webkit-box; font-size: 44px; font-weight: 500; letter-spacing: -.05em; line-height: 1.2; max-width: 896px; overflow: hidden; }
-.header-details { display: flex; flex-direction: column; gap: 8px; }
-.header-stats { display: flex; flex-wrap: wrap; gap: 8px 14px; list-style: none; margin: 0; max-width: 896px; padding: 0; }
-.header-stats li { align-items: center; display: flex; font-size: 14px; gap: 5px; }
-.header-icon { color: var(--faint); display: inline-block; height: 16px; opacity: .85; width: 16px; }
-.opencode-icon { border: 2px solid currentColor; transform: rotate(45deg) scale(.65); }
-.model-icon { border: 1px solid currentColor; border-radius: 50%; }
-.header-label { display: none; }
-.header-details > time { color: var(--faint); font-size: 14px; }
-.message-list { margin-top: 0; max-width: 896px; }
-.message-list::before, .message + .message { display: none; }
-.message { display: flex; flex-direction: column; gap: 10px; padding: 0; }
-.share-part { display: flex; gap: 10px; }
-.part-decoration { align-items: center; display: flex; flex: 0 0 18px; flex-direction: column; gap: 10px; }
-.part-decoration .role-mark { background: var(--bg); color: var(--muted); flex: 0 0 18px; font-size: 18px; height: 18px; width: 18px; }
-.message-user .role-mark { color: var(--muted); }
-.part-reasoning .role-mark::first-letter { color: var(--blue); }
-.part-file .role-mark { font-size: 15px; }
-.part-tool .role-mark, .part-shell .role-mark { font-size: 14px; }
-.part-bar { background: var(--line); border-radius: 1px; flex: 1; width: 3px; }
-.part-content { display: flex; flex: 1 1 auto; flex-direction: column; gap: 10px; min-width: 0; padding-bottom: 16px; }
-.part-info { display: none; }
-.message-user .rich-text { max-width: 640px; }
-.message-assistant .rich-text { border: 1px solid var(--blue); border-radius: 4px; max-width: 640px; padding: 8px 11px; }
-.rich-text { font-size: 14px; line-height: 1.5; }
-.rich-text p { margin-bottom: 16px; }
-.rich-text p:last-child { margin-bottom: 0; }
-.tool-block, .reasoning, .fallback { border: 0; margin: 0; max-width: 640px; }
-.tool-title { align-items: flex-start; color: var(--muted); display: flex; font-size: 14px; gap: 6px; line-height: 18px; max-width: 640px; }
-.tool-name { letter-spacing: -.03em; text-transform: uppercase; }
-.tool-title strong { color: var(--ink); font-weight: 500; overflow-wrap: anywhere; }
-.tool-title em { color: var(--faint); font-size: 12px; font-style: normal; margin-left: auto; white-space: nowrap; }
-.tool-block summary, .reasoning summary, .fallback summary { color: var(--muted); font-size: 14px; line-height: 18px; min-height: 18px; padding: 0; }
-.tool-block summary::before, .reasoning summary::before, .fallback summary::before { content: ""; display: none; }
-.tool-kind { display: none; }
-.tool-block summary strong { color: var(--ink); font-size: 14px; font-weight: 500; }
-.tool-block summary em { font-size: 12px; }
-.tool-content { border: 0; padding: 0; }
-.tool-content label { display: none; }
-.tool-content pre { max-width: 448px; }
-.command-block { border: 1px solid var(--line); }
-.result-disclosure { border: 0; margin: 4px 0 0; }
-.result-disclosure summary { color: var(--muted); font-size: 12px; }
-.tool-details { margin: 0; }
-.tool-details summary { color: var(--faint); font-size: 11px; }
-.file-part { border: 0; margin: 0; padding: 0; }
-.reasoning .rich-text { background: var(--surface); border: 1px solid var(--blue); border-radius: 4px; font-size: 12px; margin-top: 6px; padding: 8px 11px; }
-.fallback pre { margin-top: 7px; }
+.main-content {
+  max-width: none;
+  padding: 0;
+}
+.share-viewer {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  line-height: 1;
+  padding: 24px;
+}
+.share-header {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.share-header h1 {
+  display: -webkit-box;
+  font-size: 44px;
+  font-weight: 500;
+  letter-spacing: -0.05em;
+  line-height: 1.2;
+  max-width: 896px;
+  overflow: hidden;
+}
+.header-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.header-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  list-style: none;
+  margin: 0;
+  max-width: 896px;
+  padding: 0;
+}
+.header-stats li {
+  align-items: center;
+  display: flex;
+  font-size: 14px;
+  gap: 5px;
+}
+.header-icon {
+  color: var(--faint);
+  display: inline-block;
+  height: 16px;
+  opacity: 0.85;
+  width: 16px;
+}
+.opencode-icon {
+  border: 2px solid currentColor;
+  transform: rotate(45deg) scale(0.65);
+}
+.model-icon {
+  border: 1px solid currentColor;
+  border-radius: 50%;
+}
+.header-label {
+  display: none;
+}
+.header-details > time {
+  color: var(--faint);
+  font-size: 14px;
+}
+.message-list {
+  margin-top: 0;
+  max-width: 896px;
+}
+.message-list::before,
+.message + .message {
+  display: none;
+}
+.message {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0;
+}
+.share-part {
+  display: flex;
+  gap: 10px;
+}
+.part-decoration {
+  align-items: center;
+  display: flex;
+  flex: 0 0 18px;
+  flex-direction: column;
+  gap: 10px;
+}
+.part-decoration .role-mark {
+  background: var(--bg);
+  color: var(--muted);
+  flex: 0 0 18px;
+  font-size: 18px;
+  height: 18px;
+  width: 18px;
+}
+.message-user .role-mark {
+  color: var(--muted);
+}
+.part-reasoning .role-mark::first-letter {
+  color: var(--blue);
+}
+.part-file .role-mark {
+  font-size: 15px;
+}
+.part-tool .role-mark,
+.part-shell .role-mark {
+  font-size: 14px;
+}
+.part-bar {
+  background: var(--line);
+  border-radius: 1px;
+  flex: 1;
+  width: 3px;
+}
+.part-content {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  padding-bottom: 16px;
+}
+.part-info {
+  display: none;
+}
+.message-user .rich-text {
+  max-width: 640px;
+}
+.message-assistant .rich-text {
+  border: 1px solid var(--blue);
+  border-radius: 4px;
+  max-width: 640px;
+  padding: 8px 11px;
+}
+.rich-text {
+  font-size: 14px;
+  line-height: 1.5;
+}
+.rich-text p {
+  margin-bottom: 16px;
+}
+.rich-text p:last-child {
+  margin-bottom: 0;
+}
+.tool-block,
+.reasoning,
+.fallback {
+  border: 0;
+  margin: 0;
+  max-width: 640px;
+}
+.tool-title {
+  align-items: flex-start;
+  color: var(--muted);
+  display: flex;
+  font-size: 14px;
+  gap: 6px;
+  line-height: 18px;
+  max-width: 640px;
+}
+.tool-name {
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+}
+.tool-title strong {
+  color: var(--ink);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.tool-title em {
+  color: var(--faint);
+  font-size: 12px;
+  font-style: normal;
+  margin-left: auto;
+  white-space: nowrap;
+}
+.tool-block summary,
+.reasoning summary,
+.fallback summary {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 18px;
+  min-height: 18px;
+  padding: 0;
+}
+.tool-block summary::before,
+.reasoning summary::before,
+.fallback summary::before {
+  content: "";
+  display: none;
+}
+.tool-kind {
+  display: none;
+}
+.tool-block summary strong {
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 500;
+}
+.tool-block summary em {
+  font-size: 12px;
+}
+.tool-content {
+  border: 0;
+  padding: 0;
+}
+.tool-content label {
+  display: none;
+}
+.tool-content pre {
+  max-width: 448px;
+}
+.command-block {
+  border: 1px solid var(--line);
+}
+.result-disclosure {
+  border: 0;
+  margin: 4px 0 0;
+}
+.result-disclosure summary {
+  color: var(--muted);
+  font-size: 12px;
+}
+.tool-details {
+  margin: 0;
+}
+.tool-details summary {
+  color: var(--faint);
+  font-size: 11px;
+}
+.file-part {
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+.reasoning .rich-text {
+  background: var(--surface);
+  border: 1px solid var(--blue);
+  border-radius: 4px;
+  font-size: 12px;
+  margin-top: 6px;
+  padding: 8px 11px;
+}
+.fallback pre {
+  margin-top: 7px;
+}
 
 @media (max-width: 640px) {
-  .main-content { padding: 0; }
-  .share-viewer { gap: 32px; padding: 16px; }
-  .share-header h1 { font-size: 28px; }
+  .main-content {
+    padding: 0;
+  }
+  .share-viewer {
+    gap: 32px;
+    padding: 16px;
+  }
+  .share-header h1 {
+    font-size: 28px;
+  }
 }

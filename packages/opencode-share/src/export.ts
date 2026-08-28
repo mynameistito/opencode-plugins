@@ -20,14 +20,6 @@ const sanitizeValue = (value: unknown): unknown => {
   return result;
 };
 
-/** Versioned plaintext format written by the share plugin. */
-export interface SessionExportEnvelope {
-  readonly version: 2;
-  readonly kind: "opencode-session";
-  readonly exportedAt: number;
-  readonly messages: readonly SessionMessageInfo[];
-}
-
 /** Serialize the installed beta's typed session messages for local encryption. */
 export const serializeSession = (
   messages: readonly SessionMessageInfo[],

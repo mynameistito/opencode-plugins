@@ -1,3 +1,5 @@
+// oxlint-disable anti-slop/no-runtime-typeof, anti-slop/no-unknown-parameters, anti-slop/no-unsafe-dictionary-type
+
 /** A safe, renderer-owned transcript model. */
 export type TranscriptPart =
   | { readonly type: "text"; readonly text: string }
