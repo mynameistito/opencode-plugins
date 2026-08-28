@@ -41,11 +41,11 @@
   "knip": {
     "ignoreDependencies": [
       "@opentui/core",
-      "@opentui/solid",
       "eslint-plugin-github",
       "eslint-plugin-sonarjs",
       "lefthook",
-      "@opencode-ai/cli"
+      "@opencode-ai/cli",
+      "wrangler"
     ]
   }
 }

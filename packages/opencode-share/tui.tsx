@@ -11,6 +11,8 @@ import { shareUrl } from "./src/url.ts";
 
 const PLUGIN_ID = "mynameistito.opencode-share";
 const COMMAND_ID = "opencode-share.create";
+const MAX_WORKER_REQUEST_BYTES = 5_242_880;
+const UPLOAD_TIMEOUT_MS = 30_000;
 interface SessionSlot {
   readonly sessionID?: string;
 }
@@ -48,21 +50,30 @@ const runShare = async (context: Context, sessionID: string): Promise<void> => {
     return showError(context, "Session export exceeds maxPayloadBytes.");
   }
   const encrypted = await encrypt(plaintext);
-  const response = await fetch(
-    `${config.endpoint.replace(/\/$/u, "")}/api/shares`,
-    {
-      body: JSON.stringify({
-        expiresAt,
-        id: crypto.randomUUID(),
-        payload: encrypted.payload,
-      }),
+  const body = JSON.stringify({
+    expiresAt,
+    id: crypto.randomUUID(),
+    payload: encrypted.payload,
+  });
+  if (new TextEncoder().encode(body).byteLength > MAX_WORKER_REQUEST_BYTES) {
+    return showError(context, "Session export exceeds Worker request limit.");
+  }
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), UPLOAD_TIMEOUT_MS);
+  let response: Response;
+  try {
+    response = await fetch(`${config.endpoint}/api/shares`, {
+      body,
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
       method: "POST",
-    }
-  );
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
   if (!response.ok) {
     return showError(context, "Worker upload failed.");
   }

@@ -17,11 +17,23 @@ export interface ShareConfig {
   readonly maxPayloadBytes: number;
 }
 
+const resolveEndpoint = (value: unknown): string => {
+  if (typeof value !== "string" || value.length === 0) {
+    return "";
+  }
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" ? url.origin : "";
+  } catch {
+    return "";
+  }
+};
+
 /** Resolve and constrain plugin options without reading secrets. */
 export const resolveConfig = (options: ShareOptions): ShareConfig => ({
   defaultExpiry:
     typeof options.defaultExpiry === "string" ? options.defaultExpiry : "7d",
-  endpoint: typeof options.endpoint === "string" ? options.endpoint : "",
+  endpoint: resolveEndpoint(options.endpoint),
   maxPayloadBytes:
     typeof options.maxPayloadBytes === "number" &&
     Number.isSafeInteger(options.maxPayloadBytes) &&

@@ -9,6 +9,7 @@ interface Env {
   readonly SHARE_ADMIN_TOKEN?: string;
   readonly ALLOWED_ORIGIN?: string;
   readonly RATE_LIMIT_PER_MINUTE?: string;
+  readonly RATE_LIMITER: RateLimit;
 }
 const json = (body: JsonValue, status = 200, origin = ""): Response =>
   Response.json(body, {
@@ -26,15 +27,11 @@ const headers = (origin: string): HeadersInit => ({
   "Access-Control-Allow-Methods": "GET,POST,DELETE,OPTIONS",
   "Access-Control-Allow-Origin": origin,
   "Content-Security-Policy":
-    "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'",
+    "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'",
   "Referrer-Policy": "no-referrer",
   "X-Content-Type-Options": "nosniff",
   "X-Frame-Options": "DENY",
 });
-const counts = new Map<
-  string,
-  { readonly start: number; readonly count: number }
->();
 const isValidationError = (
   value: ReturnType<typeof parseCreateInput>
 ): value is Exclude<ReturnType<typeof parseCreateInput>, object> => {
@@ -68,22 +65,15 @@ const createShare = async (
   env: Env,
   origin: string
 ): Promise<Response> => {
-  if (!authorized(request, env.SHARE_INGEST_TOKEN)) {
+  if (!(await authorized(request, env.SHARE_INGEST_TOKEN))) {
     return error("unauthorized", 401, origin);
   }
   const ip = request.headers.get("CF-Connecting-IP") ?? "unknown";
   const now = Date.now();
-  const current = counts.get(ip);
-  const limit = Number(env.RATE_LIMIT_PER_MINUTE ?? 20);
-  if (current && now - current.start < 60_000 && current.count >= limit) {
+  const limited = await env.RATE_LIMITER.limit({ key: ip });
+  if (!limited.success) {
     return error("rate_limited", 429, origin);
   }
-  counts.set(
-    ip,
-    current && now - current.start < 60_000
-      ? { count: current.count + 1, start: current.start }
-      : { count: 1, start: now }
-  );
   if (
     request.headers.get("Content-Type")?.split(";")[0] !== "application/json"
   ) {
@@ -107,11 +97,16 @@ const createShare = async (
   await env.SHARES.put(objectKey, JSON.stringify(parsed.payload), {
     httpMetadata: { contentType: "application/json" },
   });
-  await env.DB.prepare(
-    "INSERT INTO shares (id, object_key, expires_at, created_at, state) VALUES (?, ?, ?, ?, 'active')"
-  )
-    .bind(parsed.id, objectKey, parsed.expiresAt, now)
-    .run();
+  try {
+    await env.DB.prepare(
+      "INSERT INTO shares (id, object_key, expires_at, created_at, state) VALUES (?, ?, ?, ?, 'active')"
+    )
+      .bind(parsed.id, objectKey, parsed.expiresAt, now)
+      .run();
+  } catch (dbError) {
+    await env.SHARES.delete(objectKey);
+    throw dbError;
+  }
   return json({ expiresAt: parsed.expiresAt, id: parsed.id }, 201, origin);
 };
 
@@ -175,7 +170,7 @@ export default {
       url.pathname
     );
     if (url.pathname === "/s/" || url.pathname.startsWith("/s/")) {
-      return viewer();
+      return viewer(origin);
     }
     if (url.pathname === "/api/shares" && request.method === "POST") {
       return createShare(request, env, origin);
@@ -190,7 +185,7 @@ export default {
   },
   async scheduled(_event: ScheduledController, env: Env): Promise<void> {
     const expired = await env.DB.prepare(
-      "SELECT id, object_key FROM shares WHERE state = 'active' AND expires_at <= ?"
+      "SELECT id, object_key FROM shares WHERE state = 'active' AND expires_at <= ? LIMIT 100"
     )
       .bind(Date.now())
       .all<{ id: string; object_key: string }>();

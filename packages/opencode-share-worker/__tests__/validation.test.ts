@@ -17,10 +17,10 @@ test("rejects oversized and expired requests", () => {
   );
   expect(parseCreateInput(input, 0, 10)).toBe("payload_too_large");
 });
-test("checks bearer authorization", () => {
+test("checks bearer authorization", async () => {
   const request = new Request("https://host", {
     headers: { Authorization: "Bearer secret" },
   });
-  expect(authorized(request, "secret")).toBe(true);
-  expect(authorized(request, "other")).toBe(false);
+  expect(await authorized(request, "secret")).toBe(true);
+  expect(await authorized(request, "other")).toBe(false);
 });

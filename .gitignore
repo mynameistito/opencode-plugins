@@ -4,3 +4,5 @@ dist/
 .DS_Store
 *.tsbuildinfo
 packages/opencode-share-worker/.wrangler/
+packages/opencode-share-worker/.dev.vars
+packages/opencode-share-worker/wrangler.local.jsonc

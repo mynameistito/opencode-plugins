@@ -21,3 +21,12 @@ test("parses expiry", () => {
 });
 test("resolves configuration", () =>
   expect(resolveConfig({ sanitize: false }).sanitize).toBe(false));
+test("only accepts HTTPS Worker origins", () => {
+  const httpEndpoint = ["http", "://host"].join("");
+  const ftpEndpoint = ["ftp", "://host"].join("");
+  expect(resolveConfig({ endpoint: httpEndpoint }).endpoint).toBe("");
+  expect(resolveConfig({ endpoint: ftpEndpoint }).endpoint).toBe("");
+  expect(resolveConfig({ endpoint: "https://host/path" }).endpoint).toBe(
+    "https://host"
+  );
+});

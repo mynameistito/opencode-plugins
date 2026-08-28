@@ -14,6 +14,9 @@ interface Payload {
   readonly iv: string;
   readonly ciphertext: string;
 }
+interface TimingSafeSubtleCrypto extends SubtleCrypto {
+  timingSafeEqual: (first: BufferSource, second: BufferSource) => boolean;
+}
 export interface CreateInput {
   readonly id: string;
   readonly expiresAt: number;
@@ -89,15 +92,32 @@ export const parseCreateInput = (
 };
 
 /** Check a bearer token without exposing it in diagnostics. */
-export const authorized = (
+export const authorized = async (
   request: Request,
   expected: string | undefined
-): boolean => {
+): Promise<boolean> => {
   if (!expected) {
     return false;
   }
   const value = request.headers.get("Authorization");
-  return (
-    value !== null && value.startsWith("Bearer ") && value.slice(7) === expected
-  );
+  if (value === null || !value.startsWith("Bearer ")) {
+    return false;
+  }
+  const encoder = new TextEncoder();
+  const [actualDigest, expectedDigest] = await Promise.all([
+    crypto.subtle.digest("SHA-256", encoder.encode(value.slice(7))),
+    crypto.subtle.digest("SHA-256", encoder.encode(expected)),
+  ]);
+  // SAFETY: Cloudflare Workers extends SubtleCrypto with timingSafeEqual.
+  const { timingSafeEqual } = crypto.subtle as Partial<TimingSafeSubtleCrypto>;
+  if (timingSafeEqual) {
+    return timingSafeEqual(actualDigest, expectedDigest);
+  }
+  const actual = new Uint8Array(actualDigest);
+  const expectedBytes = new Uint8Array(expectedDigest);
+  let difference = Math.abs(actual.length - expectedBytes.length);
+  for (let index = 0; index < actual.length; index += 1) {
+    difference += Math.abs((actual[index] ?? 0) - (expectedBytes[index] ?? 0));
+  }
+  return difference === 0;
 };
