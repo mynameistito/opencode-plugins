@@ -22,17 +22,17 @@ Shows provider usage limits in the sidebar and prompt footer.
 
 Supported providers:
 
-- Codex
-- OpenCode GO
-- MiniMax Token Plan
-- Synthetic
-- Qwen
-- ZAI Coding Plan
+- [ChatGPT](https://chatgpt.com/)
+- [OpenCode GO](https://opencode.ai/go)
+- [MiniMax Token Plan](https://www.minimax.ai/)
+- [Synthetic](https://synthetic.ai/)
+- [Qwen](https://qwen.ai/)
+- [ZAI Coding Plan](https://zai.ai/)
 
 Install it with:
 
 ```bash
-opencode plugin @mynameistito/opencode-usage-limits@latest -g
+opencode2 plugin add @mynameistito/opencode-usage-limits@latest -g
 ```
 
 See the [usage-limits README](packages/opencode-usage-limits/README.md) for provider credentials, configuration, and troubleshooting.
