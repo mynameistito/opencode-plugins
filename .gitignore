@@ -3,3 +3,4 @@ dist/
 *.log
 .DS_Store
 *.tsbuildinfo
+packages/opencode-share-worker/.wrangler/

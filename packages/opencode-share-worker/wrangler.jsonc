@@ -2,7 +2,7 @@
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "opencode-share",
   "main": "src/index.ts",
-  "compatibility_date": "2026-08-28",
+  "compatibility_date": "2026-08-27",
   "r2_buckets": [
     { "binding": "SHARES", "bucket_name": "replace-with-r2-bucket-name" },
   ],
