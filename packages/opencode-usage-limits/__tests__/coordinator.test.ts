@@ -139,4 +139,65 @@ describe("usage coordinator", () => {
     expect(harness.snapshots[0]).toEqual(["loading"]);
     await Effect.runPromise(Fiber.interrupt(fiber));
   });
+
+  test("keeps refreshing after an unexpected provider defect", async () => {
+    let attempts = 0;
+    const harness = dependencies(
+      () => {
+        attempts += 1;
+        return attempts === 1
+          ? Effect.sync(() => {
+              throw new Error("unexpected provider failure");
+            })
+          : Effect.succeed(usage("codex"));
+      },
+      {
+        ...config,
+        providers: { codex: { enabled: true }, zai: { enabled: false } },
+      }
+    );
+    const fiber = Effect.runFork(
+      Effect.scoped(usageCoordinator(harness.dependencies))
+    );
+
+    await Bun.sleep(0);
+    expect(harness.snapshots[1]).toEqual(["error"]);
+    const [firstSleep] = harness.sleeps;
+    if (!firstSleep) {
+      throw new Error("first refresh did not schedule a sleep");
+    }
+    await Effect.runPromise(Deferred.succeed(firstSleep, true));
+    await Bun.sleep(0);
+    expect(harness.snapshots.at(-1)).toEqual(["ready"]);
+    await Effect.runPromise(Fiber.interrupt(fiber));
+  });
+
+  test("keeps refreshing when a runtime loader defects", async () => {
+    let loads = 0;
+    const harness = dependencies((id) => Effect.succeed(usage(id)), {
+      ...config,
+      providers: { codex: { enabled: true }, zai: { enabled: false } },
+    });
+    harness.dependencies.loadConfig = Effect.sync(() => {
+      loads += 1;
+      if (loads === 1) {
+        throw new Error("config loader failure");
+      }
+      return Result.succeed(config);
+    });
+    const fiber = Effect.runFork(
+      Effect.scoped(usageCoordinator(harness.dependencies))
+    );
+
+    await Bun.sleep(0);
+    expect(harness.snapshots.at(-1)).toEqual([]);
+    const [firstSleep] = harness.sleeps;
+    if (!firstSleep) {
+      throw new Error("first refresh did not schedule a sleep");
+    }
+    await Effect.runPromise(Deferred.succeed(firstSleep, true));
+    await Bun.sleep(0);
+    expect(harness.snapshots.at(-1)).toEqual(["ready"]);
+    await Effect.runPromise(Fiber.interrupt(fiber));
+  });
 });
