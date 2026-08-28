@@ -1,6 +1,3 @@
-// oxlint-disable anti-slop/no-runtime-typeof, anti-slop/no-unknown-parameters, anti-slop/no-unsafe-dictionary-type, eslint(complexity), eslint(curly), eslint(prefer-destructuring), sonarjs(no-collapsible-if), sonarjs(no-nested-conditional), unicorn(no-lonely-if), eslint(no-use-before-define)
-// oxlint-disable complexity, curly, prefer-destructuring, no-collapsible-if, no-nested-conditional, no-lonely-if
-// oxlint-disable eslint/complexity, eslint/curly, eslint/prefer-destructuring, sonarjs/no-collapsible-if, sonarjs/no-nested-conditional, unicorn/no-lonely-if, eslint/no-nested-ternary
 /** A safe, renderer-owned transcript model. */
 export type TranscriptPart =
   | { readonly type: "text"; readonly text: string }
@@ -11,6 +8,13 @@ export type TranscriptPart =
       readonly input: string;
       readonly output: string;
       readonly status: string;
+      readonly duration?: number;
+      readonly command?: string;
+    }
+  | {
+      readonly type: "shell";
+      readonly command: string;
+      readonly output: string;
     }
   | { readonly type: "file"; readonly name: string; readonly detail: string }
   | {
@@ -67,17 +71,25 @@ const normalizePart = (value: unknown): TranscriptPart => {
   ) {
     return { text: value.text, type };
   }
-  if (type === "tool") {
+  if (type === "tool" || type === "tool-call" || type === "tool-result") {
     const state = isRecord(value.state) ? value.state : undefined;
+    const time = isRecord(state?.time) ? state.time : undefined;
+    const input = state?.input ?? value.input ?? "";
+    const command = isRecord(input) ? stringValue(input, "command") : undefined;
+    const start = time ? numberValue(time, "start") : undefined;
+    const end = time ? numberValue(time, "end") : undefined;
     return {
-      input: jsonText(state?.input ?? ""),
+      command,
+      duration:
+        start !== undefined && end !== undefined ? end - start : undefined,
+      input: jsonText(input),
       name: stringValue(value, "name") ?? stringValue(value, "tool") ?? "tool",
       output:
         typeof state?.output === "string"
           ? state.output
-          : typeof state?.error === "string"
+          : (typeof state?.error === "string"
             ? state.error
-            : "",
+            : ""),
       status: stringValue(state ?? {}, "status") ?? "unknown",
       type: "tool",
     };
@@ -112,9 +124,9 @@ const normalizeMessage = (
   }
   if (type === "shell") {
     parts.push({
-      detail: stringValue(value, "output") ?? "",
-      label: stringValue(value, "command") ?? "shell",
-      type: "fallback",
+      command: stringValue(value, "command") ?? "shell",
+      output: stringValue(value, "output") ?? "",
+      type: "shell",
     });
   }
   if (type === "system" || type === "synthetic" || type === "skill") {
@@ -136,10 +148,19 @@ const normalizeMessage = (
     id: stringValue(value, "id") ?? `message-${index + 1}`,
     model,
     parts,
-    role:
-      type === "assistant" || type === "user" || type === "system"
+    role: [
+      "assistant",
+      "compaction",
+      "retry",
+      "system",
+      "tool-call",
+      "tool-result",
+      "user",
+    ].includes(type)
+      ? type
+      : (type === "reasoning" || type === "shell" || type === "file"
         ? type
-        : "other",
+        : "other"),
     timestamp: isRecord(value.time)
       ? numberValue(value.time, "created")
       : undefined,

@@ -1,6 +1,3 @@
-// oxlint-disable anti-slop/no-runtime-typeof, anti-slop/no-unknown-parameters, anti-slop/no-unknown-returns, anti-slop/no-unsafe-dictionary-type, anti-slop/no-known-value-widening, anti-slop/require-safety-comment-for-type-assertion, eslint(func-style), eslint(no-use-before-define), eslint(no-nested-ternary), github(no-then), promise(prefer-await-to-then), promise(prefer-await-to-callbacks), sonarjs(max-union-size), sonarjs(no-nested-conditional), unicorn(prefer-code-point), eslint(prefer-named-capture-group)
-// oxlint-disable func-style, no-use-before-define, no-nested-ternary, no-then, prefer-await-to-callbacks, prefer-await-to-then, max-union-size, no-nested-conditional, prefer-code-point, prefer-named-capture-group
-// oxlint-disable sonarjs/max-union-size, github/no-then, sonarjs/no-nested-conditional
 import { StrictMode, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 
@@ -18,17 +15,16 @@ interface ViewState {
   readonly kind: "loading" | "decrypting" | "ready" | "error";
   readonly transcript?: Transcript;
   readonly code?: string;
-  readonly title?: string;
 }
 
 const shareId = (): string => {
-  const match = /^\/s\/([A-Za-z0-9_-]{20,96})\/?$/u.exec(
+  const match = /^\/s\/(?<id>[A-Za-z0-9_-]{20,96})\/?$/u.exec(
     window.location.pathname
   );
-  if (!match?.[1]) {
+  if (!match?.groups?.id) {
     throw new Error("not_found");
   }
-  return match[1];
+  return match.groups.id;
 };
 
 const loadShare = async (): Promise<Transcript> => {
@@ -48,8 +44,9 @@ const loadShare = async (): Promise<Transcript> => {
   if (!response.ok) {
     throw new Error("network");
   }
-  const payload: unknown = await response.json();
-  const parsed = parseTranscript(await decryptPayload(key, payload));
+  const parsed = parseTranscript(
+    await decryptPayload(key, await response.json())
+  );
   if (parsed === "unsupported") {
     throw new Error("unsupported");
   }
@@ -89,7 +86,7 @@ const errorCopy: Record<
   },
   not_found: {
     body: "This share may be expired, deleted, or unavailable.",
-    title: "Share not found",
+    title: "Share unavailable",
   },
   unsupported: {
     body: "This transcript was exported by a newer viewer than this one.",
@@ -97,70 +94,20 @@ const errorCopy: Record<
   },
 };
 
-function App() {
-  const [state, setState] = useState<ViewState>({ kind: "loading" });
-  const [dark, setDark] = useState(
-    () => window.matchMedia("(prefers-color-scheme: dark)").matches
-  );
-  useEffect(() => {
-    document.documentElement.dataset.theme = dark ? "dark" : "light";
-  }, [dark]);
-  useEffect(() => {
-    setState({ kind: "decrypting" });
-    loadShare()
-      .then((transcript) => setState({ kind: "ready", transcript }))
-      .catch((error: unknown) => {
-        const code =
-          error instanceof Error && errorCopy[error.message]
-            ? error.message
-            : "malformed";
-        setState({ code, kind: "error", title: errorCopy[code]?.title });
-      });
-  }, []);
-  return (
-    <div className="app-shell">
-      <header className="topbar">
-        <a className="wordmark" href="/s/">
-          oc<span>/</span>share
-        </a>
-        <div className="topbar-actions">
-          <span className="privacy-label">decrypted locally</span>
-          <button
-            className="theme-button"
-            type="button"
-            onClick={() => setDark((value) => !value)}
-            aria-label="Toggle color theme"
-          >
-            {dark ? "light" : "dark"}
-          </button>
-        </div>
-      </header>
-      <main className="main-content">
-        {state.kind === "ready" && state.transcript ? (
-          <TranscriptView transcript={state.transcript} />
-        ) : (
-          <Status state={state} />
-        )}
-      </main>
-    </div>
-  );
-}
-
-function Status({ state }: { readonly state: ViewState }) {
-  if (state.kind === "loading" || state.kind === "decrypting") {
-    return (
+const Status = ({ state }: { readonly state: ViewState }) => {
+  if (state.kind === "loading" || state.kind === "decrypting")
+    {return (
       <section className="status-panel" aria-live="polite">
-        <div className="skeleton-line" />
-        <div className="skeleton-line short" />
-        <p>
+        <p className="terminal-line">
+          <span className="prompt">$</span>{" "}
           {state.kind === "loading"
-            ? "Loading encrypted share"
-            : "Decrypting in this browser"}
+            ? "loading encrypted share"
+            : "decrypting locally"}
           <span className="cursor">_</span>
         </p>
+        <p className="status-muted">No plaintext or key leaves this browser.</p>
       </section>
-    );
-  }
+    );}
   const copy = errorCopy[state.code ?? "malformed"] ?? {
     body: "The share could not be displayed.",
     title: "Share unavailable",
@@ -168,17 +115,21 @@ function Status({ state }: { readonly state: ViewState }) {
   return (
     <section className="status-panel error-panel" role="alert">
       <p className="eyebrow">share unavailable</p>
-      <h1>{state.title ?? copy.title}</h1>
+      <h1>{copy.title}</h1>
       <p>{copy.body}</p>
       <p className="privacy-note">
         No key or plaintext was sent to the server.
       </p>
     </section>
   );
-}
+};
 
-function TranscriptView({ transcript }: { readonly transcript: Transcript }) {
-  return (
+const TranscriptView = ({
+  transcript,
+}: {
+  readonly transcript: Transcript;
+}) => 
+  (
     <>
       <section className="transcript-heading">
         <div>
@@ -192,7 +143,7 @@ function TranscriptView({ transcript }: { readonly transcript: Transcript }) {
       </section>
       {transcript.messages.length === 0 ? (
         <section className="empty-state">
-          This session contains no messages.
+          $ session contains no messages<span className="cursor">_</span>
         </section>
       ) : (
         <section className="message-list" aria-label="OpenCode transcript">
@@ -202,24 +153,25 @@ function TranscriptView({ transcript }: { readonly transcript: Transcript }) {
         </section>
       )}
     </>
-  );
-}
+  )
+;
 
-function Message({ message }: { readonly message: TranscriptMessage }) {
-  const { role } = message;
+const roleMark = (role: string): string => {
+  if (role === "user") {return ">";}
+  if (role === "assistant") {return "◆";}
+  if (role === "system") {return "!";}
+  return "·";
+};
+
+const Message = ({ message }: { readonly message: TranscriptMessage }) => {
+  const label = message.role === "other" ? "unknown" : message.role;
   return (
-    <article className={`message message-${role}`}>
+    <article className={`message message-${message.role}`}>
       <div className="message-gutter">
         <span className="role-mark" aria-hidden="true">
-          {role === "user"
-            ? ">"
-            : role === "assistant"
-              ? "◆"
-              : role === "system"
-                ? "!"
-                : "·"}
+          {roleMark(message.role)}
         </span>
-        <span className="role-name">{role}</span>
+        <span className="role-name">{label}</span>
       </div>
       <div className="message-body">
         <div className="message-info">
@@ -239,27 +191,66 @@ function Message({ message }: { readonly message: TranscriptMessage }) {
       </div>
     </article>
   );
-}
+};
 
-function Part({ part }: { readonly part: TranscriptPart }) {
-  if (part.type === "text") {
-    return <p className="message-text">{part.text}</p>;
-  }
-  if (part.type === "reasoning") {
-    return (
+const PlainText = ({
+  text,
+  className = "",
+}: {
+  readonly text: string;
+  readonly className?: string;
+}) => {
+  const chunks = text.split(/(?<code>```[^\n]*\n[\s\S]*?```)/gu);
+  return (
+    <div className={`rich-text ${className}`}>
+      {chunks.map((chunk, index) =>
+        chunk.startsWith("```") ? (
+          <pre className="code-block" key={index}>
+            {chunk.replaceAll(/^```[^\n]*\n|```$/gu, "")}
+          </pre>
+        ) : (chunk ? (
+          <p key={index}>{chunk}</p>
+        ) : null)
+      )}
+    </div>
+  );
+};
+
+const Part = ({ part }: { readonly part: TranscriptPart }) => {
+  if (part.type === "text") {return <PlainText text={part.text} />;}
+  if (part.type === "reasoning")
+    {return (
       <details className="reasoning">
-        <summary>reasoning</summary>
-        <pre>{part.text}</pre>
+        <summary>thinking</summary>
+        <PlainText text={part.text} />
       </details>
-    );
-  }
-  if (part.type === "tool") {
-    return (
+    );}
+  if (part.type === "shell")
+    {return (
+      <details className="tool-block shell-block" open>
+        <summary>
+          <span className="tool-kind">shell</span>
+          <strong>{part.command}</strong>
+          <em>completed</em>
+        </summary>
+        <div className="tool-content">
+          <pre className="command-block">
+            <span className="prompt">$</span> {part.command}
+          </pre>
+          {part.output ? <pre>{part.output}</pre> : null}
+        </div>
+      </details>
+    );}
+  if (part.type === "tool")
+    {return (
       <details className="tool-block">
         <summary>
-          <span>tool</span>
+          <span className="tool-kind">tool</span>
           <strong>{part.name}</strong>
-          <em>{part.status}</em>
+          <em>
+            {part.status}
+            {part.duration && part.duration > 0 ? ` · ${part.duration}ms` : ""}
+          </em>
         </summary>
         <div className="tool-content">
           <label>input</label>
@@ -272,8 +263,7 @@ function Part({ part }: { readonly part: TranscriptPart }) {
           ) : null}
         </div>
       </details>
-    );
-  }
+    );}
   if (part.type === "file") {
     return (
       <div className="file-part">
@@ -289,7 +279,59 @@ function Part({ part }: { readonly part: TranscriptPart }) {
       <pre>{part.detail}</pre>
     </details>
   );
-}
+};
+
+const App = () => {
+  const [state, setState] = useState<ViewState>({ kind: "loading" });
+  const [dark, setDark] = useState(
+    () => window.matchMedia("(prefers-color-scheme: dark)").matches
+  );
+  useEffect(() => {
+    document.documentElement.dataset.theme = dark ? "dark" : "light";
+  }, [dark]);
+  useEffect(() => {
+    const load = async () => {
+      setState({ kind: "decrypting" });
+      try {
+        setState({ kind: "ready", transcript: await loadShare() });
+      } catch (error: unknown) {
+        const code =
+          error instanceof Error && errorCopy[error.message]
+            ? error.message
+            : "malformed";
+        setState({ code, kind: "error" });
+      }
+    };
+    void load();
+  }, []);
+  return (
+    <div className="app-shell">
+      <header className="topbar">
+        <a className="wordmark" href="/s/">
+          opencode<span>/</span>share
+        </a>
+        <div className="topbar-actions">
+          <span className="privacy-label">decrypted locally</span>
+          <button
+            className="theme-button"
+            type="button"
+            onClick={() => setDark((value) => !value)}
+            aria-label="Toggle color theme"
+          >
+            theme: {dark ? "dark" : "light"}
+          </button>
+        </div>
+      </header>
+      <main className="main-content">
+        {state.kind === "ready" && state.transcript ? (
+          <TranscriptView transcript={state.transcript} />
+        ) : (
+          <Status state={state} />
+        )}
+      </main>
+    </div>
+  );
+};
 
 const root = document.querySelector("#root");
 if (root) {
