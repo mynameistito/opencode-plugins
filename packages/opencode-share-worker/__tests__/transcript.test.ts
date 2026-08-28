@@ -37,6 +37,14 @@ test("normalizes the versioned envelope and known parts", () => {
   }
 });
 
+test("derives share metadata from raw messages", () => {
+  const result = parseTranscript([
+    { id: "u1", text: "session title", time: { created: 12 }, type: "user" },
+    { model: { id: "model-x" }, time: { created: 13 }, type: "assistant" },
+  ]);
+  expect(result).toMatchObject({ createdAt: 12, model: "model-x" });
+});
+
 test("keeps compatibility with the existing raw array", () => {
   const result = parseTranscript([{ id: "u1", text: "hello", type: "user" }]);
   expect(result).toMatchObject({
@@ -59,5 +67,14 @@ test("renders unknown parts as safe fallbacks", () => {
   ]);
   expect(result).toMatchObject({
     messages: [{ parts: [{ label: "future", type: "fallback" }] }],
+  });
+});
+
+test("preserves markdown text tokens without unsafe values", () => {
+  const result = parseTranscript([
+    { text: "Use `bun` and **keep this**", type: "assistant" },
+  ]);
+  expect(result).toMatchObject({
+    messages: [{ parts: [{ type: "text", text: "Use `bun` and **keep this**" }] }],
   });
 });

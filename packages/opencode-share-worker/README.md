@@ -54,6 +54,10 @@ New shares encrypt a versioned envelope: `{ version: 2, kind: "opencode-session"
 
 The repository's `wrangler.local.jsonc` and `.dev.vars` are ignored. Do not commit generated `worker-configuration.d.ts`, local Wrangler state, or secrets.
 
+## Viewer design notes
+
+The viewer intentionally follows the original OpenCode share layout rather than presenting a dashboard: a compact shell header, a restrained session metadata row, and a narrow content column organized as a left-rail message timeline. The timeline reuses OpenCode's compact turn spacing, small role marks, muted separators, and neutral light/dark surface palette. Assistant content uses direct, safe React Markdown-like rendering with preserved newlines; fenced code and command output remain horizontally scrollable. Tool, reasoning, file, shell, and unknown content use the same compact disclosure pattern, with explicit result controls and status metadata. There are no remote assets, runtime font requests, analytics, or telemetry.
+
 ## json-render
 
 json-render was evaluated and intentionally omitted. This application consumes one known typed transcript shape, so a direct closed renderer is smaller, easier to audit, and avoids introducing a second JSON component language. No LLM or dynamic component catalog is involved.

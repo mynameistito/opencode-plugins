@@ -36,6 +36,10 @@ export interface TranscriptMessage {
 export interface Transcript {
   readonly version: 2;
   readonly exportedAt?: number;
+  readonly createdAt?: number;
+  readonly title?: string;
+  readonly model?: string;
+  readonly provider?: string;
   readonly messages: readonly TranscriptMessage[];
 }
 
@@ -60,6 +64,49 @@ const jsonText = (value: unknown): string => {
   }
 };
 
+const normalizeTool = (
+  value: RecordValue,
+  state: RecordValue | undefined
+): TranscriptPart => {
+  const time = isRecord(state?.time) ? state.time : undefined;
+  const input = state?.input ?? value.input ?? "";
+  const start = time ? numberValue(time, "start") : undefined;
+  const end = time ? numberValue(time, "end") : undefined;
+  const output =
+    stringValue(state ?? {}, "output") ??
+    stringValue(state ?? {}, "error") ??
+    "";
+  return {
+    command: isRecord(input) ? stringValue(input, "command") : undefined,
+    duration:
+      start !== undefined && end !== undefined ? end - start : undefined,
+    input: jsonText(input),
+    name: stringValue(value, "name") ?? stringValue(value, "tool") ?? "tool",
+    output,
+    status: stringValue(state ?? {}, "status") ?? "unknown",
+    type: "tool",
+  };
+};
+
+const messageRole = (type: string): string => {
+  const knownRoles = new Set([
+    "assistant",
+    "compaction",
+    "retry",
+    "system",
+    "tool-call",
+    "tool-result",
+    "user",
+  ]);
+  if (knownRoles.has(type)) {
+    return type;
+  }
+  if (["reasoning", "shell", "file"].includes(type)) {
+    return type;
+  }
+  return "other";
+};
+
 const normalizePart = (value: unknown): TranscriptPart => {
   if (!isRecord(value)) {
     return { detail: "Malformed part", label: "unknown", type: "fallback" };
@@ -73,26 +120,7 @@ const normalizePart = (value: unknown): TranscriptPart => {
   }
   if (type === "tool" || type === "tool-call" || type === "tool-result") {
     const state = isRecord(value.state) ? value.state : undefined;
-    const time = isRecord(state?.time) ? state.time : undefined;
-    const input = state?.input ?? value.input ?? "";
-    const command = isRecord(input) ? stringValue(input, "command") : undefined;
-    const start = time ? numberValue(time, "start") : undefined;
-    const end = time ? numberValue(time, "end") : undefined;
-    return {
-      command,
-      duration:
-        start !== undefined && end !== undefined ? end - start : undefined,
-      input: jsonText(input),
-      name: stringValue(value, "name") ?? stringValue(value, "tool") ?? "tool",
-      output:
-        typeof state?.output === "string"
-          ? state.output
-          : (typeof state?.error === "string"
-            ? state.error
-            : ""),
-      status: stringValue(state ?? {}, "status") ?? "unknown",
-      type: "tool",
-    };
+    return normalizeTool(value, state);
   }
   if (type === "file") {
     return {
@@ -129,14 +157,15 @@ const normalizeMessage = (
       type: "shell",
     });
   }
-  if (type === "system" || type === "synthetic" || type === "skill") {
-    if (parts.length === 0) {
-      parts.push({
-        text:
-          stringValue(value, "description") ?? stringValue(value, "text") ?? "",
-        type: "text",
-      });
-    }
+  if (
+    (type === "system" || type === "synthetic" || type === "skill") &&
+    parts.length === 0
+  ) {
+    parts.push({
+      text:
+        stringValue(value, "description") ?? stringValue(value, "text") ?? "",
+      type: "text",
+    });
   }
   if (parts.length === 0) {
     parts.push({ detail: jsonText(value), label: type, type: "fallback" });
@@ -148,19 +177,7 @@ const normalizeMessage = (
     id: stringValue(value, "id") ?? `message-${index + 1}`,
     model,
     parts,
-    role: [
-      "assistant",
-      "compaction",
-      "retry",
-      "system",
-      "tool-call",
-      "tool-result",
-      "user",
-    ].includes(type)
-      ? type
-      : (type === "reasoning" || type === "shell" || type === "file"
-        ? type
-        : "other"),
+    role: messageRole(type),
     timestamp: isRecord(value.time)
       ? numberValue(value.time, "created")
       : undefined,
@@ -173,14 +190,20 @@ export const parseTranscript = (
 ): Transcript | "malformed" | "unsupported" => {
   let messages: readonly unknown[];
   let exportedAt: number | undefined;
+  let title: string | undefined;
+  let model: string | undefined;
+  let provider: string | undefined;
   if (Array.isArray(value)) {
     messages = value;
   } else if (isRecord(value) && value.version === 2) {
     if (value.kind !== "opencode-session" || !Array.isArray(value.messages)) {
       return "malformed";
     }
-    messages = value.messages;
+    ({ messages } = value);
     exportedAt = numberValue(value, "exportedAt");
+    title = stringValue(value, "title");
+    model = stringValue(value, "model");
+    provider = stringValue(value, "provider");
   } else if (isRecord(value) && typeof value.version === "number") {
     return "unsupported";
   } else {
@@ -193,6 +216,16 @@ export const parseTranscript = (
       return "malformed";
     }
     normalized.push(item);
+    model ??= item.model;
   }
-  return { exportedAt, messages: normalized, version: 2 };
+  const createdAt = normalized.find((item) => item.timestamp)?.timestamp;
+  return {
+    createdAt,
+    exportedAt,
+    messages: normalized,
+    model,
+    provider,
+    title,
+    version: 2,
+  };
 };
