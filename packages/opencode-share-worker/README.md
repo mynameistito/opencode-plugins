@@ -34,6 +34,24 @@ The default resource names are `opencode-share-r2` and `opencode-share-d1`. Put 
 
 The Worker validates JSON, content type, size, IDs, expiry, authorization, and rate limits creation. The included hourly cron trigger calls `scheduled`, which removes expired R2 objects and metadata. Creation and deletion tokens are Wrangler secrets, not JSONC values.
 
+## Generate Tokens
+
+Generate each token independently with Bun. This command is the same in PowerShell, `cmd.exe`, macOS, and Linux:
+
+```text
+bun -e "console.log(Buffer.from(crypto.getRandomValues(new Uint8Array(32))).toString('base64url'))"
+```
+
+Use one value for the plugin's ingest token and a different value for the Worker admin token:
+
+```powershell
+$env:OPENCODE_SHARE_INGEST_TOKEN = "paste-the-first-value-here"
+wrangler secret put SHARE_INGEST_TOKEN --config wrangler.local.jsonc
+wrangler secret put SHARE_ADMIN_TOKEN --config wrangler.local.jsonc
+```
+
+Do not put either token in `wrangler.jsonc`, `cli.json`, the repository, or a share URL. The plugin only needs the ingest token; the admin token is for manual deletion operations.
+
 ## CORS
 
 The template allows all origins with `ALLOWED_ORIGIN: "*"`. That is convenient for a public viewer. For a tighter deployment, set it to the exact viewer origin, such as `https://shares.example.com`. Public reads remain public; bearer authorization still protects creation and deletion.
