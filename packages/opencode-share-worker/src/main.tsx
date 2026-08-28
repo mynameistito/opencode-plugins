@@ -131,16 +131,16 @@ const TranscriptView = ({
 }: {
   readonly transcript: Transcript;
 }) => (
-  <>
-    <section className="session-heading">
-      <p className="eyebrow">shared session</p>
+  <div className="share-viewer">
+    <header className="share-header">
       <h1>{transcript.title ?? "OpenCode session"}</h1>
-      <div className="session-meta">
-        <span>v{transcript.version}</span>
+      <div className="header-details">
+        <ul className="header-stats">
+          <li><span className="header-icon opencode-icon" aria-hidden="true" /> <span>v{transcript.version}</span></li>
+          {transcript.provider || transcript.model ? <li><span className="header-icon model-icon" aria-hidden="true" /> <span>{[transcript.provider, transcript.model].filter(Boolean).join(" /")}</span></li> : null}
+        </ul>
         {transcript.provider || transcript.model ? (
-          <span>
-            {[transcript.provider, transcript.model].filter(Boolean).join(" /")}
-          </span>
+          <span className="header-label">OpenCode session</span>
         ) : null}
         {transcript.createdAt || transcript.exportedAt ? (
           <time
@@ -154,7 +154,7 @@ const TranscriptView = ({
           </time>
         ) : null}
       </div>
-    </section>
+    </header>
     {transcript.messages.length === 0 ? (
       <section className="empty-state">
         $ session contains no messages<span className="cursor">_</span>
@@ -164,9 +164,9 @@ const TranscriptView = ({
         {transcript.messages.map((message) => (
           <Message key={message.id} message={message} />
         ))}
-      </section>
-    )}
-  </>
+        </section>
+      )}
+  </div>
 );
 
 const roleMark = (role: string): string => {
@@ -186,7 +186,6 @@ const roleMark = (role: string): string => {
 };
 
 function Message({ message }: { readonly message: TranscriptMessage }) {
-  const label = message.role === "other" ? "unknown" : message.role;
   return (
     <article className={`message message-${message.role}`}>
       {message.parts.map((part, index) => (
@@ -196,11 +195,6 @@ function Message({ message }: { readonly message: TranscriptMessage }) {
             <span className="part-bar" />
           </div>
           <div className="part-content">
-            <div className="part-info">
-              <span>{label}</span>
-              {message.model ? <span>{message.model}</span> : null}
-              {message.timestamp ? <time dateTime={new Date(message.timestamp).toISOString()}>{new Date(message.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</time> : null}
-            </div>
             <Part part={part} />
           </div>
         </div>
