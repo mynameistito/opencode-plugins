@@ -80,7 +80,9 @@ const safePublish = (
   dependencies: UsageCoordinatorDependencies,
   snapshot: CoordinatorSnapshot
 ): Effect.Effect<void> =>
-  dependencies.publish(snapshot).pipe(Effect.catchDefect(() => Effect.void));
+  Effect.suspend(() => dependencies.publish(snapshot)).pipe(
+    Effect.catchDefect(() => Effect.void)
+  );
 
 const safeFetchProvider = <ID extends ProviderID>(
   dependencies: UsageCoordinatorDependencies,
@@ -89,7 +91,9 @@ const safeFetchProvider = <ID extends ProviderID>(
   auth: OpenCodeAuth,
   timeoutMs: number
 ): Effect.Effect<ProviderUsage<ID>, ProviderError> =>
-  dependencies.fetchProvider(id, provider, auth, timeoutMs).pipe(
+  Effect.suspend(() =>
+    dependencies.fetchProvider(id, provider, auth, timeoutMs)
+  ).pipe(
     Effect.catchDefect(() =>
       Effect.fail(
         new ProviderTransportError({

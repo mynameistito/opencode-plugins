@@ -146,9 +146,9 @@ describe("usage coordinator", () => {
       () => {
         attempts += 1;
         return attempts === 1
-          ? Effect.sync(() => {
+          ? (() => {
               throw new Error("unexpected provider failure");
-            })
+            })()
           : Effect.succeed(usage("codex"));
       },
       {
@@ -162,6 +162,36 @@ describe("usage coordinator", () => {
 
     await Bun.sleep(0);
     expect(harness.snapshots[1]).toEqual(["error"]);
+    const [firstSleep] = harness.sleeps;
+    if (!firstSleep) {
+      throw new Error("first refresh did not schedule a sleep");
+    }
+    await Effect.runPromise(Deferred.succeed(firstSleep, true));
+    await Bun.sleep(0);
+    expect(harness.snapshots.at(-1)).toEqual(["ready"]);
+    await Effect.runPromise(Fiber.interrupt(fiber));
+  });
+
+  test("keeps refreshing after a direct publish throw", async () => {
+    const harness = dependencies((id) => Effect.succeed(usage(id)), {
+      ...config,
+      providers: { codex: { enabled: true }, zai: { enabled: false } },
+    });
+    let publishes = 0;
+    harness.dependencies.publish = (snapshot) => {
+      publishes += 1;
+      if (publishes === 1) {
+        throw new Error("unexpected publish failure");
+      }
+      harness.snapshots.push(snapshot.states.map((state) => state.status));
+      return Effect.void;
+    };
+    const fiber = Effect.runFork(
+      Effect.scoped(usageCoordinator(harness.dependencies))
+    );
+
+    await Bun.sleep(0);
+    expect(harness.snapshots).toEqual([["ready"]]);
     const [firstSleep] = harness.sleeps;
     if (!firstSleep) {
       throw new Error("first refresh did not schedule a sleep");
