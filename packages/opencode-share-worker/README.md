@@ -21,8 +21,8 @@ JSON errors use the stable shape `{ "error": { "code": "...", "message": "..." }
 ```powershell
 bun install --frozen-lockfile
 Copy-Item wrangler.jsonc wrangler.local.jsonc
-wrangler d1 create opencode-share
-wrangler r2 bucket create opencode-share
+wrangler d1 create opencode-share-d1
+wrangler r2 bucket create opencode-share-r2
 # Put the returned database ID and bucket name into wrangler.local.jsonc.
 wrangler d1 migrations apply opencode-share --remote --config wrangler.local.jsonc
 wrangler secret put SHARE_INGEST_TOKEN --config wrangler.local.jsonc
@@ -30,7 +30,7 @@ wrangler secret put SHARE_ADMIN_TOKEN --config wrangler.local.jsonc
 wrangler deploy --config wrangler.local.jsonc
 ```
 
-Replace the placeholder resource IDs/names in `wrangler.local.jsonc`, or edit `wrangler.jsonc` directly. `ALLOWED_ORIGIN` defaults to `*` for all browser origins; set it to the viewer origin for tighter CORS. The `$schema` points to Wrangler's installed `config-schema.json`, which is the canonical schema for this JSONC config. Secrets are never committed. Configure the plugin endpoint with the deployed origin. Public reads need only the ID; the AES-GCM key remains in the URL fragment.
+The default resource names are `opencode-share-r2` and `opencode-share-d1`. Put the D1 ID returned by `wrangler d1 create` into `wrangler.local.jsonc`; keep the R2 bucket name as `opencode-share-r2` unless you chose another name. Each resource must have one unique binding: `SHARES` for R2 and `DB` for D1. Do not add duplicate `remote` entries to the file. `ALLOWED_ORIGIN` defaults to `*` for all browser origins; set it to the viewer origin for tighter CORS. The `$schema` points to Wrangler's installed `config-schema.json`, which is the canonical schema for this JSONC config. Secrets are never committed. Configure the plugin endpoint with the deployed origin. Public reads need only the ID; the AES-GCM key remains in the URL fragment.
 
 The Worker validates JSON, content type, size, IDs, expiry, authorization, and rate limits creation. The included hourly cron trigger calls `scheduled`, which removes expired R2 objects and metadata. Creation and deletion tokens are Wrangler secrets, not JSONC values.
 
