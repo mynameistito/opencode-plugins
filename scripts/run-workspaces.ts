@@ -26,6 +26,8 @@ if (!isSupportedTask(task)) {
 const packages = [
   "packages/opencode-force-input",
   "packages/opencode-usage-limits",
+  "packages/opencode-share",
+  "packages/opencode-share-worker",
 ];
 
 for (const packageDirectory of packages) {

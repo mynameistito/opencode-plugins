@@ -1,0 +1,38 @@
+{
+  "name": "@mynameistito/opencode-share",
+  "version": "0.1.0",
+  "description": "Local-encrypted session sharing plugin for OpenCode V2.",
+  "license": "MIT",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "type": "module",
+  "exports": {
+    "./tui": {
+      "types": "./dist/tui.d.mts",
+      "import": "./dist/tui.mjs"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "check": "ultracite check",
+    "fix": "ultracite fix",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test",
+    "test:package": "bun run build && bun ./scripts/test-package.ts",
+    "prepack": "bun run build"
+  },
+  "dependencies": {
+    "@opencode-ai/plugin": "0.0.0-beta-18050"
+  },
+  "devDependencies": {
+    "@opencode-ai/cli": "0.0.0-beta-18050",
+    "@opencode-ai/client": "0.0.0-beta-18050",
+    "@types/node": "^26.1.1"
+  }
+}

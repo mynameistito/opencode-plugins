@@ -1,0 +1,21 @@
+{
+  "name": "@mynameistito/opencode-share-worker",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Self-hosted Cloudflare Worker for encrypted OpenCode session shares.",
+  "type": "module",
+  "scripts": {
+    "build": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "check": "ultracite check",
+    "fix": "ultracite fix",
+    "test": "bun test",
+    "test:package": "bun run build"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260828.1",
+    "@types/bun": "1.4.0",
+    "typescript": "npm:@typescript/typescript6@^6.0.2",
+    "wrangler": "^4.36.0"
+  }
+}

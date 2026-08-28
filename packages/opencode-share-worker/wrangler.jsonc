@@ -1,0 +1,25 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "opencode-share",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-28",
+  "r2_buckets": [
+    { "binding": "SHARES", "bucket_name": "replace-with-r2-bucket-name" },
+  ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "opencode-share",
+      "database_id": "replace-with-d1-database-id",
+      "migrations_dir": "migrations",
+    },
+  ],
+  "vars": {
+    "ALLOWED_ORIGIN": "*",
+    "RATE_LIMIT_PER_MINUTE": "20",
+  },
+  "triggers": { "crons": ["0 * * * *"] },
+  "secrets": {
+    "required": ["SHARE_INGEST_TOKEN", "SHARE_ADMIN_TOKEN"],
+  },
+}

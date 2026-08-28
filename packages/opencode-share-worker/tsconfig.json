@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "lib": ["ESNext", "WebWorker"],
+    "target": "ESNext",
+    "module": "Preserve",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "noUncheckedIndexedAccess": true,
+    "types": ["@cloudflare/workers-types", "bun"]
+  },
+  "include": ["src/**/*.ts", "__tests__/**/*.ts"]
+}
