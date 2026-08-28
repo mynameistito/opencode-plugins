@@ -6,3 +6,4 @@ dist/
 packages/opencode-share-worker/.wrangler/
 packages/opencode-share-worker/.dev.vars
 packages/opencode-share-worker/wrangler.local.jsonc
+packages/opencode-share-worker/worker-configuration.d.ts

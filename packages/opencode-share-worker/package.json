@@ -5,18 +5,31 @@
   "description": "Self-hosted Cloudflare Worker for encrypted OpenCode session shares.",
   "type": "module",
   "scripts": {
-    "build": "tsc --noEmit",
-    "dev": "wrangler dev --config wrangler.local.jsonc",
+    "build": "vite build",
+    "dev": "vite dev",
+    "preview": "vite preview",
+    "deploy": "vite build && wrangler deploy",
     "typecheck": "tsc --noEmit",
+    "cftypes": "wrangler types",
     "check": "ultracite check",
     "fix": "ultracite fix",
     "test": "bun test",
     "test:package": "bun run build"
   },
+  "dependencies": {
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
   "devDependencies": {
-    "@cloudflare/workers-types": "^5.20260828.1",
+    "@cloudflare/vite-plugin": "^1.54.1",
+    "@tailwindcss/vite": "^4.3.3",
     "@types/bun": "1.4.0",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.5",
+    "@vitejs/plugin-react": "^6.1.1",
+    "tailwindcss": "^4.3.3",
     "typescript": "npm:@typescript/typescript6@^6.0.2",
+    "vite": "^8.2.2",
     "wrangler": "^4.36.0"
   },
   "knip": {

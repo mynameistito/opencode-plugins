@@ -3,6 +3,12 @@
   "name": "opencode-share",
   "main": "src/index.ts",
   "compatibility_date": "2026-08-27",
+  "assets": {
+    "binding": "ASSETS",
+    "directory": "./dist/client",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*", "/s/*"],
+  },
   "r2_buckets": [{ "binding": "SHARES", "bucket_name": "opencode-share-r2" }],
   "d1_databases": [
     {

@@ -1,16 +1,6 @@
 import type { JsonValue } from "./validation";
 import { authorized, parseCreateInput } from "./validation";
-import { viewer } from "./viewer";
 
-interface Env {
-  readonly DB: D1Database;
-  readonly SHARES: R2Bucket;
-  readonly SHARE_INGEST_TOKEN?: string;
-  readonly SHARE_ADMIN_TOKEN?: string;
-  readonly ALLOWED_ORIGIN?: string;
-  readonly RATE_LIMIT_PER_MINUTE?: string;
-  readonly RATE_LIMITER: RateLimit;
-}
 const json = (body: JsonValue, status = 200, origin = ""): Response =>
   Response.json(body, {
     headers: {
@@ -27,7 +17,7 @@ const headers = (origin: string): HeadersInit => ({
   "Access-Control-Allow-Methods": "GET,POST,DELETE,OPTIONS",
   "Access-Control-Allow-Origin": origin,
   "Content-Security-Policy":
-    "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'",
+    "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'",
   "Referrer-Policy": "no-referrer",
   "X-Content-Type-Options": "nosniff",
   "X-Frame-Options": "DENY",
@@ -169,9 +159,6 @@ export default {
     const match = /^\/api\/shares\/(?<id>[A-Za-z0-9_-]{20,96})$/u.exec(
       url.pathname
     );
-    if (url.pathname === "/s/" || url.pathname.startsWith("/s/")) {
-      return viewer(origin);
-    }
     if (url.pathname === "/api/shares" && request.method === "POST") {
       return createShare(request, env, origin);
     }
@@ -180,6 +167,9 @@ export default {
     }
     if (match && request.method === "DELETE") {
       return deleteShare(request, env, match.groups?.id ?? "", origin);
+    }
+    if (url.pathname === "/s/" || url.pathname.startsWith("/s/")) {
+      return env.ASSETS.fetch(request);
     }
     return error("not_found", 404, origin);
   },

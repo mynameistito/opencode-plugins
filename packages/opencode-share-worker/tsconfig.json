@@ -1,14 +1,22 @@
 {
   "compilerOptions": {
-    "lib": ["ESNext", "WebWorker"],
+    "lib": ["ESNext", "DOM"],
     "target": "ESNext",
     "module": "Preserve",
     "moduleResolution": "bundler",
+    "jsx": "react-jsx",
     "strict": true,
     "skipLibCheck": true,
     "noEmit": true,
+    "allowImportingTsExtensions": true,
     "noUncheckedIndexedAccess": true,
-    "types": ["@cloudflare/workers-types", "bun"]
+    "types": ["bun"]
   },
-  "include": ["src/**/*.ts", "__tests__/**/*.ts"]
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "src/**/*.d.ts",
+    "__tests__/**/*.ts",
+    "worker-configuration.d.ts"
+  ]
 }
