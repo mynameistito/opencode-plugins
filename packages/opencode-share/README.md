@@ -39,7 +39,7 @@ Add the Worker URL and non-secret options to `~/.config/opencode/cli.json`:
 }
 ```
 
-Use `/share`, the command palette, or `<leader>h`. The token is read from `tokenEnv`; never put it in `cli.json`. The default keyboard binding is intentionally a plugin command binding and does not replace an OpenCode default.
+Use `/oshare`, the command palette, or `<leader>h`. OpenCode reserves `/share` for its built-in sharing command. The token is read from `tokenEnv`; never put it in `cli.json`. The default keyboard binding is intentionally a plugin command binding and does not replace an OpenCode default.
 
 ## Options
 

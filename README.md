@@ -41,7 +41,7 @@ See the [usage-limits README](packages/opencode-usage-limits/README.md) for prov
 
 Shares an OpenCode session through a self-hosted Cloudflare Worker. The transcript is sanitized and encrypted in the TUI with AES-GCM before it leaves the machine. The Worker stores ciphertext in R2 and lifecycle metadata in D1; it never receives the encryption key or decrypts the transcript.
 
-The plugin registers `/share`, a command-palette action, and `<leader>h`. Install it with:
+The plugin registers `/oshare`, a command-palette action, and `<leader>h`. OpenCode's built-in command owns `/share`. Install it with:
 
 ```powershell
 opencode2 plugin add "@mynameistito/opencode-share@latest" -g

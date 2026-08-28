@@ -109,9 +109,9 @@ export const authorized = async (
     crypto.subtle.digest("SHA-256", encoder.encode(expected)),
   ]);
   // SAFETY: Cloudflare Workers extends SubtleCrypto with timingSafeEqual.
-  const { timingSafeEqual } = crypto.subtle as Partial<TimingSafeSubtleCrypto>;
-  if (timingSafeEqual) {
-    return timingSafeEqual(actualDigest, expectedDigest);
+  const subtle = crypto.subtle as Partial<TimingSafeSubtleCrypto>;
+  if (subtle.timingSafeEqual) {
+    return subtle.timingSafeEqual(actualDigest, expectedDigest);
   }
   const actual = new Uint8Array(actualDigest);
   const expectedBytes = new Uint8Array(expectedDigest);

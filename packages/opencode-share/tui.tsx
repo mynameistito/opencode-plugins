@@ -95,39 +95,39 @@ const setup = (context: Context): (() => void) => {
     append: "prompt.footer.status",
     render: ({ sessionID: currentSessionID }: SessionSlot) => {
       sessionID = currentSessionID;
-      return <></>;
+      context.keymap.layer((): KeymapLayer => ({
+        bindings: [COMMAND_ID],
+        commands: [
+          {
+            bind: "<leader>h",
+            description: "Encrypt and upload the current session",
+            group: "Session",
+            id: COMMAND_ID,
+            palette: true,
+            run: async () => {
+              if (sessionID) {
+                try {
+                  await runShare(context, sessionID);
+                } catch {
+                  showError(context, "Session sharing failed.");
+                }
+              } else {
+                context.ui.toast.show({
+                  message: "No active session.",
+                  title: "Share",
+                  variant: "error",
+                });
+              }
+            },
+            slash: { name: "oshare" },
+            title: "Share encrypted session",
+          },
+        ],
+        mode: "global",
+      }));
+      return null;
     },
   });
-  context.keymap.layer((): KeymapLayer => ({
-    bindings: [COMMAND_ID],
-    commands: [
-      {
-        bind: "<leader>h",
-        description: "Encrypt and upload the current session",
-        group: "Session",
-        id: COMMAND_ID,
-        palette: true,
-        run: async () => {
-          if (sessionID) {
-            try {
-              await runShare(context, sessionID);
-            } catch {
-              showError(context, "Session sharing failed.");
-            }
-          } else {
-            context.ui.toast.show({
-              message: "No active session.",
-              title: "Share",
-              variant: "error",
-            });
-          }
-        },
-        slash: { name: "share" },
-        title: "Share encrypted session",
-      },
-    ],
-    mode: "global",
-  }));
   return dispose;
 };
 
