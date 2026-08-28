@@ -10,7 +10,7 @@ This package contains the OpenCode v2 TUI plugin and is published from the monor
 opencode2 plugin add "@mynameistito/opencode-force-input@latest" -g
 ```
 
-OpenCode writes the plugin to `~/.config/opencode/tui.json`. Verify it is installed with:
+OpenCode writes the plugin to `~/.config/opencode/cli.json`. Verify it is installed with:
 
 ```powershell
 opencode2 plugin list
@@ -35,12 +35,12 @@ To clear a cached package before reinstalling:
 Remove-Item -LiteralPath "$HOME\.cache\opencode\packages\@mynameistito\opencode-force-input@latest" -Recurse -Force -ErrorAction SilentlyContinue
 ```
 
-The v2 package can also be configured manually in `~/.config/opencode/tui.json`:
+The v2 package can also be configured manually in `~/.config/opencode/cli.json`:
 
 ```json
 {
-  "$schema": "https://opencode.ai/tui.json",
-  "plugin": ["@mynameistito/opencode-force-input@latest"]
+  "$schema": "https://opencode.ai/v2/cli.json",
+  "plugins": ["@mynameistito/opencode-force-input@latest"]
 }
 ```
 
@@ -50,7 +50,7 @@ This package only exposes the `/tui` entrypoint. It does not provide a server pl
 
 The plugin registers high-priority v2 keymap commands for `ctrl+return` and `ctrl+enter`. Each command dispatches `session.interrupt` three times, then `prompt.submit`, preserving OpenCode's guarded abort flow.
 
-Remove `ctrl+return` from `input_newline` in `tui.json` if it is also configured as a newline binding:
+Remove `ctrl+return` from `input_newline` in `cli.json` if it is also configured as a newline binding:
 
 ```json
 { "keybinds": { "input_newline": "shift+return,alt+return,ctrl+j" } }

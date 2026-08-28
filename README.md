@@ -1,13 +1,55 @@
 # OpenCode Plugins
 
-OpenCode TUI plugins maintained as a Bun workspace.
+Personal TUI plugins for [OpenCode](https://opencode.ai) V2 and the [`@opencode-ai/cli`](https://www.npmjs.com/package/@opencode-ai/cli).
 
 ## Packages
 
-- [`@mynameistito/opencode-force-input`](packages/opencode-force-input) adds force-submit bindings for OpenCode v2.
-- [`@mynameistito/opencode-usage-limits`](packages/opencode-usage-limits) displays provider usage limits in the TUI.
+### [`@mynameistito/opencode-force-input`](packages/opencode-force-input)
 
-Both packages currently contain OpenCode v2 code and are released from `main` using npm's `latest` dist-tag.
+Interrupts the active run and force-submits the current prompt with `Ctrl+Enter`.
+
+Install it with OpenCode's plugin command:
+
+```powershell
+opencode2 plugin add "@mynameistito/opencode-force-input@latest" -g
+```
+
+See the [force-input README](packages/opencode-force-input/README.md) for manual configuration and Windows Terminal key bindings.
+
+### [`@mynameistito/opencode-usage-limits`](packages/opencode-usage-limits)
+
+Shows provider usage limits in the sidebar and prompt footer.
+
+Supported providers:
+
+- Codex
+- OpenCode GO
+- MiniMax Token Plan
+- Synthetic
+- Qwen
+- ZAI Coding Plan
+
+Install it with:
+
+```bash
+opencode plugin @mynameistito/opencode-usage-limits@latest -g
+```
+
+See the [usage-limits README](packages/opencode-usage-limits/README.md) for provider credentials, configuration, and troubleshooting.
+
+## Local Development
+
+Build the workspace and load the source entrypoints from `~/.config/opencode/cli.json`:
+
+```jsonc
+{
+  "$schema": "https://opencode.ai/v2/cli.json",
+  "plugins": [
+    "/path/to/opencode-plugins/packages/opencode-force-input/src/tui.tsx",
+    "/path/to/opencode-plugins/packages/opencode-usage-limits/src/index.ts",
+  ],
+}
+```
 
 ## Development
 
@@ -26,4 +68,4 @@ bun run changeset-add -- force-input patch "Describe the change"
 bun run changeset-add -- usage-limits minor "Describe the change"
 ```
 
-Packages remain independently publishable. Build output is generated during packaging and is not committed.
+Packages are independently publishable. Build output is generated during packaging and is not committed.
