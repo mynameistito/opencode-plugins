@@ -1,5 +1,11 @@
 # @mynameistito/opencode-usage-limits
 
+## 1.0.4
+
+### Patch Changes
+
+- 915bdc5: keep usage-limit refreshes alive after provider or runtime failures
+
 ## 1.0.3
 
 ### Patch Changes
