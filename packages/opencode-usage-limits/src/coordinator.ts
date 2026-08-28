@@ -1,7 +1,10 @@
-import { Effect, Result } from "effect";
+import { Cause, Effect, Result } from "effect";
 
 import { DEFAULT_CONFIG } from "@/config.ts";
-import { MissingProviderCredentialsError } from "@/errors.ts";
+import {
+  MissingProviderCredentialsError,
+  ProviderTransportError,
+} from "@/errors.ts";
 import type { ProviderError } from "@/errors.ts";
 import { getProviderConfigs } from "@/providers.ts";
 import { defaultLabelFor } from "@/providers/index.ts";
@@ -73,20 +76,55 @@ const providerDisplaysFor = (
     ])
   );
 
+const safePublish = (
+  dependencies: UsageCoordinatorDependencies,
+  snapshot: CoordinatorSnapshot
+): Effect.Effect<void> =>
+  Effect.suspend(() => dependencies.publish(snapshot)).pipe(
+    Effect.catchDefect(() => Effect.void)
+  );
+
+const safeFetchProvider = <ID extends ProviderID>(
+  dependencies: UsageCoordinatorDependencies,
+  id: ID,
+  provider: ProviderConfigMap[ID] | undefined,
+  auth: OpenCodeAuth,
+  timeoutMs: number
+): Effect.Effect<ProviderUsage<ID>, ProviderError> =>
+  Effect.suspend(() =>
+    dependencies.fetchProvider(id, provider, auth, timeoutMs)
+  ).pipe(
+    Effect.catchDefect(() =>
+      Effect.fail(
+        new ProviderTransportError({
+          cause: "unknown",
+          operation: "fetch-usage",
+          providerID: id,
+        })
+      )
+    )
+  );
+
 export const usageCoordinator = (
   dependencies: UsageCoordinatorDependencies
 ): Effect.Effect<void> =>
   Effect.gen(function* coordinatorLoop() {
     const lastSuccess = new Map<ProviderID, ProviderUsage>();
     while (true) {
-      const configResult = yield* dependencies.loadConfig;
+      const configResult = yield* dependencies.loadConfig.pipe(
+        Effect.catchCause((cause) =>
+          Cause.hasInterruptsOnly(cause)
+            ? Effect.failCause(cause)
+            : Effect.succeed(Result.succeed(DEFAULT_CONFIG))
+        )
+      );
       const config = Result.isFailure(configResult)
         ? DEFAULT_CONFIG
         : configResult.success;
 
       const intervalMs = intervalMilliseconds(config.refreshIntervalSeconds);
       const providers = config.enabled ? getProviderConfigs(config) : [];
-      yield* dependencies.publish({
+      yield* safePublish(dependencies, {
         lastRefreshAt: null,
         providerDisplays: providerDisplaysFor(providers),
         showErrors: config.showErrors,
@@ -94,11 +132,18 @@ export const usageCoordinator = (
       });
 
       if (providers.length > 0) {
-        const auth = yield* dependencies.loadOpenCodeAuth;
+        const auth = yield* dependencies.loadOpenCodeAuth.pipe(
+          Effect.catchCause((cause) =>
+            Cause.hasInterruptsOnly(cause)
+              ? Effect.failCause(cause)
+              : Effect.succeed({})
+          )
+        );
         const terminalStates = yield* Effect.all(
           providers.map(([id, provider]) =>
             Effect.match(
-              dependencies.fetchProvider(
+              safeFetchProvider(
+                dependencies,
                 id,
                 provider,
                 auth,
@@ -140,7 +185,7 @@ export const usageCoordinator = (
         );
         const now = yield* dependencies.now;
         const staleAfterMs = intervalMs * 2;
-        yield* dependencies.publish({
+        yield* safePublish(dependencies, {
           lastRefreshAt: now,
           providerDisplays: providerDisplaysFor(providers),
           showErrors: config.showErrors,
@@ -156,7 +201,7 @@ export const usageCoordinator = (
           ),
         });
       } else {
-        yield* dependencies.publish({
+        yield* safePublish(dependencies, {
           lastRefreshAt: null,
           providerDisplays: {},
           showErrors: config.showErrors,
