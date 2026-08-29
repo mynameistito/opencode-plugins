@@ -1,3 +1,4 @@
+import { test, describe, expect } from 'vitest';
 /* @jsxImportSource @opentui/solid */
 import { describe, expect, test } from "bun:test";
 

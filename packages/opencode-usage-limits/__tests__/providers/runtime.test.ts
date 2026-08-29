@@ -1,3 +1,4 @@
+import { test, afterEach, describe, expect } from 'vitest';
 import { afterEach, describe, expect, test } from "bun:test";
 import { rm } from "node:fs/promises";
 import { tmpdir } from "node:os";

@@ -35,7 +35,7 @@
     "solid-js": "1.9.12",
     "tsdown": "^0.22.14",
     "typescript": "npm:@typescript/typescript6@^6.0.2",
-    "ultracite": "7.10.6"
+    "ultracite": "7.10.7"
   },
   "packageManager": "bun@1.4.0",
   "knip": {

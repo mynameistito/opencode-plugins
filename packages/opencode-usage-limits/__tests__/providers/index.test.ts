@@ -1,3 +1,4 @@
+import { test, describe, expect } from 'vitest';
 import { describe, expect, test } from "bun:test";
 
 import { Effect } from "effect";
