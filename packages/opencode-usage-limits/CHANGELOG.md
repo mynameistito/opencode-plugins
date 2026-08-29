@@ -1,5 +1,14 @@
 # @mynameistito/opencode-usage-limits
 
+## 1.0.5
+
+### Patch Changes
+
+- 5e63296: Harden JSON parsing at provider and configuration boundaries
+- ff8c6ae: Reject non-finite numbers at JSON boundaries
+- ff8c6ae: chore: update ultracite
+- 2e79adf: Share TypeScript compiler settings across the workspace and include root scripts in the workspace typecheck.
+
 ## 1.0.4
 
 ### Patch Changes
