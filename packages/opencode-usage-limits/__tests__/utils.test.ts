@@ -7,6 +7,7 @@ import {
   clampPercent,
   fetchJson,
   isRecord,
+  parseJsonValue,
   readJsonFile,
   resolveEnvReference,
 } from "@/utils.ts";
@@ -48,6 +49,10 @@ describe("utility helpers", () => {
     expect(isRecord([])).toBe(false);
     expect(isRecord(null)).toBe(false);
     expect(isRecord("object")).toBe(false);
+  });
+
+  test("rejects parsed non-finite numbers", () => {
+    expect(() => parseJsonValue("1e400")).toThrow(SyntaxError);
   });
 
   test("reads JSONC with line comments, block comments, quoted slashes, and trailing commas", async () => {

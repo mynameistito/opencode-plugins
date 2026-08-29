@@ -28,7 +28,7 @@ const isJsonValue = <T>(value: T): value is T & JsonValue => {
   }
   if (
     typeof value === "boolean" ||
-    typeof value === "number" ||
+    (typeof value === "number" && Number.isFinite(value)) ||
     typeof value === "string"
   ) {
     return true;
