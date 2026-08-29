@@ -1,4 +1,3 @@
-import { afterEach } from 'vitest';
 import { afterEach, mock } from "bun:test";
 
 const originalFetch = globalThis.fetch;

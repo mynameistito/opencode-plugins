@@ -1,4 +1,3 @@
-import { test, describe, expect } from 'vitest';
 import { describe, expect, test } from "bun:test";
 
 import { fetchCodexUsage } from "@/providers/codex.ts";

@@ -1,4 +1,3 @@
-import { test, afterEach, describe, expect } from 'vitest';
 import { afterEach, describe, expect, mock, test } from "bun:test";
 
 import { Redacted, Result } from "effect";

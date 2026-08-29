@@ -1,4 +1,3 @@
-import { test, describe, expect } from 'vitest';
 import { describe, expect, test } from "bun:test";
 
 import type { KeymapLayer, SlotClaim } from "@opencode-ai/plugin/tui/context";
