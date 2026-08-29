@@ -1,5 +1,12 @@
 # @mynameistito/opencode-force-input
 
+## 1.0.2
+
+### Patch Changes
+
+- ff8c6ae: chore: update ultracite
+- 2e79adf: Share TypeScript compiler settings across the workspace and include root scripts in the workspace typecheck.
+
 ## 1.0.1
 
 ### Patch Changes
