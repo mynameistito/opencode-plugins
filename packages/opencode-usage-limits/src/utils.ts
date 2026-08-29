@@ -22,6 +22,41 @@ export type JsonValue =
   | string
   | undefined;
 
+const isJsonValue = <T>(value: T): value is T & JsonValue => {
+  if (value === null || value === undefined) {
+    return true;
+  }
+  if (
+    typeof value === "boolean" ||
+    typeof value === "number" ||
+    typeof value === "string"
+  ) {
+    return true;
+  }
+  if (Array.isArray(value)) {
+    return value.every(isJsonValue);
+  }
+  if (Object.prototype.toString.call(value) !== "[object Object]") {
+    return false;
+  }
+  return Object.values(value).every(isJsonValue);
+};
+
+/**
+ * Parses text and narrows the result to the JSON boundary type.
+ *
+ * @param input - JSON text to parse.
+ * @returns The parsed JSON value.
+ * @throws {SyntaxError} When the text is not a JSON value.
+ */
+export const parseJsonValue = (input: string): JsonValue => {
+  const parsed: unknown = JSON.parse(input);
+  if (!isJsonValue(parsed)) {
+    throw new SyntaxError("invalid JSON value");
+  }
+  return parsed;
+};
+
 /**
  * Normalizes an arbitrary number into the inclusive percentage range used by UI.
  *
@@ -183,9 +218,7 @@ const expandHome = (value: string): string =>
  */
 export const readJsonFile = async (filePath: string): Promise<JsonValue> => {
   const raw = await readFile(expandHome(filePath), "utf-8");
-  // SAFETY: JSON.parse returns only values represented by the JSON boundary type.
-  const parsed = JSON.parse(stripJsonComments(raw)) as JsonValue;
-  return parsed;
+  return parseJsonValue(stripJsonComments(raw));
 };
 
 /**
@@ -250,9 +283,7 @@ export const fetchJson = async (
   }
 
   try {
-    // SAFETY: JSON.parse returns only values represented by the JSON boundary type.
-    const parsed = JSON.parse(body) as JsonValue;
-    return parsed;
+    return parseJsonValue(body);
   } catch {
     throw new Error("invalid JSON");
   }
