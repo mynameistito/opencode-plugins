@@ -16,7 +16,7 @@
     "version-pr-title": "bun scripts/version-pr-title.ts",
     "test": "bun run scripts/run-workspaces.ts test",
     "test:package": "bun run scripts/run-workspaces.ts test:package",
-    "typecheck": "bun run --filter '*' typecheck",
+    "typecheck": "tsc --noEmit && bun run --filter '*' typecheck",
     "changeset": "changeset",
     "changeset-add": "bun run scripts/changeset-add.ts"
   },
