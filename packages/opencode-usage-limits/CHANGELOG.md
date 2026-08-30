@@ -1,5 +1,11 @@
 # @mynameistito/opencode-usage-limits
 
+## 1.0.7
+
+### Patch Changes
+
+- e090c8a: Prevent prompt footer usage from flashing with mixed refresh settings.
+
 ## 1.0.6
 
 ### Patch Changes
