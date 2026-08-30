@@ -19,13 +19,6 @@ import type {
 } from "@/types.ts";
 import { quotaUsedPercent } from "@/usage.ts";
 
-/**
- * Chooses the status-dot color for a usage percentage.
- *
- * @param usedPercent - Percentage consumed, or `null` when unknown.
- * @param theme - Active OpenCode TUI theme.
- * @returns A theme color indicating healthy, warning, error, or unknown usage.
- */
 interface V2Theme {
   readonly text: {
     readonly default: RGBA;
@@ -155,15 +148,6 @@ export const shouldRenderProviderState = (
   return showErrors && state.errorKind !== "missing_credentials";
 };
 
-/**
- * Renders the sidebar usage-limits panel.
- *
- * The panel lists every enabled provider, shows loading and stale states, and can
- * optionally display provider fetch errors.
- *
- * @param props - Provider states, error visibility, active TUI theme, and last refresh timestamp.
- * @returns Solid/OpenTUI JSX for the sidebar content slot.
- */
 export const UsageLimitsPanel = (props: {
   diagnostics?: readonly ConfigDiagnostic[];
   states: readonly ProviderState[];
