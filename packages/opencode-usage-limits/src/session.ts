@@ -14,16 +14,6 @@ import type { UsageWindowKind } from "@/usage.ts";
 import { isRecord, isString } from "@/utils.ts";
 import type { JsonValue } from "@/utils.ts";
 
-/**
- * Extracts an OpenCode provider identifier from a session message-like value.
- *
- * OpenCode message shapes have changed over time, so the provider may be present
- * either directly on the message, nested under `message.model`, or under the
- * v2 session wrapper's `message.info` payload.
- *
- * @param message - Unknown message payload from OpenCode session state.
- * @returns The provider identifier when present.
- */
 const getProviderFromMessage = (message: JsonValue): string | undefined => {
   if (!isRecord(message)) {
     return undefined;
@@ -50,15 +40,6 @@ const getProviderFromMessage = (message: JsonValue): string | undefined => {
   return undefined;
 };
 
-/**
- * Finds the provider currently represented by a session's latest messages.
- *
- * Messages are scanned from newest to oldest so the returned provider reflects
- * the most recent model/provider selection in the active conversation.
- *
- * @param messages - OpenCode session messages.
- * @returns The latest provider identifier, or `undefined` when unavailable.
- */
 export const currentProviderID = (
   messages: readonly JsonValue[]
 ): string | undefined => {
@@ -72,10 +53,6 @@ export const currentProviderID = (
   return undefined;
 };
 
-/**
- * Extracts the usage data from a provider state, preferring the latest ready
- * data and falling back to the previous successful payload on error.
- */
 const windowFromState = (
   state: ProviderState | undefined
 ): ProviderUsage | undefined => {

@@ -381,6 +381,7 @@ export const zaiProvider = {
   capabilities: { customBaseUrl: false, transport: "http" },
   configSchema: zaiProviderConfigSchema,
   defaultLabel: "ZAI",
+  displayOrder: 1,
   fetch: fetchZaiCodingPlanUsageEffect,
   footerWindowKind: "rolling",
   id: "zai",

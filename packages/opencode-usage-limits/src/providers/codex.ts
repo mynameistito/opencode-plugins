@@ -343,6 +343,7 @@ export const codexProvider = {
   capabilities: { customBaseUrl: true, transport: "http" },
   configSchema: codexProviderConfigSchema,
   defaultLabel: "Codex",
+  displayOrder: 0,
   fetch: fetchCodexUsageEffect,
   footerWindowKind: "rolling",
   id: "codex",

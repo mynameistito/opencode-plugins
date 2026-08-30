@@ -429,6 +429,7 @@ export const syntheticProvider = {
   capabilities: { customBaseUrl: true, transport: "http" },
   configSchema: syntheticProviderConfigSchema,
   defaultLabel: "Synthetic",
+  displayOrder: 2,
   fetch: fetchSyntheticUsageEffect,
   footerWindowKind: "rolling",
   id: "synthetic",

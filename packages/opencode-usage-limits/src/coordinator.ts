@@ -1,7 +1,10 @@
 import { Cause, Effect, Result } from "effect";
 
 import { DEFAULT_CONFIG } from "@/config.ts";
+import type { ConfigDiagnostic } from "@/config.ts";
 import {
+  ConfigDecodeError,
+  ConfigReadError,
   MissingProviderCredentialsError,
   ProviderTransportError,
 } from "@/errors.ts";
@@ -19,6 +22,7 @@ import type {
 } from "@/types.ts";
 
 export interface CoordinatorSnapshot {
+  readonly diagnostics: readonly ConfigDiagnostic[];
   readonly states: readonly ProviderState[];
   readonly providerDisplays: Readonly<
     Partial<Record<ProviderID, ProviderDisplayConfig>>
@@ -31,7 +35,10 @@ export interface UsageCoordinatorDependencies {
   readonly loadConfig: Effect.Effect<
     Result.Result<ResolvedUsageLimitsConfig, unknown>
   >;
-  readonly loadOpenCodeAuth: Effect.Effect<OpenCodeAuth>;
+  readonly loadOpenCodeAuth: Effect.Effect<{
+    readonly auth: OpenCodeAuth;
+    readonly diagnostic?: ConfigDiagnostic;
+  }>;
   readonly fetchProvider: <ID extends ProviderID>(
     id: ID,
     config: ProviderConfigMap[ID] | undefined,
@@ -105,6 +112,21 @@ const safeFetchProvider = <ID extends ProviderID>(
     )
   );
 
+const configDiagnosticFor = (
+  result: Result.Result<ResolvedUsageLimitsConfig, unknown>
+): ConfigDiagnostic | undefined => {
+  if (Result.isSuccess(result)) {
+    return;
+  }
+  if (result.failure instanceof ConfigDecodeError) {
+    return { kind: "config-decode", message: result.failure.message };
+  }
+  return {
+    kind: "config-read",
+    message: "Usage-limits config could not be read",
+  };
+};
+
 export const usageCoordinator = (
   dependencies: UsageCoordinatorDependencies
 ): Effect.Effect<void> =>
@@ -115,9 +137,18 @@ export const usageCoordinator = (
         Effect.catchCause((cause) =>
           Cause.hasInterruptsOnly(cause)
             ? Effect.failCause(cause)
-            : Effect.succeed(Result.succeed(DEFAULT_CONFIG))
+            : Effect.succeed(
+                Result.fail(
+                  new ConfigReadError({
+                    cause: "filesystem",
+                    operation: "read-config",
+                    path: "usage-limits.jsonc",
+                  })
+                )
+              )
         )
       );
+      const configDiagnostic = configDiagnosticFor(configResult);
       const config = Result.isFailure(configResult)
         ? DEFAULT_CONFIG
         : configResult.success;
@@ -125,6 +156,7 @@ export const usageCoordinator = (
       const intervalMs = intervalMilliseconds(config.refreshIntervalSeconds);
       const providers = config.enabled ? getProviderConfigs(config) : [];
       yield* safePublish(dependencies, {
+        diagnostics: configDiagnostic ? [configDiagnostic] : [],
         lastRefreshAt: null,
         providerDisplays: providerDisplaysFor(providers),
         showErrors: config.showErrors,
@@ -132,13 +164,20 @@ export const usageCoordinator = (
       });
 
       if (providers.length > 0) {
-        const auth = yield* dependencies.loadOpenCodeAuth.pipe(
+        const authLoad = yield* dependencies.loadOpenCodeAuth.pipe(
           Effect.catchCause((cause) =>
             Cause.hasInterruptsOnly(cause)
               ? Effect.failCause(cause)
-              : Effect.succeed({})
+              : Effect.succeed({
+                  auth: {},
+                  diagnostic: {
+                    kind: "auth-read" as const,
+                    message: "OpenCode auth could not be read",
+                  },
+                })
           )
         );
+        const { auth } = authLoad;
         const terminalStates = yield* Effect.all(
           providers.map(([id, provider]) =>
             Effect.match(
@@ -186,6 +225,10 @@ export const usageCoordinator = (
         const now = yield* dependencies.now;
         const staleAfterMs = intervalMs * 2;
         yield* safePublish(dependencies, {
+          diagnostics: [
+            ...(configDiagnostic ? [configDiagnostic] : []),
+            ...(authLoad.diagnostic ? [authLoad.diagnostic] : []),
+          ],
           lastRefreshAt: now,
           providerDisplays: providerDisplaysFor(providers),
           showErrors: config.showErrors,
@@ -202,6 +245,7 @@ export const usageCoordinator = (
         });
       } else {
         yield* safePublish(dependencies, {
+          diagnostics: configDiagnostic ? [configDiagnostic] : [],
           lastRefreshAt: null,
           providerDisplays: {},
           showErrors: config.showErrors,

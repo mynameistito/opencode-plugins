@@ -2,6 +2,7 @@
 import type { RGBA } from "@opentui/core";
 import { createMemo, For } from "solid-js";
 
+import type { ConfigDiagnostic } from "@/config.ts";
 import {
   bottomWindowMainText,
   formatPercent,
@@ -18,13 +19,6 @@ import type {
 } from "@/types.ts";
 import { quotaUsedPercent } from "@/usage.ts";
 
-/**
- * Chooses the status-dot color for a usage percentage.
- *
- * @param usedPercent - Percentage consumed, or `null` when unknown.
- * @param theme - Active OpenCode TUI theme.
- * @returns A theme color indicating healthy, warning, error, or unknown usage.
- */
 interface V2Theme {
   readonly text: {
     readonly default: RGBA;
@@ -154,16 +148,8 @@ export const shouldRenderProviderState = (
   return showErrors && state.errorKind !== "missing_credentials";
 };
 
-/**
- * Renders the sidebar usage-limits panel.
- *
- * The panel lists every enabled provider, shows loading and stale states, and can
- * optionally display provider fetch errors.
- *
- * @param props - Provider states, error visibility, active TUI theme, and last refresh timestamp.
- * @returns Solid/OpenTUI JSX for the sidebar content slot.
- */
 export const UsageLimitsPanel = (props: {
+  diagnostics?: readonly ConfigDiagnostic[];
   states: readonly ProviderState[];
   showErrors: boolean;
   theme: UsageTheme;
@@ -208,7 +194,8 @@ export const UsageLimitsPanel = (props: {
     })
   );
 
-  if (visibleStates().length === 0) {
+  const diagnostics = props.diagnostics ?? [];
+  if (visibleStates().length === 0 && diagnostics.length === 0) {
     return null;
   }
 
@@ -217,6 +204,9 @@ export const UsageLimitsPanel = (props: {
       <text fg={colors.text}>
         <b>Usage Limits</b>
       </text>
+      <For each={diagnostics}>
+        {(diagnostic) => <text fg={colors.error}>{diagnostic.message}</text>}
+      </For>
       <For each={visibleStates()}>
         {(state) => {
           let tierName: string | undefined;

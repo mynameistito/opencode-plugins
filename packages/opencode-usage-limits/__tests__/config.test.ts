@@ -145,14 +145,39 @@ describe("configuration loading", () => {
       openai: { access: "token", accountId: "account" },
     });
 
-    const auth = await loadOpenCodeAuth();
-    expect(Redacted.isRedacted(auth.openai?.access)).toBe(true);
-    expect(String(auth.openai?.access)).not.toContain("token");
+    const result = await loadOpenCodeAuth();
+    expect(Redacted.isRedacted(result.auth.openai?.access)).toBe(true);
+    expect(String(result.auth.openai?.access)).not.toContain("token");
+    expect(result.diagnostic).toBeUndefined();
   });
 
   test("treats absent or malformed auth as empty", async () => {
     readJsonFile.mockRejectedValueOnce(new Error("missing"));
-    await expect(loadOpenCodeAuth()).resolves.toEqual({});
+    await expect(loadOpenCodeAuth()).resolves.toMatchObject({
+      auth: {},
+      diagnostic: { kind: "auth-read" },
+    });
+  });
+
+  test("classifies absent and malformed auth without exposing values", async () => {
+    readJsonFile.mockRejectedValueOnce(
+      Object.assign(new Error("missing"), { code: "ENOENT" })
+    );
+    await expect(loadOpenCodeAuth()).resolves.toMatchObject({
+      auth: {},
+      diagnostic: { kind: "auth-missing" },
+    });
+
+    readJsonFile.mockResolvedValueOnce({
+      minimax: { apiKey: { secret: "do-not-log" }, key: "valid-key" },
+    });
+    const result = await loadOpenCodeAuth();
+    expect(credentialValue(result.auth.minimax?.key)).toBe("valid-key");
+    expect(result.diagnostic).toEqual({
+      kind: "auth-decode",
+      message: "Some OpenCode auth fields could not be read",
+    });
+    expect(JSON.stringify(result.diagnostic)).not.toContain("do-not-log");
     expect(parseOpenCodeAuth({ openai: { access: 42 } })).toEqual({});
   });
 

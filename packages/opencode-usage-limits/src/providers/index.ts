@@ -1,4 +1,5 @@
 import { codexProvider } from "@/providers/codex.ts";
+import type { ProviderDefinition } from "@/providers/definition.ts";
 import { minimaxProvider } from "@/providers/minimax.ts";
 import { openCodeGoProvider } from "@/providers/opencode-go.ts";
 import { qwenProvider } from "@/providers/qwen.ts";
@@ -7,22 +8,11 @@ import { zaiProvider } from "@/providers/zai-coding-plan.ts";
 import type { ProviderID } from "@/types.ts";
 
 /** Single ordered manifest of every supported provider definition. */
-const PROVIDER_MANIFEST = [
-  codexProvider,
-  zaiProvider,
-  syntheticProvider,
-  minimaxProvider,
-  qwenProvider,
-  openCodeGoProvider,
-] as const;
+type ProviderRegistry = {
+  [ID in ProviderID]: ProviderDefinition<ID>;
+};
 
-/** Sidebar display order derived from the provider manifest. */
-export const PROVIDER_ORDER: readonly ProviderID[] = PROVIDER_MANIFEST.map(
-  (provider) => provider.id
-);
-
-/** Provider lookup derived from the same ordered manifest. */
-export const PROVIDER_REGISTRY = {
+const PROVIDER_MANIFEST: ProviderRegistry = {
   codex: codexProvider,
   minimax: minimaxProvider,
   "opencode-go": openCodeGoProvider,
@@ -31,8 +21,20 @@ export const PROVIDER_REGISTRY = {
   zai: zaiProvider,
 };
 
+/** Sidebar display order derived from the provider manifest. */
+export const PROVIDER_ORDER: readonly ProviderID[] = Object.values(
+  PROVIDER_MANIFEST
+)
+  .toSorted((left, right) => left.displayOrder - right.displayOrder)
+  .map((provider) => provider.id);
+
+/** Provider lookup derived from the same ordered manifest. */
+export const PROVIDER_REGISTRY = PROVIDER_MANIFEST;
+
 /** Provider definitions projected in explicit sidebar display order. */
-export const PROVIDERS = [...PROVIDER_MANIFEST] as const;
+export const PROVIDERS = Object.values(PROVIDER_MANIFEST).toSorted(
+  (left, right) => left.displayOrder - right.displayOrder
+);
 
 /** Returns the default display label for a provider ID. */
 export const defaultLabelFor = (id: ProviderID): string =>
@@ -42,7 +44,7 @@ export const defaultLabelFor = (id: ProviderID): string =>
 export const pluginProviderForOpenCode = (
   openCodeID: string
 ): ProviderID | null => {
-  for (const provider of PROVIDER_MANIFEST) {
+  for (const provider of PROVIDERS) {
     if (provider.openCodeProviderIDs.some((id) => id === openCodeID)) {
       return provider.id;
     }

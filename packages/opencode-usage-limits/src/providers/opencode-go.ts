@@ -224,6 +224,7 @@ export const openCodeGoProvider = {
   capabilities: { customBaseUrl: true, transport: "http" },
   configSchema: openCodeGoProviderConfigSchema,
   defaultLabel: "OpenCode GO",
+  displayOrder: 5,
   fetch: fetchOpenCodeGoUsageEffect,
   footerWindowKind: "rolling",
   id: "opencode-go",

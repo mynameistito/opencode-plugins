@@ -369,6 +369,7 @@ export const qwenProvider = {
   capabilities: { customBaseUrl: false, transport: "command" },
   configSchema: qwenProviderConfigSchema,
   defaultLabel: "Qwen",
+  displayOrder: 4,
   fetch: fetchQwenTokenPlanUsage,
   footerWindowKind: "credits",
   id: "qwen",
