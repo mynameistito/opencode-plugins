@@ -125,7 +125,7 @@ const createHarness = (
           ? Result.fail(state.configError)
           : Result.succeed(state.config)
       ),
-    loadOpenCodeAuth: () => Promise.resolve(auth),
+    loadOpenCodeAuth: () => Promise.resolve({ auth }),
     now: () => NOW,
     sleep: (delayMs) =>
       Effect.gen(function* sleep() {
@@ -369,7 +369,7 @@ describe("usage-limits TUI lifecycle", () => {
 
     expect(harness.fetches).toEqual([]);
     expect(harness.scheduled[0]?.delayMs).toBe(60_000);
-    expect(await renderSlot(registered, "sidebar.content")).not.toContain(
+    expect(await renderSlot(registered, "sidebar.content")).toContain(
       "Usage Limits"
     );
   });

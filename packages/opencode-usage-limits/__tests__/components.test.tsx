@@ -55,6 +55,7 @@ const renderPanelText = async (
   const setup = await testRender(
     () => (
       <UsageLimitsPanel
+        diagnostics={[]}
         showErrors={showErrors}
         states={states}
         theme={theme}

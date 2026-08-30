@@ -6,7 +6,6 @@ import { usageCoordinator } from "@/coordinator.ts";
 import type { CoordinatorSnapshot } from "@/coordinator.ts";
 import type { ProviderError } from "@/errors.ts";
 import type {
-  OpenCodeAuth,
   ProviderID,
   ProviderUsage,
   ResolvedUsageLimitsConfig,
@@ -23,7 +22,7 @@ const config: ResolvedUsageLimitsConfig = {
   showErrors: true,
 };
 
-const usage = (id: ProviderID): ProviderUsage => ({
+const usage = <ID extends ProviderID>(id: ID): ProviderUsage<ID> => ({
   capturedAt: new Date("2026-08-14T12:00:00.000Z"),
   id,
   label: id,
@@ -31,9 +30,9 @@ const usage = (id: ProviderID): ProviderUsage => ({
 });
 
 const dependencies = (
-  fetchProvider: (
-    id: ProviderID
-  ) => Effect.Effect<ProviderUsage, ProviderError>,
+  fetchProvider: <ID extends ProviderID>(
+    id: ID
+  ) => Effect.Effect<ProviderUsage<ID>, ProviderError>,
   initialConfig: ResolvedUsageLimitsConfig = config
 ) => {
   const snapshots: string[][] = [];
@@ -42,15 +41,13 @@ const dependencies = (
   return {
     dependencies: {
       fetchProvider: <ID extends ProviderID>(id: ID) =>
-        // SAFETY: The test dispatcher returns the usage type selected by ID.
         Effect.tap(fetchProvider(id), () =>
           Effect.sync(() => {
             fetches.push(id);
           })
-        ) as Effect.Effect<ProviderUsage<ID>, ProviderError>,
+        ),
       loadConfig: Effect.succeed(Result.succeed(initialConfig)),
-      // SAFETY: An empty auth object is a valid parsed OpenCode auth value.
-      loadOpenCodeAuth: Effect.succeed({} as OpenCodeAuth),
+      loadOpenCodeAuth: Effect.succeed({ auth: {} }),
       now: Effect.succeed(new Date("2026-08-14T12:01:00.000Z")),
       publish: (snapshot: CoordinatorSnapshot) =>
         Effect.sync(() => {
@@ -107,8 +104,8 @@ describe("usage coordinator", () => {
 
   test("interrupts active provider work without publishing after disposal", async () => {
     const gate = await Effect.runPromise(Deferred.make<boolean>());
-    const harness = dependencies(() =>
-      Deferred.await(gate).pipe(Effect.as(usage("codex")))
+    const harness = dependencies((id) =>
+      Deferred.await(gate).pipe(Effect.as(usage(id)))
     );
     const fiber = Effect.runFork(
       Effect.scoped(usageCoordinator(harness.dependencies))
@@ -143,13 +140,13 @@ describe("usage coordinator", () => {
   test("keeps refreshing after an unexpected provider defect", async () => {
     let attempts = 0;
     const harness = dependencies(
-      () => {
+      (id) => {
         attempts += 1;
         return attempts === 1
           ? (() => {
               throw new Error("unexpected provider failure");
             })()
-          : Effect.succeed(usage("codex"));
+          : Effect.succeed(usage(id));
       },
       {
         ...config,

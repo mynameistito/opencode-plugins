@@ -2,6 +2,7 @@
 import type { RGBA } from "@opentui/core";
 import { createMemo, For } from "solid-js";
 
+import type { ConfigDiagnostic } from "@/config.ts";
 import {
   bottomWindowMainText,
   formatPercent,
@@ -164,6 +165,7 @@ export const shouldRenderProviderState = (
  * @returns Solid/OpenTUI JSX for the sidebar content slot.
  */
 export const UsageLimitsPanel = (props: {
+  diagnostics?: readonly ConfigDiagnostic[];
   states: readonly ProviderState[];
   showErrors: boolean;
   theme: UsageTheme;
@@ -208,7 +210,8 @@ export const UsageLimitsPanel = (props: {
     })
   );
 
-  if (visibleStates().length === 0) {
+  const diagnostics = props.diagnostics ?? [];
+  if (visibleStates().length === 0 && diagnostics.length === 0) {
     return null;
   }
 
@@ -217,6 +220,9 @@ export const UsageLimitsPanel = (props: {
       <text fg={colors.text}>
         <b>Usage Limits</b>
       </text>
+      <For each={diagnostics}>
+        {(diagnostic) => <text fg={colors.error}>{diagnostic.message}</text>}
+      </For>
       <For each={visibleStates()}>
         {(state) => {
           let tierName: string | undefined;

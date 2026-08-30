@@ -34,7 +34,7 @@ export interface UsageLimitsTuiDependencies {
   /** Loads the fully resolved plugin configuration. */
   loadConfig: () => Promise<Awaited<ReturnType<typeof loadConfig>>>;
   /** Loads shared OpenCode provider authentication. */
-  loadOpenCodeAuth: () => Promise<OpenCodeAuth>;
+  loadOpenCodeAuth: () => Promise<Awaited<ReturnType<typeof loadOpenCodeAuth>>>;
   /** Returns the current wall-clock time. */
   now: () => Date;
   /** Suspends the coordinator until its next refresh. */
@@ -65,6 +65,7 @@ export const createUsageLimitsPlugin =
   (dependencies: UsageLimitsTuiDependencies) =>
   (context: Context): (() => void) => {
     const [snapshot, setSnapshot] = createSignal<CoordinatorSnapshot>({
+      diagnostics: [],
       lastRefreshAt: null,
       providerDisplays: {},
       showErrors: true,
@@ -74,6 +75,7 @@ export const createUsageLimitsPlugin =
       append: "sidebar.content",
       render: () => (
         <UsageLimitsPanel
+          diagnostics={snapshot().diagnostics}
           providerDisplays={snapshot().providerDisplays}
           showErrors={snapshot().showErrors}
           states={snapshot().states}
