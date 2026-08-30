@@ -1,3 +1,4 @@
+import { existsSync, readdirSync } from "node:fs";
 import path from "node:path";
 
 const [task] = process.argv.slice(2);
@@ -23,10 +24,23 @@ if (!isSupportedTask(task)) {
   process.exit(1);
 }
 
-const packages = [
-  "packages/opencode-force-input",
-  "packages/opencode-usage-limits",
-];
+const manifest: { workspaces?: string[] } = JSON.parse(
+  await Bun.file("package.json").text()
+);
+const workspacePatterns = manifest.workspaces ?? [];
+const packages = workspacePatterns
+  .filter((pattern) => pattern.endsWith("/*"))
+  .flatMap((pattern) => {
+    const parentDirectory = pattern.slice(0, -2);
+    return readdirSync(parentDirectory, { withFileTypes: true })
+      .filter(
+        (entry) =>
+          entry.isDirectory() &&
+          existsSync(path.join(parentDirectory, entry.name, "package.json"))
+      )
+      .map((entry) => path.join(parentDirectory, entry.name));
+  })
+  .toSorted();
 
 for (const packageDirectory of packages) {
   console.log(`\n==> ${packageDirectory} ${task}`);
