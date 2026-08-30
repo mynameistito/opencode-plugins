@@ -1,5 +1,11 @@
 # @mynameistito/opencode-force-input
 
+## 1.0.3
+
+### Patch Changes
+
+- d5930f1: Complete npm metadata and improve package discoverability keywords.
+
 ## 1.0.2
 
 ### Patch Changes
