@@ -1,5 +1,11 @@
 # @mynameistito/opencode-force-input
 
+## 1.0.4
+
+### Patch Changes
+
+- 63d2765: Move force-input plugin entrypoint to src/index.ts
+
 ## 1.0.3
 
 ### Patch Changes
