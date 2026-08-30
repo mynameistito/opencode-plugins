@@ -1,5 +1,11 @@
 # @mynameistito/opencode-usage-limits
 
+## 1.0.9
+
+### Patch Changes
+
+- 57a9511: Preserve safe diagnostics for configuration and authentication failures
+
 ## 1.0.8
 
 ### Patch Changes
