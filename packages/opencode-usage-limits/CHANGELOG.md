@@ -1,5 +1,11 @@
 # @mynameistito/opencode-usage-limits
 
+## 1.0.6
+
+### Patch Changes
+
+- d5930f1: Complete npm metadata and improve provider and usage discoverability keywords.
+
 ## 1.0.5
 
 ### Patch Changes
