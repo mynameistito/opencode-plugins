@@ -17,9 +17,7 @@ export default defineConfig({
   dts: {
     sourcemap: true,
   },
-  entry: {
-    tui: "./tui.tsx",
-  },
+  entry: ["src/index.ts"],
   format: ["esm"],
   outDir: "dist",
   sourcemap: true,

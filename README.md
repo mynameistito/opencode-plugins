@@ -45,7 +45,7 @@ Build the workspace and load the source entrypoints from `~/.config/opencode/cli
 {
   "$schema": "https://opencode.ai/v2/cli.json",
   "plugins": [
-    "/path/to/opencode-plugins/packages/opencode-force-input/src/tui.tsx",
+    "/path/to/opencode-plugins/packages/opencode-force-input/src/index.ts",
     "/path/to/opencode-plugins/packages/opencode-usage-limits/src/index.ts",
   ],
 }

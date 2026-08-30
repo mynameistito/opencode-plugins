@@ -1,13 +1,12 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "jsx": "react-jsx",
     "allowJs": true,
     "types": ["bun"],
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noPropertyAccessFromIndexSignature": false
   },
-  "include": ["index.ts", "tui.tsx", "__tests__/**/*.ts", "scripts/**/*.ts"],
+  "include": ["src/**/*.ts", "__tests__/**/*.ts", "scripts/**/*.ts"],
   "exclude": ["dist"]
 }

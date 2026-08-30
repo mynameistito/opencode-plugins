@@ -1,4 +1,4 @@
-const tuiEntrypoint = new URL("../dist/tui.mjs", import.meta.url);
+const tuiEntrypoint = new URL("../dist/index.mjs", import.meta.url);
 const tuiModule = await import(tuiEntrypoint.href);
 const tuiPlugin = tuiModule.default;
 
