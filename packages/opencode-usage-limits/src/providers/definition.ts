@@ -10,7 +10,6 @@ import type {
 } from "@/types.ts";
 import type { UsageWindowKind } from "@/usage.ts";
 
-/** Fetches and normalizes usage for one provider adapter. */
 type ProviderFetch<ID extends ProviderID> = (
   config: ProviderConfigMap[ID] | undefined,
   openCodeAuth: OpenCodeAuth,
@@ -29,6 +28,8 @@ export interface ProviderDefinition<ID extends ProviderID = ProviderID> {
   id: ID;
   /** Default sidebar label when config.label is omitted. */
   defaultLabel: string;
+  /** Stable sidebar display order. */
+  displayOrder: number;
   /** Schema for this provider's supported configuration fields. */
   configSchema: Schema.Schema<ProviderConfigMap[ID]>;
   /** Runtime behavior supported by this adapter. */

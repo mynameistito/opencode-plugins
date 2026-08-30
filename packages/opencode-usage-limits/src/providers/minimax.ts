@@ -459,6 +459,7 @@ export const minimaxProvider = {
   capabilities: { customBaseUrl: true, transport: "http" },
   configSchema: minimaxProviderConfigSchema,
   defaultLabel: "MiniMax",
+  displayOrder: 3,
   fetch: fetchMiniMaxTokenPlanUsageEffect,
   footerWindowKind: "rolling",
   id: "minimax",
