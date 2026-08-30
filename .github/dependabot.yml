@@ -4,9 +4,14 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    labels:
+      - dependencies
     ignore:
       - dependency-name: typescript
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
+    labels:
+      - dependencies
+      - github-actions
