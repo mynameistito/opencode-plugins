@@ -1,15 +1,20 @@
 {
+  "$schema": "https://json.schemastore.org/package.json",
   "name": "@mynameistito/opencode-force-input",
   "version": "1.0.2",
   "description": "OpenCode TUI plugin that interrupts the active run and submits the prompt with Ctrl+Enter.",
   "keywords": [
     "ctrl-enter",
+    "ctrl-return",
     "force-submit",
+    "interrupt",
+    "keyboard-shortcuts",
     "opencode",
     "opencode-plugin",
+    "prompt",
     "tui"
   ],
-  "homepage": "https://github.com/mynameistito/opencode-plugins#readme",
+  "homepage": "https://github.com/mynameistito/opencode-plugins/tree/main/packages/opencode-force-input#readme",
   "bugs": {
     "url": "https://github.com/mynameistito/opencode-plugins/issues"
   },
@@ -17,7 +22,8 @@
   "author": "mynameistito",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mynameistito/opencode-plugins.git"
+    "url": "git+https://github.com/mynameistito/opencode-plugins.git",
+    "directory": "packages/opencode-force-input"
   },
   "files": [
     "dist",

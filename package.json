@@ -1,4 +1,5 @@
 {
+  "$schema": "https://json.schemastore.org/package.json",
   "name": "opencode-plugins",
   "private": true,
   "description": "OpenCode plugins maintained in a Bun workspace.",
