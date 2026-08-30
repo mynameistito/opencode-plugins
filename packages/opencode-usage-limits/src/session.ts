@@ -106,13 +106,13 @@ const windowFromState = (
  * @returns The best usage window for the active provider, or `null` if none can
  *   be shown.
  */
-export const usageForProvider = (
+const selectUsageForProvider = (
   states: readonly ProviderState[],
   providerID: string | undefined,
   providerDisplays: Readonly<
     Partial<Record<ProviderID, ProviderDisplayConfig>>
   > = {}
-): UsageWindow | null => {
+): { providerID: ProviderID; window: UsageWindow } | null => {
   const usageID = providerID ? pluginProviderForOpenCode(providerID) : null;
 
   const resolveWindow = (id: ProviderID): UsageWindow | null => {
@@ -152,7 +152,7 @@ export const usageForProvider = (
   if (usageID) {
     const window = resolveWindow(usageID);
     if (window) {
-      return window;
+      return { providerID: usageID, window };
     }
   }
 
@@ -163,9 +163,28 @@ export const usageForProvider = (
     }
     const window = resolveWindow(state.id);
     if (window) {
-      return window;
+      return { providerID: state.id, window };
     }
   }
 
   return null;
 };
+
+export const usageProviderFor = (
+  states: readonly ProviderState[],
+  providerID: string | undefined,
+  providerDisplays: Readonly<
+    Partial<Record<ProviderID, ProviderDisplayConfig>>
+  > = {}
+): ProviderID | null =>
+  selectUsageForProvider(states, providerID, providerDisplays)?.providerID ??
+  null;
+
+export const usageForProvider = (
+  states: readonly ProviderState[],
+  providerID: string | undefined,
+  providerDisplays: Readonly<
+    Partial<Record<ProviderID, ProviderDisplayConfig>>
+  > = {}
+): UsageWindow | null =>
+  selectUsageForProvider(states, providerID, providerDisplays)?.window ?? null;
