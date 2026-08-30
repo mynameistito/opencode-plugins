@@ -1,5 +1,11 @@
 # @mynameistito/opencode-usage-limits
 
+## 1.0.8
+
+### Patch Changes
+
+- acdf020: Respect footer bar visibility for fallback provider usage
+
 ## 1.0.7
 
 ### Patch Changes
