@@ -9,9 +9,12 @@ import type { CoordinatorSnapshot } from "@/coordinator.ts";
 import { usageCoordinator } from "@/coordinator.ts";
 import type { ProviderError } from "@/errors.ts";
 import { fetchProviderEffect } from "@/providers.ts";
-import { pluginProviderForOpenCode } from "@/providers/index.ts";
 import { ProviderRuntimeLive } from "@/providers/runtime/index.ts";
-import { currentProviderID, usageForProvider } from "@/session.ts";
+import {
+  currentProviderID,
+  usageForProvider,
+  usageProviderFor,
+} from "@/session.ts";
 import type {
   ProviderID,
   OpenCodeAuth,
@@ -88,15 +91,17 @@ export const createUsageLimitsPlugin =
         const providerID = currentProviderID(
           context.data.session.message.list(slot.sessionID)
         );
-        const usageProviderID = providerID
-          ? pluginProviderForOpenCode(providerID)
-          : null;
+        const selectedProviderID = usageProviderFor(
+          snapshot().states,
+          providerID,
+          snapshot().providerDisplays
+        );
         return (
           <BottomUsage
             theme={context.theme}
             showBar={
-              usageProviderID
-                ? snapshot().providerDisplays[usageProviderID]
+              selectedProviderID
+                ? snapshot().providerDisplays[selectedProviderID]
                     ?.showFooterBar !== false
                 : true
             }

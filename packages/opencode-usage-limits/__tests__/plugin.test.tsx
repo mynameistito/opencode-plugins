@@ -88,7 +88,10 @@ const usage = <ID extends ProviderID>(id: ID): ProviderUsage<ID> => ({
   ],
 });
 
-const createHarness = (initialConfig = config()) => {
+const createHarness = (
+  initialConfig = config(),
+  sessionProviderID = "openai"
+) => {
   const scheduled: ScheduledRefresh[] = [];
   const fetches: ProviderID[] = [];
   const auth: OpenCodeAuth = {};
@@ -145,7 +148,9 @@ const createHarness = (initialConfig = config()) => {
   };
 
   const partialApi = {
-    data: { session: { message: { list: () => [{ providerID: "openai" }] } } },
+    data: {
+      session: { message: { list: () => [{ providerID: sessionProviderID }] } },
+    },
     theme,
     ui: {
       slot: (claim: {
@@ -316,6 +321,25 @@ describe("usage-limits TUI lifecycle", () => {
     expect(rendered).not.toContain(
       slot === "sidebar.content" ? "[█████░░░░░░░]" : "[████░░░░░░░░]"
     );
+  });
+
+  test("uses the fallback provider footer bar setting", async () => {
+    const harness = createHarness(
+      config({
+        providers: {
+          codex: {
+            enabled: true,
+            showFooterBar: false,
+          },
+        },
+      }),
+      "anthropic"
+    );
+    const registered = await initialize(harness);
+
+    const rendered = await renderSlot(registered, "prompt.footer.status");
+    expect(rendered).toContain("42%");
+    expect(rendered).not.toContain("[████░░░░░░░░]");
   });
 
   test("does not render footer usage for shell mode or missing sessions", async () => {
