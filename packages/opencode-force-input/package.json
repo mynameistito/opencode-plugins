@@ -33,8 +33,8 @@
   "type": "module",
   "exports": {
     "./tui": {
-      "types": "./dist/tui.d.mts",
-      "import": "./dist/tui.mjs"
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
     }
   },
   "publishConfig": {

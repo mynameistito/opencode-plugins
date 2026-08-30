@@ -1,5 +1,3 @@
-/* @jsxImportSource @opentui/solid */
-
 import { Plugin } from "@opencode-ai/plugin/tui";
 import type { Context } from "@opencode-ai/plugin/tui/context";
 
