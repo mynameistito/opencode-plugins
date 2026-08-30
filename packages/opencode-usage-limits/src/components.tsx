@@ -164,7 +164,7 @@ export const shouldRenderProviderState = (
  * @returns Solid/OpenTUI JSX for the sidebar content slot.
  */
 export const UsageLimitsPanel = (props: {
-  states: ProviderState[];
+  states: readonly ProviderState[];
   showErrors: boolean;
   theme: UsageTheme;
   lastRefreshAt: Date | null;

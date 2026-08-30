@@ -5,6 +5,7 @@ import { createSignal } from "solid-js";
 
 import { BottomUsage, UsageLimitsPanel } from "@/components.tsx";
 import { loadConfig, loadOpenCodeAuth } from "@/config.ts";
+import type { CoordinatorSnapshot } from "@/coordinator.ts";
 import { usageCoordinator } from "@/coordinator.ts";
 import type { ProviderError } from "@/errors.ts";
 import { fetchProviderEffect } from "@/providers.ts";
@@ -13,10 +14,8 @@ import { ProviderRuntimeLive } from "@/providers/runtime/index.ts";
 import { currentProviderID, usageForProvider } from "@/session.ts";
 import type {
   ProviderID,
-  ProviderDisplayConfig,
   OpenCodeAuth,
   ProviderConfigMap,
-  ProviderState,
   ProviderUsage,
 } from "@/types.ts";
 
@@ -62,21 +61,21 @@ const productionDependencies: UsageLimitsTuiDependencies = {
 export const createUsageLimitsPlugin =
   (dependencies: UsageLimitsTuiDependencies) =>
   (context: Context): (() => void) => {
-    const [states, setStates] = createSignal<ProviderState[]>([]);
-    const [providerDisplays, setProviderDisplays] = createSignal<
-      Readonly<Partial<Record<ProviderID, ProviderDisplayConfig>>>
-    >({});
-    const [showErrors, setShowErrors] = createSignal(true);
-    const [lastRefreshAt, setLastRefreshAt] = createSignal<Date | null>(null);
+    const [snapshot, setSnapshot] = createSignal<CoordinatorSnapshot>({
+      lastRefreshAt: null,
+      providerDisplays: {},
+      showErrors: true,
+      states: [],
+    });
     const disposeSidebar = context.ui.slot({
       append: "sidebar.content",
       render: () => (
         <UsageLimitsPanel
-          providerDisplays={providerDisplays()}
-          showErrors={showErrors()}
-          states={states()}
+          providerDisplays={snapshot().providerDisplays}
+          showErrors={snapshot().showErrors}
+          states={snapshot().states}
           theme={context.theme}
-          lastRefreshAt={lastRefreshAt()}
+          lastRefreshAt={snapshot().lastRefreshAt}
         />
       ),
     });
@@ -97,10 +96,15 @@ export const createUsageLimitsPlugin =
             theme={context.theme}
             showBar={
               usageProviderID
-                ? providerDisplays()[usageProviderID]?.showFooterBar !== false
+                ? snapshot().providerDisplays[usageProviderID]
+                    ?.showFooterBar !== false
                 : true
             }
-            window={usageForProvider(states(), providerID, providerDisplays())}
+            window={usageForProvider(
+              snapshot().states,
+              providerID,
+              snapshot().providerDisplays
+            )}
           />
         );
       },
@@ -111,13 +115,7 @@ export const createUsageLimitsPlugin =
       loadConfig: Effect.tryPromise(dependencies.loadConfig),
       loadOpenCodeAuth: Effect.tryPromise(dependencies.loadOpenCodeAuth),
       now: Effect.sync(dependencies.now),
-      publish: (snapshot) =>
-        Effect.sync(() => {
-          setProviderDisplays(snapshot.providerDisplays);
-          setShowErrors(snapshot.showErrors);
-          setStates([...snapshot.states]);
-          setLastRefreshAt(snapshot.lastRefreshAt);
-        }),
+      publish: (nextSnapshot) => Effect.sync(() => setSnapshot(nextSnapshot)),
       sleep: (milliseconds) =>
         dependencies.sleep?.(milliseconds) ?? Effect.sleep(milliseconds),
     });
