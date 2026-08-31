@@ -1,5 +1,11 @@
 # @mynameistito/opencode-usage-limits
 
+## 1.0.10
+
+### Patch Changes
+
+- a915126: Read OpenCode auth from platform data directories
+
 ## 1.0.9
 
 ### Patch Changes
