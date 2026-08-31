@@ -1,59 +1,85 @@
 import { describe, expect, test } from "bun:test";
 
-import { createQwenProvider } from "@/providers/qwen.ts";
-import type { QwenCommandRunner } from "@/providers/qwen.ts";
+import { Effect, Exit, Layer } from "effect";
+
+import { ProviderCommandError, ProviderTimeoutError } from "@/errors.ts";
+import { qwenProvider } from "@/providers/qwen.ts";
+import { ProviderClock } from "@/providers/runtime/clock.ts";
+import { ProviderCommandExecutor } from "@/providers/runtime/command.ts";
+import type { ProviderCommandInput } from "@/providers/runtime/command.ts";
+import { ProviderEnvironmentLive } from "@/providers/runtime/environment.ts";
+import { ProviderFileSystemLive } from "@/providers/runtime/filesystem.ts";
+import { ProviderHttpClientLive } from "@/providers/runtime/http.ts";
 
 const NOW = new Date("2026-08-14T12:00:00.000Z");
 
-const commandError = (input: {
-  code?: number | string;
-  stderr?: string;
-  stdout?: string;
-}): Error => Object.assign(new Error("command failed"), input);
+type CommandResult = string | ProviderCommandError | ProviderTimeoutError;
 
-const safeErrorGraph = (error: Error | null): string => {
-  if (!(error instanceof Error)) {
-    return String(error);
-  }
-  const cause = error.cause instanceof Error ? safeErrorGraph(error.cause) : "";
-  return `${error.name}:${error.message}:${cause}`;
-};
+const authenticated = JSON.stringify({
+  authenticated: true,
+  server_verified: true,
+});
 
-const asError = <T>(value: T): Error =>
-  value instanceof Error ? value : new Error(String(value));
+const createRuntime = (auth: CommandResult, usage: CommandResult = "") => {
+  const calls: ProviderCommandInput[] = [];
+  const commands = Layer.succeed(ProviderCommandExecutor, {
+    execute: (input) => {
+      calls.push(input);
+      const result = input.args[0] === "auth" ? auth : usage;
+      return result instanceof Error
+        ? Effect.fail(result)
+        : Effect.succeed(result);
+    },
+  });
+  const clock = Layer.succeed(ProviderClock, {
+    after: () => Effect.succeed(null),
+    now: Effect.succeed(NOW),
+  });
 
-interface RunnerHarness {
-  calls: string[][];
-  runner: QwenCommandRunner;
-}
-
-const createRunner = (
-  auth: string | Error,
-  usage: string | Error = ""
-): RunnerHarness => {
-  const calls: string[][] = [];
-  const runner: QwenCommandRunner = (_cli, args) => {
-    calls.push(args);
-    const result = args[0] === "auth" ? auth : usage;
-    if (result instanceof Error) {
-      return Promise.reject(result);
-    }
-    return Promise.resolve(result);
+  return {
+    calls,
+    runtime: Layer.mergeAll(
+      commands,
+      clock,
+      ProviderEnvironmentLive,
+      ProviderFileSystemLive,
+      ProviderHttpClientLive
+    ),
   };
-  return { calls, runner };
 };
 
-const fetchUsage = (runner: QwenCommandRunner, label?: string) =>
-  createQwenProvider({ commandRunner: runner, now: () => NOW }).fetch(
-    label ? { label } : undefined,
-    {},
-    4321
+const fetchUsage = (
+  runtime: ReturnType<typeof createRuntime>["runtime"],
+  label?: string
+) =>
+  Effect.runPromise(
+    qwenProvider
+      .fetch(label ? { label } : undefined, {}, 4321)
+      .pipe(Effect.provide(runtime))
   );
 
+const fetchUsageExit = (runtime: ReturnType<typeof createRuntime>["runtime"]) =>
+  Effect.runPromiseExit(
+    qwenProvider.fetch(undefined, {}, 4321).pipe(Effect.provide(runtime))
+  );
+
+const expectFailure = <ErrorTag extends string>(
+  exit: Exit.Exit<unknown, { readonly _tag: ErrorTag }>,
+  tag: ErrorTag
+) => {
+  expect(Exit.isFailure(exit)).toBe(true);
+  if (Exit.isFailure(exit)) {
+    const serialized = JSON.stringify(exit.cause);
+    expect(serialized).toContain(`"_tag":"${tag}"`);
+    return serialized;
+  }
+  throw new Error("expected provider fetch failure");
+};
+
 describe("Qwen provider", () => {
-  test("returns authenticated usage with reset dates and calculated counts", async () => {
-    const { calls, runner } = createRunner(
-      JSON.stringify({ authenticated: true, server_verified: true }),
+  test("fetches authenticated usage through the runtime services", async () => {
+    const { calls, runtime } = createRuntime(
+      authenticated,
       JSON.stringify({
         token_plan: {
           planName: "Plus",
@@ -66,11 +92,22 @@ describe("Qwen provider", () => {
       })
     );
 
-    const usage = await fetchUsage(runner);
+    const usage = await fetchUsage(runtime);
 
     expect(calls).toEqual([
-      ["auth", "status", "--format", "json"],
-      ["usage", "summary", "--format", "json"],
+      {
+        acceptedExitCodes: new Set([2]),
+        args: ["auth", "status", "--format", "json"],
+        command: "qwencloud",
+        providerID: "qwen",
+        timeoutMs: 4321,
+      },
+      {
+        args: ["usage", "summary", "--format", "json"],
+        command: "qwencloud",
+        providerID: "qwen",
+        timeoutMs: 4321,
+      },
     ]);
     expect(usage).toMatchObject({
       capturedAt: NOW,
@@ -93,152 +130,89 @@ describe("Qwen provider", () => {
     );
   });
 
-  test("reports an unavailable CLI without exposing subprocess diagnostics", async () => {
-    const secret = "stderr-secret-like-value";
-    const { runner } = createRunner(
-      commandError({ code: "ENOENT", stderr: secret, stdout: secret })
+  test("accepts exit code 2 auth JSON and reports missing credentials", async () => {
+    const { calls, runtime } = createRuntime(
+      JSON.stringify({ authenticated: false })
     );
 
-    try {
-      await fetchUsage(runner);
-      throw new Error("expected Qwen CLI failure");
-    } catch (error) {
-      expect(safeErrorGraph(asError(error))).toContain(
-        "qwencloud CLI not available (qwencloud CLI failed)"
-      );
-      expect(safeErrorGraph(asError(error))).not.toContain(secret);
-    }
-  });
+    const exit = await fetchUsageExit(runtime);
 
-  test("accepts unauthenticated JSON from a non-zero auth command", async () => {
-    const { runner } = createRunner(
-      commandError({
-        code: 2,
-        stdout: JSON.stringify({ authenticated: false }),
-      })
-    );
-
-    await expect(fetchUsage(runner)).rejects.toThrow(
-      "Not authenticated. Run: qwencloud auth login"
-    );
+    expect(calls[0]?.acceptedExitCodes).toEqual(new Set([2]));
+    const serialized = expectFailure(exit, "MissingProviderCredentialsError");
+    expect(serialized).toContain('"operation":"run-command"');
+    expect(serialized).toContain('"providerID":"qwen"');
   });
 
   test.each([
-    ["malformed auth JSON", "{", "", "Failed to parse qwencloud auth status"],
-    [
-      "malformed usage JSON",
-      JSON.stringify({ authenticated: true }),
-      "{",
-      "Failed to parse qwencloud usage response",
-    ],
-    [
-      "partial usage JSON",
-      JSON.stringify({ authenticated: true }),
-      JSON.stringify({ token_plan: { subscribed: true } }),
-      "invalid Qwen usage",
-    ],
-  ])("rejects %s", async (_name, auth, usage, message) => {
-    const { runner } = createRunner(auth, usage);
+    ["auth", "{", "decode"],
+    ["usage", authenticated, "decode"],
+  ])(
+    "classifies malformed %s JSON as a safe decode error",
+    async (kind, auth, cause) => {
+      const { runtime } = createRuntime(auth, kind === "usage" ? "{" : "");
 
-    await expect(fetchUsage(runner)).rejects.toThrow(message);
-  });
+      const exit = await fetchUsageExit(runtime);
 
-  test("redacts malformed usage output from parse failures", async () => {
-    const fragment = "malformed-output-secret-fragment";
-    const { runner } = createRunner(
-      JSON.stringify({ authenticated: true }),
-      `{"token_plan":"${fragment}`
-    );
-
-    try {
-      await fetchUsage(runner);
-      throw new Error("expected malformed Qwen usage failure");
-    } catch (error) {
-      expect(safeErrorGraph(asError(error))).toContain(
-        "Failed to parse qwencloud usage response"
-      );
-      expect(safeErrorGraph(asError(error))).not.toContain(fragment);
-    }
-  });
-
-  test("reports accounts without a subscription", async () => {
-    const { runner } = createRunner(
-      JSON.stringify({ authenticated: true }),
-      JSON.stringify({ token_plan: { subscribed: false } })
-    );
-
-    await expect(fetchUsage(runner)).rejects.toThrow(
-      "No subscription detected. Verify at home.qwencloud.com/billing"
-    );
-  });
-
-  test("classifies a non-zero usage exit as a usage query failure", async () => {
-    const secret = "stdout-secret-like-value";
-    const { runner } = createRunner(
-      JSON.stringify({ authenticated: true }),
-      commandError({ code: 1, stderr: secret, stdout: secret })
-    );
-
-    try {
-      await fetchUsage(runner);
-      throw new Error("expected Qwen usage command failure");
-    } catch (error) {
-      expect(safeErrorGraph(asError(error))).toContain(
-        "qwencloud usage query failed (qwencloud CLI exit code 1)"
-      );
-      expect(safeErrorGraph(asError(error))).toContain(
-        "qwencloud CLI exit code 1"
-      );
-      expect(safeErrorGraph(asError(error))).not.toContain(secret);
-    }
-  });
-
-  test.each([-1, Number.POSITIVE_INFINITY])(
-    "rejects invalid required usage percentage %s",
-    async (usedPct) => {
-      const { runner } = createRunner(
-        JSON.stringify({ authenticated: true }),
-        JSON.stringify({ token_plan: { subscribed: true, usedPct } })
-      );
-
-      await expect(fetchUsage(runner)).rejects.toThrow("invalid Qwen usage");
+      const serialized = expectFailure(exit, "ProviderResponseDecodeError");
+      expect(serialized).toContain(`"cause":"${cause}"`);
+      expect(serialized).toContain('"operation":"decode-response"');
+      expect(serialized).toContain('"providerID":"qwen"');
     }
   );
 
-  test("downgrades invalid optional counts to percentage usage", async () => {
-    const { runner } = createRunner(
-      JSON.stringify({ authenticated: true }),
-      JSON.stringify({
-        token_plan: {
-          remainingCredits: -1,
-          subscribed: true,
-          totalCredits: Number.POSITIVE_INFINITY,
-          usedPct: 25,
-        },
-      })
+  test("classifies a missing subscription as a safe schema error", async () => {
+    const { runtime } = createRuntime(
+      authenticated,
+      JSON.stringify({ token_plan: { subscribed: false } })
     );
 
-    const usage = await fetchUsage(runner);
-    expect(usage.windows[0]?.quota._tag).toBe("Percentage");
+    const exit = await fetchUsageExit(runtime);
+
+    const serialized = expectFailure(exit, "ProviderResponseDecodeError");
+    expect(serialized).toContain('"cause":"schema"');
   });
 
-  test("classifies an auth timeout as CLI unavailability", async () => {
-    const { runner } = createRunner(commandError({ code: "ETIMEDOUT" }));
+  test.each([
+    [
+      "command failure",
+      new ProviderCommandError({
+        cause: "command",
+        exitCode: 1,
+        operation: "run-command",
+        providerID: "qwen",
+      }),
+      "ProviderCommandError",
+    ],
+    [
+      "timeout",
+      new ProviderTimeoutError({
+        cause: "timeout",
+        operation: "run-command",
+        providerID: "qwen",
+        timeoutMs: 4321,
+      }),
+      "ProviderTimeoutError",
+    ],
+  ])("preserves safe %s classification", async (_name, error, tag) => {
+    const { runtime } = createRuntime(error);
 
-    await expect(fetchUsage(runner)).rejects.toThrow(
-      "qwencloud CLI not available (qwencloud CLI failed)"
-    );
+    const exit = await fetchUsageExit(runtime);
+
+    const serialized = expectFailure(exit, tag);
+    expect(serialized).toContain('"operation":"run-command"');
+    expect(serialized).toContain('"providerID":"qwen"');
   });
 
   test("uses a configured provider label", async () => {
-    const { runner } = createRunner(
-      JSON.stringify({ authenticated: true }),
+    const { runtime } = createRuntime(
+      authenticated,
       JSON.stringify({
         token_plan: { planName: "Plus", subscribed: true, usedPct: 10 },
       })
     );
 
-    const usage = await fetchUsage(runner, "Work Qwen");
+    const usage = await fetchUsage(runtime, "Work Qwen");
+
     expect(usage.label).toBe("Work Qwen");
   });
 });

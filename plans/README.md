@@ -6,7 +6,7 @@ Generated on 2026-08-31 against commit `a368bf0`. Execute in the order below. Ea
 
 | Plan | Title | Priority | Effort | Depends on | Status |
 | --- | --- | --- | --- | --- | --- |
-| 001 | Consolidate the Qwen provider path | P1 | S | - | TODO |
+| 001 | Consolidate the Qwen provider path | P1 | S | - | DONE |
 | 002 | Share optional provider auth-file loading | P2 | M | - | TODO |
 | 003 | Remove orphaned usage-limits surfaces | P2 | S | - | TODO |
 | 004 | Align the public config schema with runtime validation | P1 | M | - | TODO |
