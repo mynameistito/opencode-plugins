@@ -127,6 +127,92 @@ describe("provider runtime services", () => {
     expect(cancelled).toBe(true);
   });
 
+  test("cancels a rate-limited response body", async () => {
+    let cancelled = false;
+    const body = new ReadableStream<Uint8Array>({
+      cancel: () => {
+        cancelled = true;
+      },
+    });
+    const layer = makeProviderHttpClient(() =>
+      Promise.resolve(new Response(body, { status: 429 }))
+    );
+
+    const result = await Effect.runPromise(
+      Effect.gen(function* result() {
+        const http = yield* ProviderHttpClient;
+        return yield* http.requestJson({
+          headers: {},
+          method: "GET",
+          providerID: "codex",
+          timeoutMs: 1000,
+          url: "https://example.test/usage",
+        });
+      }).pipe(Effect.provide(layer), Effect.exit)
+    );
+
+    expect(Exit.isFailure(result)).toBe(true);
+    expect(cancelled).toBe(true);
+  });
+
+  test("cancels a non-success response body", async () => {
+    let cancelled = false;
+    const body = new ReadableStream<Uint8Array>({
+      cancel: () => {
+        cancelled = true;
+      },
+    });
+    const layer = makeProviderHttpClient(() =>
+      Promise.resolve(new Response(body, { status: 401 }))
+    );
+
+    const result = await Effect.runPromise(
+      Effect.gen(function* result() {
+        const http = yield* ProviderHttpClient;
+        return yield* http.requestJson({
+          headers: {},
+          method: "GET",
+          providerID: "codex",
+          timeoutMs: 1000,
+          url: "https://example.test/usage",
+        });
+      }).pipe(Effect.provide(layer), Effect.exit)
+    );
+
+    expect(Exit.isFailure(result)).toBe(true);
+    expect(cancelled).toBe(true);
+  });
+
+  test("decodes JSON split across response chunks", async () => {
+    const body = new ReadableStream<Uint8Array>({
+      start: (controller) => {
+        const encoder = new TextEncoder();
+        controller.enqueue(encoder.encode('{"plan":'));
+        controller.enqueue(encoder.encode('"pro"'));
+        controller.enqueue(encoder.encode("}"));
+        controller.close();
+      },
+    });
+    const layer = makeProviderHttpClient(() =>
+      Promise.resolve(new Response(body, { status: 200 }))
+    );
+
+    const result = await Effect.runPromise(
+      Effect.gen(function* result() {
+        const http = yield* ProviderHttpClient;
+        return yield* http.requestJson({
+          headers: {},
+          method: "GET",
+          providerID: "codex",
+          timeoutMs: 1000,
+          url: "https://example.test/usage",
+        });
+      }).pipe(Effect.provide(layer))
+    );
+
+    expect(result).toEqual({ plan: "pro" });
+  });
+
   test("uses the Effect clock for deterministic provider timestamps", async () => {
     const now = await Effect.runPromise(
       ProviderClock.pipe(Effect.flatMap((clock) => clock.now)).pipe(

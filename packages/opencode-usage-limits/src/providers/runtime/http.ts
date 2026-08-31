@@ -41,17 +41,22 @@ const readChunks = async (
   chunks: Uint8Array[],
   length: number
 ): Promise<number> => {
-  const result = await reader.read();
-  if (result.done) {
-    return length;
+  let totalLength = length;
+  while (true) {
+    // eslint-disable-next-line no-await-in-loop -- A stream reader must be consumed sequentially.
+    const result = await reader.read();
+    if (result.done) {
+      return totalLength;
+    }
+    const nextLength = totalLength + result.value.byteLength;
+    if (nextLength > MAX_RESPONSE_BYTES) {
+      // eslint-disable-next-line no-await-in-loop -- Finish cancellation before reporting the bounded-read failure.
+      await reader.cancel();
+      throw new RangeError("response limit exceeded");
+    }
+    chunks.push(result.value);
+    totalLength = nextLength;
   }
-  const nextLength = length + result.value.byteLength;
-  if (nextLength > MAX_RESPONSE_BYTES) {
-    await reader.cancel();
-    throw new RangeError("response limit exceeded");
-  }
-  chunks.push(result.value);
-  return readChunks(reader, chunks, nextLength);
 };
 
 /** A bounded provider JSON request. */
@@ -151,6 +156,7 @@ export const makeProviderHttpClient = (fetchImplementation: ProviderFetch) =>
             signal,
           });
           if (response.status === 429) {
+            await cancelBody(response);
             throw new ProviderRateLimitError({
               operation: FETCH_OPERATION,
               providerID: request.providerID,
@@ -164,6 +170,7 @@ export const makeProviderHttpClient = (fetchImplementation: ProviderFetch) =>
             } else if (response.status === 403) {
               cause = "forbidden";
             }
+            await cancelBody(response);
             throw new ProviderTransportError({
               cause,
               operation: "fetch-usage",
