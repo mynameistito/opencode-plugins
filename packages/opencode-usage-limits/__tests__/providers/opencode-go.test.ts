@@ -1,10 +1,51 @@
 import { describe, expect, test } from "bun:test";
+import { rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
 
 import { fetchOpenCodeGoUsage } from "@/providers/opencode-go.ts";
 
 import { installFetchMock } from "./helpers.ts";
 
 describe("OpenCode GO provider", () => {
+  test.each([
+    [
+      "valid",
+      JSON.stringify({ "opencode-go": { key: "file-key" } }),
+      "file-key",
+    ],
+    ["missing", undefined, "auth-key"],
+    ["malformed", "{", "auth-key"],
+  ])(
+    "uses the %s configured auth file or falls back to OpenCode auth",
+    async (_kind, contents, expectedKey) => {
+      const authPath = path.join(
+        tmpdir(),
+        `oc-usage-limits-${crypto.randomUUID()}.json`
+      );
+      if (contents !== undefined) {
+        await Bun.write(authPath, contents);
+      }
+      try {
+        const fetchMock = installFetchMock(
+          Response.json({ usage: { rolling: { percent: 1 } } })
+        );
+
+        await fetchOpenCodeGoUsage(
+          { authPath },
+          { "opencode-go": { key: "auth-key" } },
+          1000
+        );
+
+        expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({
+          headers: { Authorization: `Bearer ${expectedKey}` },
+        });
+      } finally {
+        await rm(authPath, { force: true });
+      }
+    }
+  );
+
   test("builds authenticated requests and parses usage windows", async () => {
     const fetchMock = installFetchMock(
       Response.json({

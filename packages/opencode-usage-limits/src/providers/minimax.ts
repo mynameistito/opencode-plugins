@@ -4,11 +4,11 @@ import {
   MissingProviderCredentialsError,
   ProviderResponseDecodeError,
 } from "@/errors.ts";
+import { readProviderAuthFileCredential } from "@/providers/auth-file.ts";
 import type { ProviderDefinition } from "@/providers/definition.ts";
 import { isJsonNumber, isJsonString } from "@/providers/json.ts";
 import { ProviderClock } from "@/providers/runtime/clock.ts";
 import { ProviderEnvironment } from "@/providers/runtime/environment.ts";
-import { ProviderFileSystem } from "@/providers/runtime/filesystem.ts";
 import { ProviderHttpClient } from "@/providers/runtime/http.ts";
 import { ProviderRuntimeLive } from "@/providers/runtime/index.ts";
 import type {
@@ -118,40 +118,6 @@ const keyFromMiniMaxAuth = (
   }
 
   return undefined;
-};
-
-/**
- * Attempts to load a MiniMax subscription key from a configured auth path.
- *
- * Missing or invalid files are ignored so other credential sources can still be
- * tried by the provider adapter.
- *
- * @param authPath - Optional auth file path.
- * @returns A MiniMax subscription key when the file exists and contains one.
- */
-const readMiniMaxAuthPathKey = (
-  authPath: string | undefined
-): Effect.Effect<
-  Redacted.Redacted<string> | undefined,
-  never,
-  ProviderEnvironment | ProviderFileSystem
-> => {
-  if (!authPath) {
-    return Effect.succeed<undefined>(globalThis.undefined);
-  }
-  return Effect.gen(function* loadMiniMaxAuthPathKey() {
-    const files = yield* ProviderFileSystem;
-    const environment = yield* ProviderEnvironment;
-    const auth = yield* files.readJson({
-      path: authPath,
-      providerID: "minimax",
-    });
-    return isRecord(auth)
-      ? keyFromMiniMaxAuth(auth, environment.credential)
-      : undefined;
-  }).pipe(
-    Effect.catchCause(() => Effect.succeed<undefined>(globalThis.undefined))
-  );
 };
 
 /**
@@ -365,7 +331,11 @@ const fetchMiniMaxTokenPlanUsageEffect = (
     const officialHosts = new Set(["www.minimax.io", "api.minimaxi.com"]);
     const isOfficialHost = officialHosts.has(new URL(baseUrl).hostname);
     const configuredKey = environment.resolveCredential(config?.apiKey);
-    const configuredFileKey = yield* readMiniMaxAuthPathKey(config?.authPath);
+    const configuredFileKey = yield* readProviderAuthFileCredential(
+      config?.authPath,
+      "minimax",
+      keyFromMiniMaxAuth
+    );
     const authKey = isRecord(openCodeAuth)
       ? keyFromMiniMaxAuth(openCodeAuth, environment.credential)
       : undefined;

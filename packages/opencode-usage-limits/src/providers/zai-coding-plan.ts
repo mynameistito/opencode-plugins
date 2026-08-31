@@ -4,11 +4,11 @@ import {
   MissingProviderCredentialsError,
   ProviderResponseDecodeError,
 } from "@/errors.ts";
+import { readProviderAuthFileCredential } from "@/providers/auth-file.ts";
 import type { ProviderDefinition } from "@/providers/definition.ts";
 import { isJsonNumber, isJsonString } from "@/providers/json.ts";
 import { ProviderClock } from "@/providers/runtime/clock.ts";
 import { ProviderEnvironment } from "@/providers/runtime/environment.ts";
-import { ProviderFileSystem } from "@/providers/runtime/filesystem.ts";
 import { ProviderHttpClient } from "@/providers/runtime/http.ts";
 import { ProviderRuntimeLive } from "@/providers/runtime/index.ts";
 import type {
@@ -170,37 +170,6 @@ const keyFromZaiAuth = (
 };
 
 /**
- * Attempts to load a ZAI API key from a configured auth path.
- *
- * Missing or invalid files are ignored so other credential sources can still be
- * tried by the provider adapter.
- *
- * @param authPath - Optional auth file path.
- * @returns A ZAI API key when the file exists and contains one.
- */
-const readZaiAuthPathKey = (
-  authPath: string | undefined
-): Effect.Effect<
-  Redacted.Redacted<string> | undefined,
-  never,
-  ProviderEnvironment | ProviderFileSystem
-> => {
-  if (!authPath) {
-    return Effect.succeed<undefined>(globalThis.undefined);
-  }
-  return Effect.gen(function* loadZaiAuthPathKey() {
-    const files = yield* ProviderFileSystem;
-    const environment = yield* ProviderEnvironment;
-    const auth = yield* files.readJson({ path: authPath, providerID: "zai" });
-    return isRecord(auth)
-      ? keyFromZaiAuth(auth, environment.credential)
-      : undefined;
-  }).pipe(
-    Effect.catchCause(() => Effect.succeed<undefined>(globalThis.undefined))
-  );
-};
-
-/**
  * Converts one raw ZAI limit entry into a normalized usage window.
  *
  * Token limits become the primary `5h` quota window. Time limits are not shown
@@ -300,7 +269,11 @@ const fetchZaiCodingPlanUsageEffect = (
     const http = yield* ProviderHttpClient;
     const clock = yield* ProviderClock;
     const apiKey =
-      (yield* readZaiAuthPathKey(config?.authPath)) ??
+      (yield* readProviderAuthFileCredential(
+        config?.authPath,
+        "zai",
+        keyFromZaiAuth
+      )) ??
       (isRecord(openCodeAuth)
         ? keyFromZaiAuth(openCodeAuth, environment.credential)
         : undefined) ??
