@@ -55,7 +55,7 @@ const commonProviderFields = {
 };
 
 /** Schema for Codex provider configuration. */
-export const codexProviderConfigSchema = Schema.Struct({
+const codexProviderConfigSchema = Schema.Struct({
   ...commonProviderFields,
   apiKey: Schema.optionalKey(secret),
   authPath: Schema.optionalKey(Schema.String),
@@ -64,7 +64,7 @@ export const codexProviderConfigSchema = Schema.Struct({
 });
 
 /** Schema for ZAI provider configuration. */
-export const zaiProviderConfigSchema = Schema.Struct({
+const zaiProviderConfigSchema = Schema.Struct({
   ...commonProviderFields,
   apiKey: Schema.optionalKey(secret),
   authPath: Schema.optionalKey(Schema.String),
@@ -72,7 +72,7 @@ export const zaiProviderConfigSchema = Schema.Struct({
 });
 
 /** Schema for Synthetic provider configuration. */
-export const syntheticProviderConfigSchema = Schema.Struct({
+const syntheticProviderConfigSchema = Schema.Struct({
   ...commonProviderFields,
   apiKey: Schema.optionalKey(secret),
   authPath: Schema.optionalKey(Schema.String),
@@ -80,7 +80,7 @@ export const syntheticProviderConfigSchema = Schema.Struct({
 });
 
 /** Schema for MiniMax provider configuration. */
-export const minimaxProviderConfigSchema = Schema.Struct({
+const minimaxProviderConfigSchema = Schema.Struct({
   ...commonProviderFields,
   apiKey: Schema.optionalKey(secret),
   authPath: Schema.optionalKey(Schema.String),
@@ -88,10 +88,10 @@ export const minimaxProviderConfigSchema = Schema.Struct({
 });
 
 /** Schema for Qwen provider configuration. */
-export const qwenProviderConfigSchema = Schema.Struct(commonProviderFields);
+const qwenProviderConfigSchema = Schema.Struct(commonProviderFields);
 
 /** Schema for OpenCode GO provider configuration. */
-export const openCodeGoProviderConfigSchema = Schema.Struct({
+const openCodeGoProviderConfigSchema = Schema.Struct({
   ...commonProviderFields,
   apiKey: Schema.optionalKey(secret),
   authPath: Schema.optionalKey(Schema.String),

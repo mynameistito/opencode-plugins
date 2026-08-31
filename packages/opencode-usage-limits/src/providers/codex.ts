@@ -1,6 +1,5 @@
 import { Effect, Redacted, Result } from "effect";
 
-import { codexProviderConfigSchema } from "@/config-schema.ts";
 import {
   MissingProviderCredentialsError,
   ProviderResponseDecodeError,
@@ -340,8 +339,6 @@ export const fetchCodexUsage = (
 
 /** Plugin registration for the Codex provider adapter. */
 export const codexProvider = {
-  capabilities: { customBaseUrl: true, transport: "http" },
-  configSchema: codexProviderConfigSchema,
   defaultLabel: "Codex",
   displayOrder: 0,
   fetch: fetchCodexUsageEffect,

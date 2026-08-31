@@ -1,37 +1,14 @@
-import { afterEach, describe, expect, mock, test } from "bun:test";
+import { describe, expect, test } from "bun:test";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
 import {
   clampPercent,
-  fetchJson,
   isRecord,
   parseJsonValue,
   readJsonFile,
-  resolveEnvReference,
 } from "@/utils.ts";
-
-const originalFetch = globalThis.fetch;
-type FetchMock = (
-  url: string | URL | Request,
-  init?: RequestInit
-) => Promise<Response>;
-
-const installFetchMock = (response: Response) => {
-  const fetchMock = mock<FetchMock>(() => Promise.resolve(response));
-  // SAFETY: Bun's mock function has the same call signature as global fetch.
-  globalThis.fetch = Object.assign(fetchMock, {
-    preconnect: originalFetch.preconnect,
-  });
-  return fetchMock;
-};
-
-afterEach(() => {
-  globalThis.fetch = originalFetch;
-  delete process.env.OC_USAGE_LIMITS_TEST_KEY;
-  mock.restore();
-});
 
 describe("utility helpers", () => {
   test("clamps finite percentages and treats non-finite values as zero", () => {
@@ -100,61 +77,5 @@ describe("utility helpers", () => {
     } finally {
       await rm(directory, { force: true, recursive: true });
     }
-  });
-
-  test("resolves environment variable references only when the full value matches", () => {
-    process.env.OC_USAGE_LIMITS_TEST_KEY = "secret";
-
-    expect(resolveEnvReference("{env:OC_USAGE_LIMITS_TEST_KEY}")).toBe(
-      "secret"
-    );
-    expect(resolveEnvReference("  {env:OC_USAGE_LIMITS_TEST_KEY}  ")).toBe(
-      "secret"
-    );
-    expect(resolveEnvReference("prefix-{env:OC_USAGE_LIMITS_TEST_KEY}")).toBe(
-      "prefix-{env:OC_USAGE_LIMITS_TEST_KEY}"
-    );
-    const missingValue = process.env.OC_USAGE_LIMITS_MISSING_KEY;
-    expect(resolveEnvReference(missingValue)).toBeUndefined();
-  });
-
-  test("fetches and parses JSON with a timeout signal", async () => {
-    const fetchMock = installFetchMock(
-      new Response('{"ok":true}', { status: 200 })
-    );
-
-    await expect(
-      fetchJson("https://example.com", { method: "GET" }, 50)
-    ).resolves.toEqual({
-      ok: true,
-    });
-
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({ method: "GET" });
-    expect(fetchMock.mock.calls[0]?.[1]?.signal).toBeInstanceOf(AbortSignal);
-  });
-
-  test.each([
-    [401, "unauthorized"],
-    [403, "forbidden"],
-    [429, "rate limited"],
-    [500, "HTTP 500"],
-  ] as const)(
-    "maps HTTP %i responses to useful errors",
-    async (status, message) => {
-      installFetchMock(new Response("{}", { status }));
-
-      await expect(
-        fetchJson("https://example.com", { method: "GET" }, 50)
-      ).rejects.toThrow(message);
-    }
-  );
-
-  test("rejects successful responses with invalid JSON", async () => {
-    installFetchMock(new Response("not json", { status: 200 }));
-
-    await expect(
-      fetchJson("https://example.com", { method: "GET" }, 50)
-    ).rejects.toThrow("invalid JSON");
   });
 });

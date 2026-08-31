@@ -1,6 +1,5 @@
 import { Effect, Redacted, Result } from "effect";
 
-import { zaiProviderConfigSchema } from "@/config-schema.ts";
 import {
   MissingProviderCredentialsError,
   ProviderResponseDecodeError,
@@ -378,8 +377,6 @@ export const fetchZaiCodingPlanUsage = (
 
 /** Plugin registration for the ZAI Coding Plan provider adapter. */
 export const zaiProvider = {
-  capabilities: { customBaseUrl: false, transport: "http" },
-  configSchema: zaiProviderConfigSchema,
   defaultLabel: "ZAI",
   displayOrder: 1,
   fetch: fetchZaiCodingPlanUsageEffect,

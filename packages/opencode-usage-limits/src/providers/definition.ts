@@ -1,4 +1,4 @@
-import type { Effect, Schema } from "effect";
+import type { Effect } from "effect";
 
 import type { ProviderError } from "@/errors.ts";
 import type { ProviderRuntime } from "@/providers/runtime/index.ts";
@@ -16,12 +16,6 @@ type ProviderFetch<ID extends ProviderID> = (
   timeoutMs: number
 ) => Effect.Effect<ProviderUsage<ID>, ProviderError, ProviderRuntime>;
 
-/** Provider runtime capabilities declared for registry introspection. */
-interface ProviderCapabilities {
-  readonly customBaseUrl: boolean;
-  readonly transport: "command" | "http";
-}
-
 /** Static metadata and adapter binding for one plugin provider. */
 export interface ProviderDefinition<ID extends ProviderID = ProviderID> {
   /** Plugin provider identifier and config key. */
@@ -30,10 +24,6 @@ export interface ProviderDefinition<ID extends ProviderID = ProviderID> {
   defaultLabel: string;
   /** Stable sidebar display order. */
   displayOrder: number;
-  /** Schema for this provider's supported configuration fields. */
-  configSchema: Schema.Schema<ProviderConfigMap[ID]>;
-  /** Runtime behavior supported by this adapter. */
-  capabilities: ProviderCapabilities;
   /** Provider-specific usage fetch adapter. */
   fetch: ProviderFetch<ID>;
   /**

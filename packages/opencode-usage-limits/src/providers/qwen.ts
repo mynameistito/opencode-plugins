@@ -1,6 +1,5 @@
 import { Effect, Result } from "effect";
 
-import { qwenProviderConfigSchema } from "@/config-schema.ts";
 import {
   MissingProviderCredentialsError,
   ProviderResponseDecodeError,
@@ -366,8 +365,6 @@ export const createQwenProvider = (dependencies: QwenProviderDependencies) => ({
 
 /** Plugin registration for the Qwen Token Plan provider adapter. */
 export const qwenProvider = {
-  capabilities: { customBaseUrl: false, transport: "command" },
-  configSchema: qwenProviderConfigSchema,
   defaultLabel: "Qwen",
   displayOrder: 4,
   fetch: fetchQwenTokenPlanUsage,

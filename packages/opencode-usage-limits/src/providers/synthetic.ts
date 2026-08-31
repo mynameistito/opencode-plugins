@@ -1,6 +1,5 @@
 import { Effect, Redacted, Result } from "effect";
 
-import { syntheticProviderConfigSchema } from "@/config-schema.ts";
 import {
   MissingProviderCredentialsError,
   ProviderResponseDecodeError,
@@ -426,8 +425,6 @@ export const fetchSyntheticUsage = (
 
 /** Plugin registration for the Synthetic provider adapter. */
 export const syntheticProvider = {
-  capabilities: { customBaseUrl: true, transport: "http" },
-  configSchema: syntheticProviderConfigSchema,
   defaultLabel: "Synthetic",
   displayOrder: 2,
   fetch: fetchSyntheticUsageEffect,
