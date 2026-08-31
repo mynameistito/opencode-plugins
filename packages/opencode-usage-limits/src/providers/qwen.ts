@@ -8,12 +8,7 @@ import type { ProviderDefinition } from "@/providers/definition.ts";
 import { isJsonBoolean, isJsonNumber, isJsonString } from "@/providers/json.ts";
 import { ProviderClock } from "@/providers/runtime/clock.ts";
 import { ProviderCommandExecutor } from "@/providers/runtime/command.ts";
-import type {
-  OpenCodeAuth,
-  QwenProviderConfig,
-  ProviderUsage,
-  UsageWindow,
-} from "@/types.ts";
+import type { OpenCodeAuth, QwenProviderConfig, UsageWindow } from "@/types.ts";
 import {
   countQuota,
   parseUsageCount,
@@ -43,10 +38,6 @@ interface QwenTokenPlan {
 interface QwenUsagePayload {
   readonly token_plan?: QwenTokenPlanPayload;
 }
-interface QwenCommandError extends Error {
-  readonly code?: number | string;
-  readonly stdout?: string;
-}
 interface QwenTokenPlanPayload {
   readonly planName?: string;
   readonly remainingCredits?: number;
@@ -55,32 +46,6 @@ interface QwenTokenPlanPayload {
   readonly subscribed: boolean;
   readonly totalCredits?: number;
   readonly usedPct?: number;
-}
-
-const safeCommandCause = (error: QwenCommandError): Error => {
-  const code =
-    isJsonNumber(error.code) || isJsonString(error.code)
-      ? error.code
-      : undefined;
-  const suffix = code === undefined ? "failed" : `exit code ${code}`;
-  return new Error(`qwencloud CLI ${suffix}`);
-};
-
-const commandError = (error: Error): QwenCommandError =>
-  // SAFETY: command runners attach these optional fields to Error instances.
-  error as QwenCommandError;
-
-/** Legacy injectable Qwen command boundary retained for direct consumers. */
-export type QwenCommandRunner = (
-  cli: string,
-  args: string[],
-  timeoutMs: number
-) => Promise<string>;
-
-/** Dependencies for constructing a direct Qwen adapter. */
-export interface QwenProviderDependencies {
-  readonly commandRunner: QwenCommandRunner;
-  readonly now: () => Date;
 }
 
 /**
@@ -291,77 +256,6 @@ const fetchQwenTokenPlanUsage = (
       windows: [window],
     };
   });
-
-/** Stable injectable Promise adapter retained for existing direct consumers. */
-export const createQwenProvider = (dependencies: QwenProviderDependencies) => ({
-  fetch: async (
-    config: QwenProviderConfig | undefined,
-    _openCodeAuth: OpenCodeAuth,
-    timeoutMs: number
-  ): Promise<ProviderUsage<"qwen">> => {
-    const run = async (
-      args: string[],
-      allowNonZero = false
-    ): Promise<string> => {
-      try {
-        const output = await dependencies.commandRunner(
-          DEFAULT_CLI,
-          args,
-          timeoutMs
-        );
-        return output.trim();
-      } catch (error) {
-        const parsed = error instanceof Error ? commandError(error) : undefined;
-        const code =
-          parsed && isJsonNumber(parsed.code) ? parsed.code : undefined;
-        const stdout =
-          parsed && isJsonString(parsed.stdout) ? parsed.stdout.trim() : "";
-        if (allowNonZero && stdout && code !== undefined && code !== 0) {
-          return stdout;
-        }
-        throw safeCommandCause(parsed ?? new Error("command failed"));
-      }
-    };
-    let authRaw: string;
-    try {
-      authRaw = await run(["auth", "status", "--format", "json"], true);
-    } catch (error) {
-      throw new Error("qwencloud CLI not available (qwencloud CLI failed)", {
-        cause: error,
-      });
-    }
-    const auth = parseAuthStatus(authRaw);
-    if (!auth) {
-      throw new Error("Not authenticated. Run: qwencloud auth login");
-    }
-
-    let usageRaw: string;
-    try {
-      usageRaw = await run(["usage", "summary", "--format", "json"]);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "failed";
-      throw new Error(`qwencloud usage query failed (${message})`, {
-        cause: error,
-      });
-    }
-    const tokenPlan = parseTokenPlan(usageRaw);
-    if (!tokenPlan.subscribed) {
-      throw new Error(
-        "No subscription detected. Verify at home.qwencloud.com/billing"
-      );
-    }
-    const window = buildQwenWindow(tokenPlan);
-    if (!window) {
-      throw new Error("invalid Qwen usage");
-    }
-    return {
-      capturedAt: dependencies.now(),
-      id: "qwen",
-      label: config?.label ?? tokenPlan.planName ?? "Qwen Token Plan",
-      windows: [window],
-    };
-  },
-});
 
 /** Plugin registration for the Qwen Token Plan provider adapter. */
 export const qwenProvider = {
