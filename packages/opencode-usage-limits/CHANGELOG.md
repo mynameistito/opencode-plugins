@@ -1,5 +1,11 @@
 # @mynameistito/opencode-usage-limits
 
+## 1.0.12
+
+### Patch Changes
+
+- a475e19: Cancel rejected provider response bodies.
+
 ## 1.0.11
 
 ### Patch Changes
