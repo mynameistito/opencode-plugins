@@ -1,4 +1,7 @@
 import { describe, expect, test } from "bun:test";
+import { rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
 
 import { fetchSyntheticUsage } from "@/providers/synthetic.ts";
 
@@ -9,6 +12,40 @@ describe("Synthetic provider", () => {
   const nextRegenAt = new Date(
     Date.now() + 3 * 24 * 60 * 60 * 1000
   ).toISOString();
+
+  test.each([
+    ["valid", JSON.stringify({ synthetic: { key: "file-key" } }), "file-key"],
+    ["missing", undefined, "auth-key"],
+    ["malformed", "{", "auth-key"],
+  ])(
+    "uses the %s configured auth file or falls back to OpenCode auth",
+    async (_kind, contents, expectedKey) => {
+      const authPath = path.join(
+        tmpdir(),
+        `oc-usage-limits-${crypto.randomUUID()}.json`
+      );
+      if (contents !== undefined) {
+        await Bun.write(authPath, contents);
+      }
+      try {
+        const fetchMock = installFetchMock(
+          Response.json({ rollingFiveHourLimit: { max: 1, remaining: 1 } })
+        );
+
+        await fetchSyntheticUsage(
+          { authPath },
+          { synthetic: { key: "auth-key" } },
+          1000
+        );
+
+        expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({
+          headers: { Authorization: `Bearer ${expectedKey}` },
+        });
+      } finally {
+        await rm(authPath, { force: true });
+      }
+    }
+  );
 
   test("parses v3 rolling and weekly windows and sends a bearer header", async () => {
     const fetchMock = installFetchMock(

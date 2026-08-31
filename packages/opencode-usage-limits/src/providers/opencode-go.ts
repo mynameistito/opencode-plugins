@@ -4,11 +4,11 @@ import {
   MissingProviderCredentialsError,
   ProviderResponseDecodeError,
 } from "@/errors.ts";
+import { readProviderAuthFileCredential } from "@/providers/auth-file.ts";
 import type { ProviderDefinition } from "@/providers/definition.ts";
 import { isJsonNumber, isJsonString } from "@/providers/json.ts";
 import { ProviderClock } from "@/providers/runtime/clock.ts";
 import { ProviderEnvironment } from "@/providers/runtime/environment.ts";
-import { ProviderFileSystem } from "@/providers/runtime/filesystem.ts";
 import { ProviderHttpClient } from "@/providers/runtime/http.ts";
 import { ProviderRuntimeLive } from "@/providers/runtime/index.ts";
 import type {
@@ -89,31 +89,6 @@ const keyFromAuth = (
   return credential(value.key) ?? credential(value.apiKey);
 };
 
-const readAuthPathKey = (
-  authPath: string | undefined
-): Effect.Effect<
-  Redacted.Redacted<string> | undefined,
-  never,
-  ProviderEnvironment | ProviderFileSystem
-> => {
-  if (!authPath) {
-    return Effect.succeed<undefined>(globalThis.undefined);
-  }
-  return Effect.gen(function* readOpenCodeGoAuthPathKey() {
-    const files = yield* ProviderFileSystem;
-    const environment = yield* ProviderEnvironment;
-    const auth = yield* files.readJson({
-      path: authPath,
-      providerID: PROVIDER_ID,
-    });
-    return isRecord(auth)
-      ? keyFromAuth(auth, environment.credential)
-      : undefined;
-  }).pipe(
-    Effect.catchCause(() => Effect.succeed<undefined>(globalThis.undefined))
-  );
-};
-
 const usageWindow = (
   value: OpenCodeGoUsageWindow | undefined,
   kind: UsageWindow["kind"],
@@ -149,7 +124,11 @@ const fetchOpenCodeGoUsageEffect = (
       DEFAULT_OPEN_CODE_GO_BASE_URL
     );
     const officialHost = new URL(baseUrl).hostname === "opencode.ai";
-    const authPathKey = yield* readAuthPathKey(config?.authPath);
+    const authPathKey = yield* readProviderAuthFileCredential(
+      config?.authPath,
+      PROVIDER_ID,
+      keyFromAuth
+    );
     const configuredKey = environment.resolveCredential(config?.apiKey);
     const authKey = isRecord(openCodeAuth)
       ? keyFromAuth(openCodeAuth, environment.credential)

@@ -4,11 +4,11 @@ import {
   MissingProviderCredentialsError,
   ProviderResponseDecodeError,
 } from "@/errors.ts";
+import { readProviderAuthFileCredential } from "@/providers/auth-file.ts";
 import type { ProviderDefinition } from "@/providers/definition.ts";
 import { isJsonNumber, isJsonString } from "@/providers/json.ts";
 import { ProviderClock } from "@/providers/runtime/clock.ts";
 import { ProviderEnvironment } from "@/providers/runtime/environment.ts";
-import { ProviderFileSystem } from "@/providers/runtime/filesystem.ts";
 import { ProviderHttpClient } from "@/providers/runtime/http.ts";
 import { ProviderRuntimeLive } from "@/providers/runtime/index.ts";
 import type {
@@ -151,40 +151,6 @@ const keyFromSyntheticAuth = (
   }
 
   return undefined;
-};
-
-/**
- * Attempts to load a Synthetic API key from a configured auth path.
- *
- * Missing or invalid files are ignored so other credential sources can still be
- * tried by the provider adapter.
- *
- * @param authPath - Optional auth file path.
- * @returns A Synthetic API key when the file exists and contains one.
- */
-const readSyntheticAuthPathKey = (
-  authPath: string | undefined
-): Effect.Effect<
-  Redacted.Redacted<string> | undefined,
-  never,
-  ProviderEnvironment | ProviderFileSystem
-> => {
-  if (!authPath) {
-    return Effect.succeed<undefined>(globalThis.undefined);
-  }
-  return Effect.gen(function* loadSyntheticAuthPathKey() {
-    const files = yield* ProviderFileSystem;
-    const environment = yield* ProviderEnvironment;
-    const auth = yield* files.readJson({
-      path: authPath,
-      providerID: "synthetic",
-    });
-    return isRecord(auth)
-      ? keyFromSyntheticAuth(auth, environment.credential)
-      : undefined;
-  }).pipe(
-    Effect.catchCause(() => Effect.succeed<undefined>(globalThis.undefined))
-  );
 };
 
 /**
@@ -349,7 +315,11 @@ const fetchSyntheticUsageEffect = (
     );
     const isOfficialHost = new URL(baseUrl).hostname === "api.synthetic.new";
     const configuredKey = environment.resolveCredential(config?.apiKey);
-    const configuredFileKey = yield* readSyntheticAuthPathKey(config?.authPath);
+    const configuredFileKey = yield* readProviderAuthFileCredential(
+      config?.authPath,
+      "synthetic",
+      keyFromSyntheticAuth
+    );
     const authKey = isRecord(openCodeAuth)
       ? keyFromSyntheticAuth(openCodeAuth, environment.credential)
       : undefined;
