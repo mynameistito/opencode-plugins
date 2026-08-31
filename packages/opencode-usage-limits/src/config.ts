@@ -18,9 +18,9 @@ const CONFIG_PATH = path.join(
 );
 /** Default OpenCode auth path shared by installed providers. */
 const OPENCODE_AUTH_PATH = path.join(
-  homedir(),
-  ".local",
-  "share",
+  process.platform === "win32"
+    ? (process.env.LOCALAPPDATA ?? path.join(homedir(), "AppData", "Local"))
+    : (process.env.XDG_DATA_HOME ?? path.join(homedir(), ".local", "share")),
   "opencode",
   "auth.json"
 );

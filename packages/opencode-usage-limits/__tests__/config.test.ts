@@ -1,4 +1,6 @@
 import { afterEach, describe, expect, mock, test } from "bun:test";
+import { homedir } from "node:os";
+import path from "node:path";
 
 import { Redacted, Result } from "effect";
 
@@ -149,6 +151,17 @@ describe("configuration loading", () => {
     expect(Redacted.isRedacted(result.auth.openai?.access)).toBe(true);
     expect(String(result.auth.openai?.access)).not.toContain("token");
     expect(result.diagnostic).toBeUndefined();
+    expect(readJsonFile).toHaveBeenCalledWith(
+      path.join(
+        process.platform === "win32"
+          ? (process.env.LOCALAPPDATA ??
+              path.join(homedir(), "AppData", "Local"))
+          : (process.env.XDG_DATA_HOME ??
+              path.join(homedir(), ".local", "share")),
+        "opencode",
+        "auth.json"
+      )
+    );
   });
 
   test("treats absent or malformed auth as empty", async () => {
