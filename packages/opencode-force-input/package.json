@@ -43,7 +43,7 @@
   "scripts": {
     "build": "tsdown",
     "check": "ultracite check",
-    "knip": "bunx knip@latest",
+    "knip": "knip",
     "fix": "ultracite fix",
     "typecheck": "tsc --noEmit",
     "prepack": "bun run build",
