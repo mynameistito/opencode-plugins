@@ -53,6 +53,8 @@ jobs:
           bun run typecheck
           bun run check
           bun run build
+          bun run test
+          bun run test:package
       - name: Determine version PR title
         id: version-title
         run: |
