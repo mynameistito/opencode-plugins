@@ -7,8 +7,10 @@ import type { CoordinatorSnapshot } from "@/coordinator.ts";
 import type { ProviderError } from "@/errors.ts";
 import type {
   ProviderID,
+  ProviderConfigMap,
   ProviderUsage,
   ResolvedUsageLimitsConfig,
+  OpenCodeAuth,
 } from "@/types.ts";
 
 const config: ResolvedUsageLimitsConfig = {
@@ -35,14 +37,21 @@ const dependencies = (
   ) => Effect.Effect<ProviderUsage<ID>, ProviderError>,
   initialConfig: ResolvedUsageLimitsConfig = config
 ) => {
+  const auths: unknown[] = [];
   const snapshots: string[][] = [];
   const sleeps: Deferred.Deferred<boolean>[] = [];
   const fetches: ProviderID[] = [];
   return {
+    auths,
     dependencies: {
-      fetchProvider: <ID extends ProviderID>(id: ID) =>
+      fetchProvider: <ID extends ProviderID>(
+        id: ID,
+        _config: ProviderConfigMap[ID] | undefined,
+        auth: OpenCodeAuth
+      ) =>
         Effect.tap(fetchProvider(id), () =>
           Effect.sync(() => {
+            auths.push(auth);
             fetches.push(id);
           })
         ),
@@ -228,6 +237,32 @@ describe("usage coordinator", () => {
     await Effect.runPromise(Deferred.succeed(firstSleep, true));
     await Bun.sleep(0);
     expect(harness.snapshots.at(-1)).toEqual(["ready"]);
+    await Effect.runPromise(Fiber.interrupt(fiber));
+  });
+
+  test("reports an auth loader defect and fetches with empty auth", async () => {
+    const harness = dependencies((id) => Effect.succeed(usage(id)), {
+      ...config,
+      providers: { codex: { enabled: true }, zai: { enabled: false } },
+    });
+    const snapshots: CoordinatorSnapshot[] = [];
+    harness.dependencies.loadOpenCodeAuth = Effect.sync(() => {
+      throw new Error("auth loader failure");
+    });
+    harness.dependencies.publish = (snapshot) =>
+      Effect.sync(() => {
+        snapshots.push(snapshot);
+      });
+    const fiber = Effect.runFork(
+      Effect.scoped(usageCoordinator(harness.dependencies))
+    );
+
+    await Bun.sleep(0);
+    expect(snapshots.at(-1)?.diagnostics).toEqual([
+      { kind: "auth-read", message: "OpenCode auth could not be read" },
+    ]);
+    expect(snapshots.at(-1)?.states).toMatchObject([{ status: "ready" }]);
+    expect(harness.auths).toEqual([{}]);
     await Effect.runPromise(Fiber.interrupt(fiber));
   });
 });

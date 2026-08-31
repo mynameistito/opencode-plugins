@@ -1,10 +1,53 @@
 import { describe, expect, test } from "bun:test";
+import { rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
 
 import { fetchCodexUsage } from "@/providers/codex.ts";
 
 import { installFetchMock } from "./helpers.ts";
 
 describe("Codex provider", () => {
+  test("uses credentials from the configured Codex auth file", async () => {
+    const authPath = path.join(
+      tmpdir(),
+      `oc-usage-limits-${crypto.randomUUID()}.json`
+    );
+    await Bun.write(
+      authPath,
+      JSON.stringify({
+        tokens: { access_token: "file-access", account_id: "file-account" },
+      })
+    );
+    try {
+      const fetchMock = installFetchMock(
+        Response.json({ rate_limit: { primary_window: { used_percent: 0 } } })
+      );
+
+      await fetchCodexUsage({ authPath }, {}, 1000);
+
+      expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({
+        headers: {
+          Authorization: "Bearer file-access",
+          "ChatGPT-Account-Id": "file-account",
+        },
+      });
+    } finally {
+      await rm(authPath, { force: true });
+    }
+  });
+
+  test("rejects a missing configured Codex auth file", async () => {
+    const authPath = path.join(
+      tmpdir(),
+      `oc-usage-limits-${crypto.randomUUID()}.json`
+    );
+
+    await expect(fetchCodexUsage({ authPath }, {}, 1000)).rejects.toThrow(
+      "provider request failed"
+    );
+  });
+
   test("builds authenticated requests and parses usage windows", async () => {
     const fetchMock = installFetchMock(
       Response.json({

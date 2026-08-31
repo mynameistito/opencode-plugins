@@ -1,13 +1,14 @@
 import { describe, expect, test } from "bun:test";
 
-import {
-  ProviderCommandError,
-  ProviderRateLimitError,
-  ProviderResponseDecodeError,
-  ProviderTimeoutError,
-  ProviderTransportError,
-} from "@/errors.ts";
 import type { ProviderError } from "@/errors.ts";
+import { ProviderCommandError } from "@/errors/command.ts";
+import { ConfigDecodeError } from "@/errors/config-decode.ts";
+import { ConfigReadError } from "@/errors/config-read.ts";
+import { MissingProviderCredentialsError } from "@/errors/missing-credentials.ts";
+import { ProviderRateLimitError } from "@/errors/rate-limit.ts";
+import { ProviderResponseDecodeError } from "@/errors/response-decode.ts";
+import { ProviderTimeoutError } from "@/errors/timeout.ts";
+import { ProviderTransportError } from "@/errors/transport.ts";
 
 const errorTag = (error: ProviderError): string => error._tag;
 
@@ -64,5 +65,65 @@ describe("provider boundary errors", () => {
 
     expect(error.cause).toBe("network");
     expect(String(error)).not.toContain("responseBody");
+  });
+
+  test("formats safe, actionable diagnostic messages", () => {
+    const errors = [
+      new ConfigDecodeError({ cause: "syntax", operation: "parse-jsonc" }),
+      new ConfigReadError({
+        cause: "filesystem",
+        operation: "read-config",
+        path: "C:/config.json",
+      }),
+      new MissingProviderCredentialsError({
+        operation: "fetch-usage",
+        providerID: "codex",
+      }),
+      new ProviderCommandError({
+        operation: "run-command",
+        providerID: "qwen",
+      }),
+      new ProviderRateLimitError({
+        operation: "fetch-usage",
+        providerID: "zai",
+      }),
+      new ProviderResponseDecodeError({
+        operation: "decode-response",
+        providerID: "opencode-go",
+      }),
+      new ProviderTimeoutError({
+        operation: "fetch-usage",
+        providerID: "synthetic",
+        timeoutMs: 1000,
+      }),
+      new ProviderTransportError({
+        cause: "unauthorized",
+        operation: "fetch-usage",
+        providerID: "minimax",
+      }),
+      new ProviderTransportError({
+        cause: "forbidden",
+        operation: "fetch-usage",
+        providerID: "minimax",
+      }),
+      new ProviderTransportError({
+        operation: "fetch-usage",
+        providerID: "minimax",
+        status: 500,
+      }),
+    ];
+
+    expect(errors.map((error) => error.message)).toEqual([
+      "",
+      "Unable to read usage-limits config at C:/config.json",
+      "missing Codex auth",
+      "provider command failed",
+      "provider rate limit reached",
+      "invalid OpenCode GO usage",
+      "provider operation timed out after 1000ms",
+      "provider credentials were rejected",
+      "provider access was forbidden",
+      "provider request failed (HTTP 500)",
+    ]);
   });
 });

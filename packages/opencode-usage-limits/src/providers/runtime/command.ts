@@ -50,12 +50,18 @@ const execute = (
       child.kill();
       resume(
         Effect.fail(
-          new ProviderCommandError({
-            cause,
-            exitCode,
-            operation: COMMAND_OPERATION,
-            providerID: input.providerID,
-          })
+          exitCode === undefined
+            ? new ProviderCommandError({
+                cause,
+                operation: COMMAND_OPERATION,
+                providerID: input.providerID,
+              })
+            : new ProviderCommandError({
+                cause,
+                exitCode,
+                operation: COMMAND_OPERATION,
+                providerID: input.providerID,
+              })
         )
       );
     };

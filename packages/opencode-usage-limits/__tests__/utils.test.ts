@@ -32,6 +32,13 @@ describe("utility helpers", () => {
     expect(() => parseJsonValue("1e400")).toThrow(SyntaxError);
   });
 
+  test("parses null and escaped JSON string values", () => {
+    expect(parseJsonValue("null")).toBeNull();
+    expect(parseJsonValue(String.raw`"quote: \" and slash: \\"`)).toBe(
+      'quote: " and slash: \\'
+    );
+  });
+
   test("reads JSONC with line comments, block comments, quoted slashes, and trailing commas", async () => {
     const directory = await mkdtemp(path.join(tmpdir(), "oc-usage-limits-"));
     const filePath = path.join(directory, "config.jsonc");
