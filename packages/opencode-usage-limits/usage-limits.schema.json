@@ -14,17 +14,17 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "codex": { "$ref": "#/$defs/provider" },
-        "minimax": { "$ref": "#/$defs/provider" },
-        "opencode-go": { "$ref": "#/$defs/provider" },
-        "qwen": { "$ref": "#/$defs/provider" },
-        "synthetic": { "$ref": "#/$defs/provider" },
-        "zai": { "$ref": "#/$defs/provider" }
+        "codex": { "$ref": "#/$defs/codexProvider" },
+        "minimax": { "$ref": "#/$defs/minimaxProvider" },
+        "opencode-go": { "$ref": "#/$defs/openCodeGoProvider" },
+        "qwen": { "$ref": "#/$defs/qwenProvider" },
+        "synthetic": { "$ref": "#/$defs/syntheticProvider" },
+        "zai": { "$ref": "#/$defs/zaiProvider" }
       }
     }
   },
   "$defs": {
-    "provider": {
+    "commonDisplayFields": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -55,7 +55,27 @@
           ],
           "default": "auto"
         },
-        "label": { "type": "string" },
+        "label": { "type": "string" }
+      }
+    },
+    "codexProvider": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "$ref": "#/$defs/commonDisplayFields/properties/enabled" },
+        "showSidebarBar": {
+          "$ref": "#/$defs/commonDisplayFields/properties/showSidebarBar"
+        },
+        "showFooterBar": {
+          "$ref": "#/$defs/commonDisplayFields/properties/showFooterBar"
+        },
+        "sidebarWindow": {
+          "$ref": "#/$defs/commonDisplayFields/properties/sidebarWindow"
+        },
+        "footerWindow": {
+          "$ref": "#/$defs/commonDisplayFields/properties/footerWindow"
+        },
+        "label": { "$ref": "#/$defs/commonDisplayFields/properties/label" },
         "authPath": {
           "type": "string",
           "description": "Optional override path to a provider auth file. Omit to use auto-discovery from OpenCode auth and provider defaults."
@@ -66,6 +86,142 @@
         },
         "authorizationScheme": { "enum": ["raw", "bearer"] },
         "baseUrl": { "type": "string" }
+      }
+    },
+    "minimaxProvider": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "$ref": "#/$defs/commonDisplayFields/properties/enabled" },
+        "showSidebarBar": {
+          "$ref": "#/$defs/commonDisplayFields/properties/showSidebarBar"
+        },
+        "showFooterBar": {
+          "$ref": "#/$defs/commonDisplayFields/properties/showFooterBar"
+        },
+        "sidebarWindow": {
+          "$ref": "#/$defs/commonDisplayFields/properties/sidebarWindow"
+        },
+        "footerWindow": {
+          "$ref": "#/$defs/commonDisplayFields/properties/footerWindow"
+        },
+        "label": { "$ref": "#/$defs/commonDisplayFields/properties/label" },
+        "authPath": {
+          "type": "string",
+          "description": "Optional override path to a provider auth file. Omit to use auto-discovery from OpenCode auth and provider defaults."
+        },
+        "apiKey": {
+          "type": "string",
+          "description": "Optional literal API key or {env:NAME} fallback when auth files do not contain a key."
+        },
+        "baseUrl": { "type": "string" }
+      }
+    },
+    "openCodeGoProvider": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "$ref": "#/$defs/commonDisplayFields/properties/enabled" },
+        "showSidebarBar": {
+          "$ref": "#/$defs/commonDisplayFields/properties/showSidebarBar"
+        },
+        "showFooterBar": {
+          "$ref": "#/$defs/commonDisplayFields/properties/showFooterBar"
+        },
+        "sidebarWindow": {
+          "$ref": "#/$defs/commonDisplayFields/properties/sidebarWindow"
+        },
+        "footerWindow": {
+          "$ref": "#/$defs/commonDisplayFields/properties/footerWindow"
+        },
+        "label": { "$ref": "#/$defs/commonDisplayFields/properties/label" },
+        "authPath": {
+          "type": "string",
+          "description": "Optional override path to a provider auth file. Omit to use auto-discovery from OpenCode auth and provider defaults."
+        },
+        "apiKey": {
+          "type": "string",
+          "description": "Optional literal API key or {env:NAME} fallback when auth files do not contain a key."
+        },
+        "baseUrl": { "type": "string" }
+      }
+    },
+    "qwenProvider": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "$ref": "#/$defs/commonDisplayFields/properties/enabled" },
+        "showSidebarBar": {
+          "$ref": "#/$defs/commonDisplayFields/properties/showSidebarBar"
+        },
+        "showFooterBar": {
+          "$ref": "#/$defs/commonDisplayFields/properties/showFooterBar"
+        },
+        "sidebarWindow": {
+          "$ref": "#/$defs/commonDisplayFields/properties/sidebarWindow"
+        },
+        "footerWindow": {
+          "$ref": "#/$defs/commonDisplayFields/properties/footerWindow"
+        },
+        "label": { "$ref": "#/$defs/commonDisplayFields/properties/label" }
+      }
+    },
+    "syntheticProvider": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "$ref": "#/$defs/commonDisplayFields/properties/enabled" },
+        "showSidebarBar": {
+          "$ref": "#/$defs/commonDisplayFields/properties/showSidebarBar"
+        },
+        "showFooterBar": {
+          "$ref": "#/$defs/commonDisplayFields/properties/showFooterBar"
+        },
+        "sidebarWindow": {
+          "$ref": "#/$defs/commonDisplayFields/properties/sidebarWindow"
+        },
+        "footerWindow": {
+          "$ref": "#/$defs/commonDisplayFields/properties/footerWindow"
+        },
+        "label": { "$ref": "#/$defs/commonDisplayFields/properties/label" },
+        "authPath": {
+          "type": "string",
+          "description": "Optional override path to a provider auth file. Omit to use auto-discovery from OpenCode auth and provider defaults."
+        },
+        "apiKey": {
+          "type": "string",
+          "description": "Optional literal API key or {env:NAME} fallback when auth files do not contain a key."
+        },
+        "baseUrl": { "type": "string" }
+      }
+    },
+    "zaiProvider": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "$ref": "#/$defs/commonDisplayFields/properties/enabled" },
+        "showSidebarBar": {
+          "$ref": "#/$defs/commonDisplayFields/properties/showSidebarBar"
+        },
+        "showFooterBar": {
+          "$ref": "#/$defs/commonDisplayFields/properties/showFooterBar"
+        },
+        "sidebarWindow": {
+          "$ref": "#/$defs/commonDisplayFields/properties/sidebarWindow"
+        },
+        "footerWindow": {
+          "$ref": "#/$defs/commonDisplayFields/properties/footerWindow"
+        },
+        "label": { "$ref": "#/$defs/commonDisplayFields/properties/label" },
+        "authPath": {
+          "type": "string",
+          "description": "Optional override path to a provider auth file. Omit to use auto-discovery from OpenCode auth and provider defaults."
+        },
+        "apiKey": {
+          "type": "string",
+          "description": "Optional literal API key or {env:NAME} fallback when auth files do not contain a key."
+        },
+        "authorizationScheme": { "enum": ["raw", "bearer"] }
       }
     }
   }
