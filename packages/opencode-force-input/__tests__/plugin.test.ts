@@ -43,12 +43,14 @@ describe("force submit", () => {
     ]);
   });
 
-  test("mounts registration in the prompt footer", () => {
+  test("mounts the prompt footer slot and dispatches force-submit", () => {
     const claims: SlotClaim[] = [];
+    const layers: (() => KeymapLayer)[] = [];
+    const dispatched: string[] = [];
     const context = {
       keymap: {
-        dispatch: () => {},
-        layer: () => {},
+        dispatch: (command: string) => dispatched.push(command),
+        layer: (layer: () => KeymapLayer) => layers.push(layer),
       },
       ui: {
         slot: (claim: SlotClaim) => {
@@ -60,6 +62,33 @@ describe("force submit", () => {
 
     setup(context);
 
-    expect(claims[0]?.append).toBe("prompt.footer.status");
+    const claim = claims.find(
+      (candidate): candidate is SlotClaim<"prompt.footer.status"> =>
+        candidate.append === "prompt.footer.status"
+    );
+    expect(claim).toBeDefined();
+    claim?.render({ mode: "normal" });
+
+    expect(layers).toHaveLength(1);
+    const [layer] = layers;
+    if (!layer) {
+      throw new Error("expected force-submit keymap layer");
+    }
+    const { commands } = layer();
+    if (!commands) {
+      throw new Error("expected force-submit keymap commands");
+    }
+    const [command] = commands;
+    if (!command) {
+      throw new Error("expected force-submit command");
+    }
+    command.run();
+
+    expect(dispatched).toEqual([
+      "session.interrupt",
+      "session.interrupt",
+      "session.interrupt",
+      "prompt.submit",
+    ]);
   });
 });

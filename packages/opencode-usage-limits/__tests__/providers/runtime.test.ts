@@ -1,11 +1,15 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { rm } from "node:fs/promises";
+import { rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
 import { Effect, Exit } from "effect";
 
 import { ProviderClock, ProviderClockLive } from "@/providers/runtime/clock.ts";
+import {
+  ProviderCommandExecutor,
+  ProviderCommandExecutorLive,
+} from "@/providers/runtime/command.ts";
 import {
   ProviderFileSystem,
   ProviderFileSystemLive,
@@ -14,6 +18,36 @@ import {
   makeProviderHttpClient,
   ProviderHttpClient,
 } from "@/providers/runtime/http.ts";
+
+const executeCommand = (args: readonly string[], timeoutMs = 1000) =>
+  Effect.runPromise(
+    Effect.gen(function* execute() {
+      const commands = yield* ProviderCommandExecutor;
+      return yield* commands.execute({
+        args,
+        command: process.execPath,
+        providerID: "qwen",
+        timeoutMs,
+      });
+    }).pipe(Effect.provide(ProviderCommandExecutorLive))
+  );
+
+const executeCommandExit = (
+  args: readonly string[],
+  acceptedExitCodes?: ReadonlySet<number>
+) =>
+  Effect.runPromiseExit(
+    Effect.gen(function* execute() {
+      const commands = yield* ProviderCommandExecutor;
+      return yield* commands.execute({
+        acceptedExitCodes,
+        args,
+        command: process.execPath,
+        providerID: "qwen",
+        timeoutMs: 1000,
+      });
+    }).pipe(Effect.provide(ProviderCommandExecutorLive))
+  );
 
 describe("provider runtime services", () => {
   const temporaryFiles: string[] = [];
@@ -221,6 +255,67 @@ describe("provider runtime services", () => {
     );
 
     expect(now).toBeInstanceOf(Date);
+  });
+
+  test("executes a controlled command and returns trimmed stdout", async () => {
+    const output = await executeCommand([
+      "-e",
+      'process.stdout.write(" usage output \\n")',
+    ]);
+
+    expect(output).toBe("usage output");
+  });
+
+  test("rejects unaccepted exits and accepts configured exit codes", async () => {
+    const args = ["-e", 'process.stdout.write("status"); process.exit(2)'];
+
+    const rejected = await executeCommandExit(args);
+    expect(Exit.isFailure(rejected)).toBe(true);
+    if (Exit.isFailure(rejected)) {
+      const serializedCause = JSON.stringify(rejected.cause);
+      expect(serializedCause).toContain('"_tag":"ProviderCommandError"');
+      expect(serializedCause).toContain('"exitCode":2');
+    }
+
+    const accepted = await executeCommandExit(args, new Set([2]));
+    expect(accepted).toEqual(Exit.succeed("status"));
+  });
+
+  test("kills a timed-out command", async () => {
+    const file = path.join(
+      tmpdir(),
+      `oc-usage-limits-command-${crypto.randomUUID()}.txt`
+    );
+    temporaryFiles.push(file);
+    const script = `
+      const file = process.argv[1];
+      const write = () => Bun.write(file, String(Date.now())).then(() => setTimeout(write, 10));
+      write();
+    `;
+
+    const result = await Effect.runPromiseExit(
+      Effect.gen(function* execute() {
+        const commands = yield* ProviderCommandExecutor;
+        return yield* commands.execute({
+          args: ["-e", script, file],
+          command: process.execPath,
+          providerID: "qwen",
+          timeoutMs: 200,
+        });
+      }).pipe(Effect.provide(ProviderCommandExecutorLive))
+    );
+
+    expect(Exit.isFailure(result)).toBe(true);
+    if (Exit.isFailure(result)) {
+      const serializedCause = JSON.stringify(result.cause);
+      expect(serializedCause).toContain('"_tag":"ProviderTimeoutError"');
+    }
+
+    await Bun.sleep(100);
+    const before = await stat(file);
+    await Bun.sleep(100);
+    const after = await stat(file);
+    expect(after.mtimeMs).toBe(before.mtimeMs);
   });
 
   test("classifies an interrupted HTTP request as a timeout", async () => {
