@@ -1,6 +1,5 @@
 import { Effect, Redacted, Result } from "effect";
 
-import { openCodeGoProviderConfigSchema } from "@/config-schema.ts";
 import {
   MissingProviderCredentialsError,
   ProviderResponseDecodeError,
@@ -221,8 +220,6 @@ export const fetchOpenCodeGoUsage = (
 
 /** Plugin registration for the OpenCode GO provider adapter. */
 export const openCodeGoProvider = {
-  capabilities: { customBaseUrl: true, transport: "http" },
-  configSchema: openCodeGoProviderConfigSchema,
   defaultLabel: "OpenCode GO",
   displayOrder: 5,
   fetch: fetchOpenCodeGoUsageEffect,

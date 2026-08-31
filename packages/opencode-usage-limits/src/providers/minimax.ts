@@ -1,6 +1,5 @@
 import { Effect, Redacted, Result } from "effect";
 
-import { minimaxProviderConfigSchema } from "@/config-schema.ts";
 import {
   MissingProviderCredentialsError,
   ProviderResponseDecodeError,
@@ -456,8 +455,6 @@ export const fetchMiniMaxTokenPlanUsage = (
 
 /** Plugin registration for the MiniMax Token Plan provider adapter. */
 export const minimaxProvider = {
-  capabilities: { customBaseUrl: true, transport: "http" },
-  configSchema: minimaxProviderConfigSchema,
   defaultLabel: "MiniMax",
   displayOrder: 3,
   fetch: fetchMiniMaxTokenPlanUsageEffect,
