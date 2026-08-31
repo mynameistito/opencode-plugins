@@ -11,7 +11,7 @@ Generated on 2026-08-31 against commit `a368bf0`. Execute in the order below. Ea
 | 003 | Remove orphaned usage-limits surfaces | P2 | S | - | DONE |
 | 004 | Align the public config schema with runtime validation | P1 | M | - | DONE |
 | 005 | Pin analysis and release executables | P2 | S | - | DONE |
-| 006 | Document Qwen footer and CLI requirements | P3 | S | 001 | TODO |
+| 006 | Document Qwen footer and CLI requirements | P3 | S | 001 | DONE |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with a one-line reason) | REJECTED (with rationale).
 

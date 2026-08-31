@@ -11,7 +11,7 @@ OpenCode TUI plugin that shows Codex, OpenCode GO, ZAI, Synthetic, MiniMax Token
 - Shows current MiniMax Token Plan rolling 5-hour and weekly windows.
 - Shows current Qwen Token Plan windows from the local `qwencloud` CLI.
 - Shows current OpenCode GO rolling, weekly, and monthly windows.
-- Adds compact prompt-footer usage when the current session uses an OpenAI, OpenCode GO, ZAI Coding Plan, Synthetic, or MiniMax Token Plan model.
+- Adds compact prompt-footer usage when the current session uses an OpenAI, OpenCode GO, ZAI Coding Plan, Synthetic, MiniMax Token Plan, or Qwen Token Plan model.
 - Providers are toggled from `~/.config/opencode/usage-limits.jsonc`.
 - Reads OpenCode-connected credentials first, then falls back to explicit config/env credentials.
 
@@ -158,6 +158,8 @@ Each provider's `sidebarWindow` can be `all`, `rolling`, `daily`, `weekly`, `mon
 | `minimax` | MiniMax Token Plan | `OC_MINIMAX_TOKEN_PLAN_KEY` | Bearer | `https://www.minimax.io` |
 | `qwen` | Qwen Token Plan | `qwencloud` CLI | CLI | — |
 | `opencode-go` | OpenCode GO usage | `OPENCODE_API_KEY` | Bearer | `https://opencode.ai/zen/go/v1` |
+
+Qwen usage requires the local `qwencloud` CLI to be installed and authenticated because the plugin calls its authentication-status and usage commands; an unauthenticated CLI state appears as missing credentials.
 
 Synthetic always uses `Bearer` auth and ignores `authorizationScheme`.
 
