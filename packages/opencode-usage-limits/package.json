@@ -52,7 +52,7 @@
   "scripts": {
     "build": "tsdown",
     "check": "ultracite check",
-    "knip": "bunx knip@latest",
+    "knip": "knip",
     "prepack": "bun run build",
     "test": "bun test",
     "test:package": "bun run build && bun ./scripts/test-package.ts",

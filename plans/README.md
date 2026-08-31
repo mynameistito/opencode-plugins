@@ -10,7 +10,7 @@ Generated on 2026-08-31 against commit `a368bf0`. Execute in the order below. Ea
 | 002 | Share optional provider auth-file loading | P2 | M | - | TODO |
 | 003 | Remove orphaned usage-limits surfaces | P2 | S | - | TODO |
 | 004 | Align the public config schema with runtime validation | P1 | M | - | TODO |
-| 005 | Pin analysis and release executables | P2 | S | - | TODO |
+| 005 | Pin analysis and release executables | P2 | S | - | DONE |
 | 006 | Document Qwen footer and CLI requirements | P3 | S | 001 | TODO |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with a one-line reason) | REJECTED (with rationale).
