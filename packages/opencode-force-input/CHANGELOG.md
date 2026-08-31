@@ -1,5 +1,11 @@
 # @mynameistito/opencode-force-input
 
+## 1.0.5
+
+### Patch Changes
+
+- f3dcc21: Remove unused Node type dependency.
+
 ## 1.0.4
 
 ### Patch Changes
