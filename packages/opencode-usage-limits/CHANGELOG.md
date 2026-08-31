@@ -1,5 +1,11 @@
 # @mynameistito/opencode-usage-limits
 
+## 1.0.11
+
+### Patch Changes
+
+- 2e27158: align the published configuration schema with runtime validation
+
 ## 1.0.10
 
 ### Patch Changes
