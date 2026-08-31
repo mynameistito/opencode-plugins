@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, mock, test } from "bun:test";
+import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import path from "node:path";
 
@@ -19,12 +20,103 @@ mock.module("@/utils.ts", () => ({ ...actualUtils, readJsonFile }));
 
 const { loadConfig, loadOpenCodeAuth } = await import("@/config.ts");
 
+interface PublishedProviderDefinition {
+  properties: object;
+}
+
+interface PublishedSchema {
+  $defs: {
+    codexProvider: PublishedProviderDefinition;
+    commonDisplayFields: PublishedProviderDefinition;
+    minimaxProvider: PublishedProviderDefinition;
+    openCodeGoProvider: PublishedProviderDefinition;
+    qwenProvider: PublishedProviderDefinition;
+    syntheticProvider: PublishedProviderDefinition;
+    zaiProvider: PublishedProviderDefinition;
+  };
+  properties: {
+    providers: {
+      properties: {
+        codex: { $ref: "#/$defs/codexProvider" };
+        minimax: { $ref: "#/$defs/minimaxProvider" };
+        "opencode-go": { $ref: "#/$defs/openCodeGoProvider" };
+        qwen: { $ref: "#/$defs/qwenProvider" };
+        synthetic: { $ref: "#/$defs/syntheticProvider" };
+        zai: { $ref: "#/$defs/zaiProvider" };
+      };
+    };
+  };
+}
+
+const publishedSchema: PublishedSchema = JSON.parse(
+  readFileSync(
+    path.join(import.meta.dir, "..", "usage-limits.schema.json"),
+    "utf-8"
+  )
+);
+
 afterEach(() => {
   readJsonFile.mockReset();
   readJsonFile.mockImplementation(originalReadJsonFile);
 });
 
 describe("configuration parsing", () => {
+  test("published schema matches provider-specific runtime fields", () => {
+    const commonFields = Object.keys(
+      publishedSchema.$defs.commonDisplayFields.properties
+    ).toSorted();
+    const providerFields = {
+      codex: Object.keys(
+        publishedSchema.$defs.codexProvider.properties
+      ).toSorted(),
+      minimax: Object.keys(
+        publishedSchema.$defs.minimaxProvider.properties
+      ).toSorted(),
+      "opencode-go": Object.keys(
+        publishedSchema.$defs.openCodeGoProvider.properties
+      ).toSorted(),
+      qwen: Object.keys(
+        publishedSchema.$defs.qwenProvider.properties
+      ).toSorted(),
+      synthetic: Object.keys(
+        publishedSchema.$defs.syntheticProvider.properties
+      ).toSorted(),
+      zai: Object.keys(publishedSchema.$defs.zaiProvider.properties).toSorted(),
+    };
+
+    expect(publishedSchema.properties.providers.properties).toEqual({
+      codex: { $ref: "#/$defs/codexProvider" },
+      minimax: { $ref: "#/$defs/minimaxProvider" },
+      "opencode-go": { $ref: "#/$defs/openCodeGoProvider" },
+      qwen: { $ref: "#/$defs/qwenProvider" },
+      synthetic: { $ref: "#/$defs/syntheticProvider" },
+      zai: { $ref: "#/$defs/zaiProvider" },
+    });
+    expect(providerFields.qwen).toEqual(commonFields);
+    expect(providerFields.zai).toEqual(
+      [...commonFields, "apiKey", "authPath", "authorizationScheme"].toSorted()
+    );
+    expect(providerFields.codex).toEqual(
+      [
+        ...commonFields,
+        "apiKey",
+        "authPath",
+        "authorizationScheme",
+        "baseUrl",
+      ].toSorted()
+    );
+    const apiKeyProviders = [
+      providerFields.minimax,
+      providerFields["opencode-go"],
+      providerFields.synthetic,
+    ];
+    for (const fields of apiKeyProviders) {
+      expect(fields).toEqual(
+        [...commonFields, "apiKey", "authPath", "baseUrl"].toSorted()
+      );
+    }
+  });
+
   test("defaults only omitted top-level fields and accepts $schema", () => {
     const result = parseUsageLimitsConfig({
       $schema: "https://example.com/usage-limits.schema.json",
@@ -89,6 +181,10 @@ describe("configuration parsing", () => {
     [{ refreshIntervalSeconds: Number.NaN }, "finite refresh"],
     [{ requestTimeoutMs: 999 }, "timeout minimum"],
     [{ providers: { codex: { authorizationScheme: "token" } } }, "enum"],
+    [
+      { providers: { qwen: { apiKey: "unsupported" } } },
+      "unsupported provider field",
+    ],
     [{ providers: { unknown: {} } }, "unknown provider"],
     [{ unknown: true }, "unknown top-level key"],
   ])("rejects %s (%s)", (input) => {
