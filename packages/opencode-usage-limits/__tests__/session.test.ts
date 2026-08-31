@@ -224,4 +224,40 @@ describe("session helpers", () => {
 
     expect(usageForProvider(states, "anthropic")?.label).toBe("5h");
   });
+
+  test("falls back past disabled and empty provider states", () => {
+    const states: ProviderState[] = [
+      {
+        id: "codex",
+        label: "Codex",
+        status: "disabled",
+      },
+      {
+        data: {
+          capturedAt: new Date(),
+          id: "zai",
+          label: "ZAI",
+          windows: [],
+        },
+        id: "zai",
+        label: "ZAI",
+        stale: false,
+        status: "ready",
+      },
+      {
+        data: {
+          capturedAt: new Date(),
+          id: "minimax",
+          label: "MiniMax",
+          windows: [window("weekly")],
+        },
+        id: "minimax",
+        label: "MiniMax",
+        stale: false,
+        status: "ready",
+      },
+    ];
+
+    expect(usageForProvider(states, "anthropic")?.label).toBe("weekly");
+  });
 });

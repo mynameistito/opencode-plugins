@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 
 import { fetchZaiCodingPlanUsage } from "@/providers/zai-coding-plan.ts";
+import type { OpenCodeAuth } from "@/types.ts";
 
 import { installFetchMock } from "./helpers.ts";
 
@@ -126,6 +127,30 @@ describe("ZAI provider", () => {
     });
   });
 
+  test.each([
+    ["direct apiKey", { apiKey: "direct-key" }],
+    ["zai-coding-plan", { "zai-coding-plan": { key: "plan-key" } }],
+  ])("accepts %s OpenCode auth", async (_name, auth) => {
+    const rawAuth: unknown = structuredClone(auth);
+    // SAFETY: The fixture represents untyped JSON loaded from OpenCode auth.
+    const openCodeAuth = rawAuth as OpenCodeAuth;
+    const fetchMock = installFetchMock(
+      Response.json({
+        data: {
+          limits: [{ percentage: 50, type: "TOKENS_LIMIT", usage: 50 }],
+        },
+      })
+    );
+
+    await fetchZaiCodingPlanUsage(undefined, openCodeAuth, 1000);
+
+    expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({
+      headers: {
+        Authorization: "zai-coding-plan" in auth ? "plan-key" : "direct-key",
+      },
+    });
+  });
+
   describe("tier inference", () => {
     test.each([
       [1400, "Max"],
@@ -243,6 +268,20 @@ describe("ZAI provider", () => {
     );
 
     installFetchMock(Response.json({ data: {} }));
+    await expect(
+      fetchZaiCodingPlanUsage({ apiKey: "key" }, {}, 1000)
+    ).rejects.toThrow("invalid ZAI usage");
+  });
+
+  test("ignores null limits but rejects a payload without a rolling limit", async () => {
+    installFetchMock(
+      Response.json({
+        data: {
+          limits: [null, { percentage: 50, type: "TIME_LIMIT", usage: 50 }],
+        },
+      })
+    );
+
     await expect(
       fetchZaiCodingPlanUsage({ apiKey: "key" }, {}, 1000)
     ).rejects.toThrow("invalid ZAI usage");

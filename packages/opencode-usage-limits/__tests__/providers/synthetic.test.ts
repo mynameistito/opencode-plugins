@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 
 import { fetchSyntheticUsage } from "@/providers/synthetic.ts";
+import type { OpenCodeAuth } from "@/types.ts";
 
 import { installFetchMock } from "./helpers.ts";
 
@@ -117,6 +118,25 @@ describe("Synthetic provider", () => {
     });
     expect(usage.id).toBe("synthetic");
     expect(usage.windows).toHaveLength(1);
+  });
+
+  test.each([
+    ["direct key", { key: "direct-key" }, "direct-key"],
+    ["direct apiKey", { apiKey: "direct-api-key" }, "direct-api-key"],
+    ["nested key", { synthetic: { key: "nested-key" } }, "nested-key"],
+  ])("accepts %s OpenCode auth", async (_name, auth, expectedKey) => {
+    const rawAuth: unknown = structuredClone(auth);
+    // SAFETY: The fixture represents untyped JSON loaded from OpenCode auth.
+    const openCodeAuth = rawAuth as OpenCodeAuth;
+    const fetchMock = installFetchMock(
+      Response.json({ rollingFiveHourLimit: { max: 1, remaining: 1 } })
+    );
+
+    await fetchSyntheticUsage(undefined, openCodeAuth, 1000);
+
+    expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({
+      headers: { Authorization: `Bearer ${expectedKey}` },
+    });
   });
 
   test("falls back to the legacy subscription bucket when v3 fields are missing", async () => {
@@ -271,6 +291,30 @@ describe("Synthetic provider", () => {
     { max: 100, remaining: -1 },
   ])("rejects invalid required counts %o", async (rollingFiveHourLimit) => {
     installFetchMock(Response.json({ rollingFiveHourLimit }));
+
+    await expect(
+      fetchSyntheticUsage({ apiKey: "syn-key" }, {}, 1000)
+    ).rejects.toThrow("invalid Synthetic usage");
+  });
+
+  test("omits an invalid weekly limit while retaining the rolling window", async () => {
+    installFetchMock(
+      Response.json({
+        rollingFiveHourLimit: { max: 100, remaining: 50 },
+        weeklyTokenLimit: { percentRemaining: 101 },
+      })
+    );
+
+    const usage = await fetchSyntheticUsage({ apiKey: "syn-key" }, {}, 1000);
+
+    expect(usage.windows).toHaveLength(1);
+    expect(usage.windows[0]).toMatchObject({ label: "5h" });
+  });
+
+  test("rejects invalid legacy subscription limits", async () => {
+    installFetchMock(
+      Response.json({ subscription: { limit: 10, requests: 11 } })
+    );
 
     await expect(
       fetchSyntheticUsage({ apiKey: "syn-key" }, {}, 1000)

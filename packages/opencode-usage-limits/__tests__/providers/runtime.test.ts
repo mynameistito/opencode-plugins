@@ -248,13 +248,36 @@ describe("provider runtime services", () => {
   });
 
   test("uses the Effect clock for deterministic provider timestamps", async () => {
-    const now = await Effect.runPromise(
-      ProviderClock.pipe(Effect.flatMap((clock) => clock.now)).pipe(
-        Effect.provide(ProviderClockLive)
-      )
+    const [now, afterZero, invalid] = await Effect.runPromise(
+      ProviderClock.pipe(
+        Effect.flatMap((clock) =>
+          Effect.all([clock.now, clock.after(0), clock.after(Number.NaN)])
+        )
+      ).pipe(Effect.provide(ProviderClockLive))
     );
 
     expect(now).toBeInstanceOf(Date);
+    expect(afterZero).toBeInstanceOf(Date);
+    expect(invalid).toBeNull();
+  });
+
+  test("classifies commands that cannot be spawned", async () => {
+    const result = await Effect.runPromiseExit(
+      Effect.gen(function* execute() {
+        const commands = yield* ProviderCommandExecutor;
+        return yield* commands.execute({
+          args: [],
+          command: path.join(tmpdir(), `missing-${crypto.randomUUID()}`),
+          providerID: "qwen",
+          timeoutMs: 1000,
+        });
+      }).pipe(Effect.provide(ProviderCommandExecutorLive))
+    );
+
+    expect(Exit.isFailure(result)).toBe(true);
+    if (Exit.isFailure(result)) {
+      expect(JSON.stringify(result.cause)).toContain('"cause":"command"');
+    }
   });
 
   test("executes a controlled command and returns trimmed stdout", async () => {
@@ -279,6 +302,18 @@ describe("provider runtime services", () => {
 
     const accepted = await executeCommandExit(args, new Set([2]));
     expect(accepted).toEqual(Exit.succeed("status"));
+  });
+
+  test.each([
+    ["stdout", 'process.stdout.write("x".repeat(2 * 1024 * 1024 + 1))'],
+    ["stderr", 'process.stderr.write("x".repeat(2 * 1024 * 1024 + 1))'],
+  ])("caps oversized command %s output", async (_stream, script) => {
+    const result = await executeCommandExit(["-e", script]);
+
+    expect(Exit.isFailure(result)).toBe(true);
+    if (Exit.isFailure(result)) {
+      expect(JSON.stringify(result.cause)).toContain('"cause":"output-limit"');
+    }
   });
 
   test("kills a timed-out command", async () => {
@@ -336,6 +371,89 @@ describe("provider runtime services", () => {
     expect(Exit.isFailure(result)).toBe(true);
     if (Exit.isFailure(result)) {
       expect(result.cause).toBeDefined();
+    }
+  });
+
+  test.each([
+    [401, "unauthorized"],
+    [403, "forbidden"],
+    [500, "http"],
+  ])("classifies HTTP status %d as %s", async (status, cause) => {
+    const layer = makeProviderHttpClient(() =>
+      Promise.resolve(new Response(null, { status }))
+    );
+    const result = await Effect.runPromise(
+      Effect.gen(function* request() {
+        const http = yield* ProviderHttpClient;
+        return yield* http.requestJson({
+          headers: {},
+          method: "GET",
+          providerID: "codex",
+          timeoutMs: 1000,
+          url: "https://example.test/usage",
+        });
+      }).pipe(Effect.provide(layer), Effect.exit)
+    );
+
+    expect(Exit.isFailure(result)).toBe(true);
+    if (Exit.isFailure(result)) {
+      expect(JSON.stringify(result.cause)).toContain(`"cause":"${cause}"`);
+    }
+  });
+
+  test("caps streamed HTTP bodies and classifies network failures", async () => {
+    let cancelled = false;
+    const layer = makeProviderHttpClient(() =>
+      Promise.resolve(
+        new Response(
+          new ReadableStream<Uint8Array>({
+            cancel: () => {
+              cancelled = true;
+            },
+            start: (controller) => {
+              controller.enqueue(new Uint8Array(2 * 1024 * 1024 + 1));
+            },
+          }),
+          { status: 200 }
+        )
+      )
+    );
+    const capped = await Effect.runPromise(
+      Effect.gen(function* request() {
+        const http = yield* ProviderHttpClient;
+        return yield* http.requestJson({
+          headers: {},
+          method: "GET",
+          providerID: "codex",
+          timeoutMs: 1000,
+          url: "https://example.test/usage",
+        });
+      }).pipe(Effect.provide(layer), Effect.exit)
+    );
+    expect(Exit.isFailure(capped)).toBe(true);
+    expect(cancelled).toBe(true);
+    if (Exit.isFailure(capped)) {
+      expect(JSON.stringify(capped.cause)).toContain('"cause":"output-limit"');
+    }
+
+    const networkLayer = makeProviderHttpClient(() =>
+      Promise.reject(new Error("offline"))
+    );
+    const network = await Effect.runPromise(
+      Effect.gen(function* request() {
+        const http = yield* ProviderHttpClient;
+        return yield* http.requestJson({
+          headers: {},
+          method: "GET",
+          providerID: "codex",
+          timeoutMs: 1000,
+          url: "https://example.test/usage",
+        });
+      }).pipe(Effect.provide(networkLayer), Effect.exit)
+    );
+    expect(Exit.isFailure(network)).toBe(true);
+    if (Exit.isFailure(network)) {
+      expect(JSON.stringify(network.cause)).toContain('"cause":"network"');
     }
   });
 });

@@ -47,7 +47,7 @@
     "fix": "ultracite fix",
     "typecheck": "tsc --noEmit",
     "prepack": "bun run build",
-    "test": "bun test",
+    "test": "bun test --coverage && bun ../../scripts/check-coverage.ts coverage/lcov.info 1",
     "test:package": "bun run build && bun ./scripts/test-package.ts"
   },
   "dependencies": {

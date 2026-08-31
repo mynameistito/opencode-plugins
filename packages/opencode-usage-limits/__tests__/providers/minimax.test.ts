@@ -198,6 +198,20 @@ describe("MiniMax provider", () => {
     expect(usage).toMatchObject({ id: "minimax" });
   });
 
+  test.each([
+    ["minimax", { minimax: null }],
+    ["minimax-coding-plan", { "minimax-coding-plan": null }],
+    ["minimax-token-plan", { "minimax-token-plan": null }],
+  ])("rejects missing %s auth layouts", async (_name, auth) => {
+    const rawAuth: unknown = structuredClone(auth);
+    // SAFETY: The fixture simulates malformed JSON loaded from OpenCode auth.
+    const openCodeAuth = rawAuth as OpenCodeAuth;
+
+    await expect(
+      fetchMiniMaxTokenPlanUsage(undefined, openCodeAuth, 1000)
+    ).rejects.toThrow("missing MiniMax key");
+  });
+
   test("prefers openCodeAuth over the configured apiKey", async () => {
     const fetchMock = installFetchMock(
       Response.json(
@@ -353,6 +367,31 @@ describe("MiniMax provider", () => {
     await expect(
       fetchMiniMaxTokenPlanUsage({ apiKey: "mm-key" }, {}, 1000)
     ).rejects.toThrow("invalid MiniMax usage");
+  });
+
+  test("ignores null model entries before selecting a usable entry", async () => {
+    installFetchMock(
+      Response.json(
+        successEnvelope([
+          null,
+          {
+            current_interval_remaining_percent: 80,
+            model_name: "general",
+          },
+        ])
+      )
+    );
+
+    const usage = await fetchMiniMaxTokenPlanUsage(
+      { apiKey: "mm-key" },
+      {},
+      1000
+    );
+
+    expect(usage.windows[0]).toMatchObject({
+      label: "5h",
+      quota: { remainingPercent: 80, usedPercent: 20 },
+    });
   });
 
   test.each([-1, Number.NaN, Number.POSITIVE_INFINITY])(

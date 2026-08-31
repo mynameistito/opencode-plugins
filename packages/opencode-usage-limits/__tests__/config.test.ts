@@ -268,6 +268,41 @@ describe("configuration loading", () => {
     });
   });
 
+  test.each([
+    [null, "OpenCode auth has an unsupported format"],
+    [[], "OpenCode auth has an unsupported format"],
+  ])(
+    "reports malformed auth format %p without credentials",
+    async (input, message) => {
+      readJsonFile.mockResolvedValueOnce(input);
+
+      await expect(loadOpenCodeAuth()).resolves.toEqual({
+        auth: {},
+        diagnostic: { kind: "auth-decode", message },
+      });
+    }
+  );
+
+  test("classifies auth parse and filesystem read errors separately", async () => {
+    readJsonFile.mockRejectedValueOnce(new SyntaxError("malformed"));
+    await expect(loadOpenCodeAuth()).resolves.toMatchObject({
+      auth: {},
+      diagnostic: {
+        kind: "auth-decode",
+        message: "OpenCode auth could not be parsed",
+      },
+    });
+
+    readJsonFile.mockRejectedValueOnce(new Error("permission denied"));
+    await expect(loadOpenCodeAuth()).resolves.toMatchObject({
+      auth: {},
+      diagnostic: {
+        kind: "auth-read",
+        message: "OpenCode auth could not be read",
+      },
+    });
+  });
+
   test("classifies absent and malformed auth without exposing values", async () => {
     readJsonFile.mockRejectedValueOnce(
       Object.assign(new Error("missing"), { code: "ENOENT" })

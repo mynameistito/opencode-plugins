@@ -54,7 +54,7 @@
     "check": "ultracite check",
     "knip": "knip",
     "prepack": "bun run build",
-    "test": "bun test",
+    "test": "bun test --coverage && bun ../../scripts/check-coverage.ts coverage/lcov.info 0.95",
     "test:package": "bun run build && bun ./scripts/test-package.ts",
     "typecheck": "tsc --noEmit",
     "fix": "ultracite fix"

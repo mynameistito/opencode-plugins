@@ -104,6 +104,28 @@ describe("OpenCode GO provider", () => {
     });
   });
 
+  test("uses nested OpenCode auth credentials", async () => {
+    const fetchMock = installFetchMock(
+      Response.json({ usage: { rolling: { percent: 1 } } })
+    );
+
+    await fetchOpenCodeGoUsage(
+      undefined,
+      { opencode: { apiKey: "key" } },
+      1000
+    );
+
+    expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({
+      headers: { Authorization: "Bearer key" },
+    });
+  });
+
+  test("rejects missing credentials", async () => {
+    await expect(fetchOpenCodeGoUsage(undefined, {}, 1000)).rejects.toThrow(
+      "missing OpenCode GO key"
+    );
+  });
+
   test("rejects malformed usage responses", async () => {
     installFetchMock(Response.json({ usage: { rolling: { percent: 101 } } }));
 
@@ -111,4 +133,15 @@ describe("OpenCode GO provider", () => {
       fetchOpenCodeGoUsage(undefined, { opencode: { key: "key" } }, 1000)
     ).rejects.toThrow("invalid OpenCode GO usage");
   });
+
+  test.each([Response.json([]), Response.json({})])(
+    "rejects malformed usage payloads",
+    async (response) => {
+      installFetchMock(response);
+
+      await expect(
+        fetchOpenCodeGoUsage(undefined, { opencode: { key: "key" } }, 1000)
+      ).rejects.toThrow("invalid OpenCode GO usage");
+    }
+  );
 });
