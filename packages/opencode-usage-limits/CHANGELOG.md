@@ -1,5 +1,12 @@
 # @mynameistito/opencode-usage-limits
 
+## 1.0.13
+
+### Patch Changes
+
+- 52cfdd0: honor XDG config and data directories for usage-limits paths
+- 8fce330: Fix command runtime failures without an exit code.
+
 ## 1.0.12
 
 ### Patch Changes
