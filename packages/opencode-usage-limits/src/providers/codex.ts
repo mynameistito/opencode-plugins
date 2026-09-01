@@ -163,6 +163,13 @@ const readCodexAuthFile = (
     return { access, accountId };
   });
 
+/**
+ * Loads fallback credentials in configured precedence order.
+ *
+ * An explicit auth file wins over an API key, and an API key wins over the
+ * default Codex auth file. This preserves the credential order used before
+ * retrying rejected OpenCode credentials.
+ */
 const loadCodexFallbackCredentials = (
   config: CodexProviderConfig | undefined,
   isOfficialHost: boolean,

@@ -89,6 +89,36 @@ describe("Codex provider", () => {
     }
   });
 
+  test("preserves a configured API key during the auth fallback", async () => {
+    let attempts = 0;
+    const fetchMock = installFetchMock(
+      Response.json({ rate_limit: { primary_window: { used_percent: 13 } } })
+    );
+    fetchMock.mockImplementation(() => {
+      attempts += 1;
+      return Promise.resolve(
+        attempts === 1
+          ? new Response(null, { status: 401 })
+          : Response.json({
+              rate_limit: { primary_window: { used_percent: 13 } },
+            })
+      );
+    });
+
+    await fetchCodexUsage(
+      { apiKey: "configured-token" },
+      { openai: { access: "expired-access", accountId: "openai-account" } },
+      1000
+    );
+
+    expect(fetchMock.mock.calls[1]?.[1]).toMatchObject({
+      headers: {
+        Authorization: "Bearer configured-token",
+        "ChatGPT-Account-Id": "openai-account",
+      },
+    });
+  });
+
   test("rejects a missing configured Codex auth file", async () => {
     const authPath = path.join(
       tmpdir(),
