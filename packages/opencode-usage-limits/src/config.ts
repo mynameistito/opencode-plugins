@@ -9,18 +9,32 @@ import type { OpenCodeAuth, ResolvedUsageLimitsConfig } from "@/types.ts";
 import { isRecord, isString, readJsonFile } from "@/utils.ts";
 import type { JsonValue } from "@/utils.ts";
 
+/**
+ * Resolves an XDG directory only when the environment value is absolute.
+ *
+ * @param value - The XDG environment value to inspect.
+ * @param fallback - The platform-specific directory to use otherwise.
+ * @returns The accepted XDG directory or the fallback directory.
+ */
+export const resolveXdgPath = (
+  value: string | undefined,
+  fallback: string
+): string => (value && path.isAbsolute(value) ? value : fallback);
+
 /** Default user configuration path for this plugin. */
 const CONFIG_PATH = path.join(
-  homedir(),
-  ".config",
+  resolveXdgPath(process.env.XDG_CONFIG_HOME, path.join(homedir(), ".config")),
   "opencode",
   "usage-limits.jsonc"
 );
 /** Default OpenCode auth path shared by installed providers. */
 const OPENCODE_AUTH_PATH = path.join(
-  process.platform === "win32"
-    ? (process.env.LOCALAPPDATA ?? path.join(homedir(), "AppData", "Local"))
-    : (process.env.XDG_DATA_HOME ?? path.join(homedir(), ".local", "share")),
+  resolveXdgPath(
+    process.env.XDG_DATA_HOME,
+    process.platform === "win32"
+      ? (process.env.LOCALAPPDATA ?? path.join(homedir(), "AppData", "Local"))
+      : path.join(homedir(), ".local", "share")
+  ),
   "opencode",
   "auth.json"
 );

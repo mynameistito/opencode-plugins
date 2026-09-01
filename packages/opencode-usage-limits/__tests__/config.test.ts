@@ -18,7 +18,24 @@ const readJsonFile = mock(originalReadJsonFile);
 
 mock.module("@/utils.ts", () => ({ ...actualUtils, readJsonFile }));
 
-const { loadConfig, loadOpenCodeAuth } = await import("@/config.ts");
+const testXdgConfigHome = path.join(homedir(), ".opencode-test-config");
+const testXdgDataHome = path.join(homedir(), ".opencode-test-data");
+const originalXdgConfigHome = process.env.XDG_CONFIG_HOME;
+const originalXdgDataHome = process.env.XDG_DATA_HOME;
+process.env.XDG_CONFIG_HOME = testXdgConfigHome;
+process.env.XDG_DATA_HOME = testXdgDataHome;
+const { loadConfig, loadOpenCodeAuth, resolveXdgPath } =
+  await import("@/config.ts");
+if (originalXdgConfigHome === undefined) {
+  delete process.env.XDG_CONFIG_HOME;
+} else {
+  process.env.XDG_CONFIG_HOME = originalXdgConfigHome;
+}
+if (originalXdgDataHome === undefined) {
+  delete process.env.XDG_DATA_HOME;
+} else {
+  process.env.XDG_DATA_HOME = originalXdgDataHome;
+}
 
 interface PublishedProviderDefinition {
   properties: object;
@@ -209,6 +226,24 @@ describe("configuration parsing", () => {
 });
 
 describe("configuration loading", () => {
+  test.each([
+    ["unset", undefined],
+    ["empty", ""],
+    ["relative", "config/opencode"],
+  ])("uses the fallback for %s XDG paths", (_label, value) => {
+    const fallback = path.join(homedir(), ".fallback");
+
+    expect(resolveXdgPath(value, fallback)).toBe(fallback);
+  });
+
+  test("accepts an absolute XDG path", () => {
+    const absolute = path.join(homedir(), ".xdg");
+
+    expect(resolveXdgPath(absolute, path.join(homedir(), ".fallback"))).toBe(
+      absolute
+    );
+  });
+
   test("returns defaults when no user config exists", async () => {
     readJsonFile.mockRejectedValueOnce(
       Object.assign(new Error("missing"), { code: "ENOENT" })
@@ -219,6 +254,9 @@ describe("configuration loading", () => {
     if (Result.isSuccess(result)) {
       expect(result.success.refreshIntervalSeconds).toBe(60);
     }
+    expect(readJsonFile).toHaveBeenCalledWith(
+      path.join(testXdgConfigHome, "opencode", "usage-limits.jsonc")
+    );
   });
 
   test("returns typed read and JSONC decode failures", async () => {
@@ -248,15 +286,7 @@ describe("configuration loading", () => {
     expect(String(result.auth.openai?.access)).not.toContain("token");
     expect(result.diagnostic).toBeUndefined();
     expect(readJsonFile).toHaveBeenCalledWith(
-      path.join(
-        process.platform === "win32"
-          ? (process.env.LOCALAPPDATA ??
-              path.join(homedir(), "AppData", "Local"))
-          : (process.env.XDG_DATA_HOME ??
-              path.join(homedir(), ".local", "share")),
-        "opencode",
-        "auth.json"
-      )
+      path.join(testXdgDataHome, "opencode", "auth.json")
     );
   });
 
