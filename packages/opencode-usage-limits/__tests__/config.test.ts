@@ -249,11 +249,11 @@ describe("configuration loading", () => {
     expect(result.diagnostic).toBeUndefined();
     expect(readJsonFile).toHaveBeenCalledWith(
       path.join(
-        process.platform === "win32"
-          ? (process.env.LOCALAPPDATA ??
+        process.env.XDG_DATA_HOME ??
+          (process.platform === "win32"
+            ? (process.env.LOCALAPPDATA ??
               path.join(homedir(), "AppData", "Local"))
-          : (process.env.XDG_DATA_HOME ??
-              path.join(homedir(), ".local", "share")),
+            : path.join(homedir(), ".local", "share")),
         "opencode",
         "auth.json"
       )
