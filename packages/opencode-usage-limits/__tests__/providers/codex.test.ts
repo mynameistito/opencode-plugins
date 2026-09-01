@@ -37,6 +37,88 @@ describe("Codex provider", () => {
     }
   });
 
+  test("falls back to Codex auth when OpenCode credentials are rejected", async () => {
+    const authPath = path.join(
+      tmpdir(),
+      `oc-usage-limits-${crypto.randomUUID()}.json`
+    );
+    await Bun.write(
+      authPath,
+      JSON.stringify({
+        tokens: { access_token: "codex-access", account_id: "codex-account" },
+      })
+    );
+    try {
+      let attempts = 0;
+      const fetchMock = installFetchMock(
+        Response.json({ rate_limit: { primary_window: { used_percent: 0 } } })
+      );
+      fetchMock.mockImplementation(() => {
+        attempts += 1;
+        return Promise.resolve(
+          attempts === 1
+            ? new Response(null, { status: 401 })
+            : Response.json({
+                rate_limit: { primary_window: { used_percent: 13 } },
+              })
+        );
+      });
+
+      const usage = await fetchCodexUsage(
+        { authPath },
+        { openai: { access: "expired-access", accountId: "openai-account" } },
+        1000
+      );
+
+      expect(fetchMock.mock.calls).toHaveLength(2);
+      expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({
+        headers: {
+          Authorization: "Bearer expired-access",
+          "ChatGPT-Account-Id": "openai-account",
+        },
+      });
+      expect(fetchMock.mock.calls[1]?.[1]).toMatchObject({
+        headers: {
+          Authorization: "Bearer codex-access",
+          "ChatGPT-Account-Id": "codex-account",
+        },
+      });
+      expect(usage.windows[0]?.quota).toMatchObject({ usedPercent: 13 });
+    } finally {
+      await rm(authPath, { force: true });
+    }
+  });
+
+  test("preserves a configured API key during the auth fallback", async () => {
+    let attempts = 0;
+    const fetchMock = installFetchMock(
+      Response.json({ rate_limit: { primary_window: { used_percent: 13 } } })
+    );
+    fetchMock.mockImplementation(() => {
+      attempts += 1;
+      return Promise.resolve(
+        attempts === 1
+          ? new Response(null, { status: 401 })
+          : Response.json({
+              rate_limit: { primary_window: { used_percent: 13 } },
+            })
+      );
+    });
+
+    await fetchCodexUsage(
+      { apiKey: "configured-token" },
+      { openai: { access: "expired-access", accountId: "openai-account" } },
+      1000
+    );
+
+    expect(fetchMock.mock.calls[1]?.[1]).toMatchObject({
+      headers: {
+        Authorization: "Bearer configured-token",
+        "ChatGPT-Account-Id": "openai-account",
+      },
+    });
+  });
+
   test("rejects a missing configured Codex auth file", async () => {
     const authPath = path.join(
       tmpdir(),
