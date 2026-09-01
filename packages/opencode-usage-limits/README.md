@@ -174,6 +174,9 @@ Codex lookup order:
 1. OpenCode auth at `~/.local/share/opencode/auth.json`, provider `openai`.
 2. Codex auth file from `authPath`, default `~/.codex/auth.json`.
 
+If an official-host request rejects the OpenCode credentials, the plugin retries
+with the configured or default Codex auth file.
+
 ZAI lookup order:
 
 1. Config `authPath`, which can point at OpenCode auth JSON or a simple `{ "key": "..." }` / `{ "apiKey": "..." }` JSON file.

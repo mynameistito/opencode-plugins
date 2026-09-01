@@ -3,8 +3,9 @@ import { Effect, Redacted, Result } from "effect";
 import {
   MissingProviderCredentialsError,
   ProviderResponseDecodeError,
+  ProviderTransportError,
 } from "@/errors.ts";
-import type { ProviderTransportError } from "@/errors.ts";
+import type { ProviderError } from "@/errors.ts";
 import { limitLabelForWindow } from "@/format.ts";
 import type { ProviderDefinition } from "@/providers/definition.ts";
 import { isJsonNumber, isJsonString } from "@/providers/json.ts";
@@ -54,6 +55,11 @@ interface CodexAuthPayload {
     readonly access_token?: JsonValue;
     readonly account_id?: JsonValue;
   };
+}
+
+interface CodexCredentials {
+  readonly access: Redacted.Redacted<string>;
+  readonly accountId: Redacted.Redacted<string>;
 }
 
 const parseCodexAuth = (value: JsonObject): CodexAuthPayload | null => {
@@ -126,10 +132,7 @@ const resetCreditsFromPayload = (payload: CodexPayload): number | null => {
 const readCodexAuthFile = (
   authPath: string | undefined
 ): Effect.Effect<
-  {
-    readonly access: Redacted.Redacted<string>;
-    readonly accountId: Redacted.Redacted<string>;
-  },
+  CodexCredentials,
   | MissingProviderCredentialsError
   | ProviderResponseDecodeError
   | ProviderTransportError,
@@ -160,6 +163,27 @@ const readCodexAuthFile = (
     return { access, accountId };
   });
 
+const loadCodexFallbackCredentials = (
+  config: CodexProviderConfig | undefined,
+  isOfficialHost: boolean,
+  openCodeAccountId: Redacted.Redacted<string> | undefined,
+  configuredAccess: Redacted.Redacted<string> | undefined
+) =>
+  Effect.gen(function* loadFallbackCredentials() {
+    if (config?.authPath) {
+      return yield* readCodexAuthFile(config.authPath);
+    }
+    if (configuredAccess) {
+      return {
+        access: configuredAccess,
+        accountId: isOfficialHost
+          ? (openCodeAccountId ?? Redacted.make("configured"))
+          : Redacted.make("configured"),
+      };
+    }
+    return yield* readCodexAuthFile(globalThis.undefined);
+  });
+
 const loadCodexCredentials = (
   config: CodexProviderConfig | undefined,
   isOfficialHost: boolean,
@@ -177,18 +201,12 @@ const loadCodexCredentials = (
     if (isOfficialHost && openCodeAccess && openCodeAccountId) {
       return { access: openCodeAccess, accountId: openCodeAccountId };
     }
-    if (config?.authPath) {
-      return yield* readCodexAuthFile(config.authPath);
-    }
-    if (configuredAccess) {
-      return {
-        access: configuredAccess,
-        accountId: isOfficialHost
-          ? (openCodeAccountId ?? Redacted.make("configured"))
-          : Redacted.make("configured"),
-      };
-    }
-    return yield* readCodexAuthFile(globalThis.undefined);
+    return yield* loadCodexFallbackCredentials(
+      config,
+      isOfficialHost,
+      openCodeAccountId,
+      configuredAccess
+    );
   });
 
 /**
@@ -239,6 +257,40 @@ const reportedWindowsAreInvalid = (
     rateLimit.secondary_window !== undefined) &&
   windows.length === 0;
 
+type CodexUsageRequest = (
+  credentials: CodexCredentials
+) => Effect.Effect<JsonValue, ProviderError>;
+
+const requestCodexUsage = (
+  requestUsage: CodexUsageRequest,
+  credentials: CodexCredentials,
+  fallbackCredentials: ReturnType<typeof loadCodexFallbackCredentials>,
+  canFallbackToCodexAuth: boolean
+) =>
+  Effect.gen(function* requestWithFallback() {
+    const firstAttempt = yield* Effect.match(requestUsage(credentials), {
+      onFailure: (error) => ({ error }),
+      onSuccess: (data) => ({ data }),
+    });
+    if ("data" in firstAttempt) {
+      return firstAttempt.data;
+    }
+    const unauthorizedResponse =
+      firstAttempt.error instanceof ProviderTransportError &&
+      firstAttempt.error.cause === "unauthorized";
+    if (!canFallbackToCodexAuth || !unauthorizedResponse) {
+      return yield* firstAttempt.error;
+    }
+    const fallback = yield* Effect.match(fallbackCredentials, {
+      onFailure: () => ({ credentials: null }),
+      onSuccess: (nextCredentials) => ({ credentials: nextCredentials }),
+    });
+    if (fallback.credentials === null) {
+      return yield* firstAttempt.error;
+    }
+    return yield* requestUsage(fallback.credentials);
+  });
+
 /**
  * Fetches and normalizes Codex usage limits.
  *
@@ -278,18 +330,34 @@ const fetchCodexUsageEffect = (
       openCodeAccountId,
       configuredAccess
     );
+    const canFallbackToCodexAuth =
+      isOfficialHost &&
+      openCodeAccess !== undefined &&
+      openCodeAccountId !== undefined;
 
-    const payload = yield* http.requestJson({
-      headers: {
-        Authorization: `Bearer ${Redacted.value(credentials.access)}`,
-        "ChatGPT-Account-Id": Redacted.value(credentials.accountId),
-        "User-Agent": "opencode-usage-limits",
-      },
-      method: "GET",
-      providerID: "codex",
-      timeoutMs,
-      url: `${baseUrl}/wham/usage`,
-    });
+    const requestUsage = (currentCredentials: CodexCredentials) =>
+      http.requestJson({
+        headers: {
+          Authorization: `Bearer ${Redacted.value(currentCredentials.access)}`,
+          "ChatGPT-Account-Id": Redacted.value(currentCredentials.accountId),
+          "User-Agent": "opencode-usage-limits",
+        },
+        method: "GET",
+        providerID: "codex",
+        timeoutMs,
+        url: `${baseUrl}/wham/usage`,
+      });
+    const payload = yield* requestCodexUsage(
+      requestUsage,
+      credentials,
+      loadCodexFallbackCredentials(
+        config,
+        isOfficialHost,
+        openCodeAccountId,
+        configuredAccess
+      ),
+      canFallbackToCodexAuth
+    );
 
     const parsedPayload = isRecord(payload) ? parseCodexPayload(payload) : null;
     if (!parsedPayload) {
