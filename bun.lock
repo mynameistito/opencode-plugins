@@ -25,10 +25,9 @@
     },
     "packages/opencode-force-input": {
       "name": "@mynameistito/opencode-force-input",
-      "version": "1.0.4",
+      "version": "1.0.5",
       "dependencies": {
         "@opencode-ai/plugin": "0.0.0-beta-18050",
-        "@types/node": "^26.1.1",
       },
       "devDependencies": {
         "@opencode-ai/cli": "0.0.0-beta-18050",
@@ -38,7 +37,7 @@
     },
     "packages/opencode-usage-limits": {
       "name": "@mynameistito/opencode-usage-limits",
-      "version": "1.0.10",
+      "version": "1.0.12",
       "dependencies": {
         "@opencode-ai/plugin": "0.0.0-beta-18027",
         "effect": "4.0.0-beta.83",
