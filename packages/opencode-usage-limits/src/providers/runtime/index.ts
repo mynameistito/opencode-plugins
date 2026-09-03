@@ -1,7 +1,5 @@
 import { Layer } from "effect";
 
-import type { ProviderClock } from "@/providers/runtime/clock.ts";
-import { ProviderClockLive } from "@/providers/runtime/clock.ts";
 import type { ProviderCommandExecutor } from "@/providers/runtime/command.ts";
 import { ProviderCommandExecutorLive } from "@/providers/runtime/command.ts";
 import type { ProviderEnvironment } from "@/providers/runtime/environment.ts";
@@ -13,7 +11,6 @@ import { ProviderHttpClientLive } from "@/providers/runtime/http.ts";
 
 /** Runtime services required by every provider definition. */
 export type ProviderRuntime =
-  | ProviderClock
   | ProviderCommandExecutor
   | ProviderEnvironment
   | ProviderFileSystem
@@ -21,7 +18,6 @@ export type ProviderRuntime =
 
 /** Production provider runtime layer. */
 export const ProviderRuntimeLive = Layer.mergeAll(
-  ProviderClockLive,
   ProviderCommandExecutorLive,
   ProviderEnvironmentLive,
   ProviderFileSystemLive,

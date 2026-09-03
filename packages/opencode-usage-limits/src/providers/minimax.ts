@@ -1,4 +1,4 @@
-import { Effect, Redacted, Result } from "effect";
+import { Clock, Effect, Redacted, Result } from "effect";
 
 import {
   MissingProviderCredentialsError,
@@ -7,7 +7,6 @@ import {
 import { readProviderAuthFileCredential } from "@/providers/auth-file.ts";
 import type { ProviderDefinition } from "@/providers/definition.ts";
 import { isJsonNumber, isJsonString } from "@/providers/json.ts";
-import { ProviderClock } from "@/providers/runtime/clock.ts";
 import { ProviderEnvironment } from "@/providers/runtime/environment.ts";
 import { ProviderHttpClient } from "@/providers/runtime/http.ts";
 import { ProviderRuntimeLive } from "@/providers/runtime/index.ts";
@@ -323,7 +322,6 @@ const fetchMiniMaxTokenPlanUsageEffect = (
   Effect.gen(function* runFetchMiniMaxTokenPlanUsage() {
     const environment = yield* ProviderEnvironment;
     const http = yield* ProviderHttpClient;
-    const clock = yield* ProviderClock;
     const baseUrl = resolveHttpsBaseUrl(
       config?.baseUrl,
       DEFAULT_MINIMAX_BASE_URL
@@ -384,7 +382,7 @@ const fetchMiniMaxTokenPlanUsageEffect = (
       });
     }
 
-    const capturedAt = yield* clock.now;
+    const capturedAt = new Date(yield* Clock.currentTimeMillis);
     const windows: UsageWindow[] = [];
     const fiveHour = minimaxFiveHourWindow(selected, capturedAt);
     if (fiveHour) {

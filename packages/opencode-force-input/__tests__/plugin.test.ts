@@ -68,6 +68,7 @@ describe("force submit", () => {
     );
     expect(claim).toBeDefined();
     claim?.render({ mode: "normal" });
+    claim?.render({ mode: "normal" });
 
     expect(layers).toHaveLength(1);
     const [layer] = layers;
