@@ -43,20 +43,14 @@ export const registerForceSubmitLayer = (keymap: ForceSubmitKeymap): void => {
 };
 
 /** Initializes the OpenCode v2 TUI plugin. */
-export const setup = (context: ForceSubmitContext): (() => void) => {
-  let layerRegistered = false;
-
-  return context.ui.slot({
+export const setup = (context: ForceSubmitContext): (() => void) =>
+  context.ui.slot({
     append: "prompt.footer.status",
     render: () => {
-      if (!layerRegistered) {
-        registerForceSubmitLayer(context.keymap);
-        layerRegistered = true;
-      }
+      registerForceSubmitLayer(context.keymap);
       return null;
     },
   });
-};
 
 /** OpenCode v2 TUI plugin module entrypoint. */
 export default Plugin.define({
