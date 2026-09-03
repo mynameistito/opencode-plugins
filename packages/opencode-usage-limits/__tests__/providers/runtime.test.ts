@@ -5,7 +5,6 @@ import path from "node:path";
 
 import { Effect, Exit } from "effect";
 
-import { ProviderClock, ProviderClockLive } from "@/providers/runtime/clock.ts";
 import {
   ProviderCommandExecutor,
   ProviderCommandExecutorLive,
@@ -245,20 +244,6 @@ describe("provider runtime services", () => {
     );
 
     expect(result).toEqual({ plan: "pro" });
-  });
-
-  test("uses the Effect clock for deterministic provider timestamps", async () => {
-    const [now, afterZero, invalid] = await Effect.runPromise(
-      ProviderClock.pipe(
-        Effect.flatMap((clock) =>
-          Effect.all([clock.now, clock.after(0), clock.after(Number.NaN)])
-        )
-      ).pipe(Effect.provide(ProviderClockLive))
-    );
-
-    expect(now).toBeInstanceOf(Date);
-    expect(afterZero).toBeInstanceOf(Date);
-    expect(invalid).toBeNull();
   });
 
   test("classifies commands that cannot be spawned", async () => {

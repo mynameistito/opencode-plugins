@@ -1,4 +1,4 @@
-import { Effect, Redacted, Result } from "effect";
+import { Clock, Effect, Redacted, Result } from "effect";
 
 import {
   MissingProviderCredentialsError,
@@ -7,7 +7,6 @@ import {
 import { readProviderAuthFileCredential } from "@/providers/auth-file.ts";
 import type { ProviderDefinition } from "@/providers/definition.ts";
 import { isJsonNumber, isJsonString } from "@/providers/json.ts";
-import { ProviderClock } from "@/providers/runtime/clock.ts";
 import { ProviderEnvironment } from "@/providers/runtime/environment.ts";
 import { ProviderHttpClient } from "@/providers/runtime/http.ts";
 import { ProviderRuntimeLive } from "@/providers/runtime/index.ts";
@@ -267,7 +266,6 @@ const fetchZaiCodingPlanUsageEffect = (
   Effect.gen(function* runFetchZaiCodingPlanUsage() {
     const environment = yield* ProviderEnvironment;
     const http = yield* ProviderHttpClient;
-    const clock = yield* ProviderClock;
     const apiKey =
       (yield* readProviderAuthFileCredential(
         config?.authPath,
@@ -328,7 +326,7 @@ const fetchZaiCodingPlanUsageEffect = (
     }
 
     return {
-      capturedAt: yield* clock.now,
+      capturedAt: new Date(yield* Clock.currentTimeMillis),
       id: "zai",
       label: config?.label ?? "ZAI",
       tierName: inferZaiTier(promptTotal),

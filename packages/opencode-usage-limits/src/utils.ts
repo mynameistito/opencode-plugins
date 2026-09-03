@@ -218,5 +218,5 @@ const expandHome = (value: string): string =>
  */
 export const readJsonFile = async (filePath: string): Promise<JsonValue> => {
   const raw = await readFile(expandHome(filePath), "utf-8");
-  return parseJsonValue(stripJsonComments(raw));
+  return parseJsonValue(stripJsonComments(raw.replace(/^\uFEFF/u, "")));
 };

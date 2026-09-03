@@ -1,10 +1,9 @@
 import { describe, expect, test } from "bun:test";
 
-import { Effect, Exit, Layer } from "effect";
+import { Clock, Effect, Exit, Layer } from "effect";
 
 import { ProviderCommandError, ProviderTimeoutError } from "@/errors.ts";
 import { qwenProvider } from "@/providers/qwen.ts";
-import { ProviderClock } from "@/providers/runtime/clock.ts";
 import { ProviderCommandExecutor } from "@/providers/runtime/command.ts";
 import type { ProviderCommandInput } from "@/providers/runtime/command.ts";
 import { ProviderEnvironmentLive } from "@/providers/runtime/environment.ts";
@@ -31,9 +30,12 @@ const createRuntime = (auth: CommandResult, usage: CommandResult = "") => {
         : Effect.succeed(result);
     },
   });
-  const clock = Layer.succeed(ProviderClock, {
-    after: () => Effect.succeed(null),
-    now: Effect.succeed(NOW),
+  const clock = Layer.succeed(Clock.Clock, {
+    currentTimeMillis: Effect.succeed(NOW.getTime()),
+    currentTimeMillisUnsafe: () => NOW.getTime(),
+    currentTimeNanos: Effect.succeed(BigInt(NOW.getTime()) * 1_000_000n),
+    currentTimeNanosUnsafe: () => BigInt(NOW.getTime()) * 1_000_000n,
+    sleep: () => Effect.void,
   });
 
   return {

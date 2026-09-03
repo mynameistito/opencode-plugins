@@ -1,4 +1,4 @@
-import { Effect, Result } from "effect";
+import { Clock, Effect, Result } from "effect";
 
 import {
   MissingProviderCredentialsError,
@@ -6,7 +6,6 @@ import {
 } from "@/errors.ts";
 import type { ProviderDefinition } from "@/providers/definition.ts";
 import { isJsonBoolean, isJsonNumber, isJsonString } from "@/providers/json.ts";
-import { ProviderClock } from "@/providers/runtime/clock.ts";
 import { ProviderCommandExecutor } from "@/providers/runtime/command.ts";
 import type { OpenCodeAuth, QwenProviderConfig, UsageWindow } from "@/types.ts";
 import {
@@ -201,7 +200,6 @@ const fetchQwenTokenPlanUsage = (
 ): ReturnType<ProviderDefinition<"qwen">["fetch"]> =>
   Effect.gen(function* runFetchQwenTokenPlanUsage() {
     const commands = yield* ProviderCommandExecutor;
-    const clock = yield* ProviderClock;
     const authRaw = yield* commands.execute({
       acceptedExitCodes: new Set([2]),
       args: ["auth", "status", "--format", "json"],
@@ -250,7 +248,7 @@ const fetchQwenTokenPlanUsage = (
     }
 
     return {
-      capturedAt: yield* clock.now,
+      capturedAt: new Date(yield* Clock.currentTimeMillis),
       id: "qwen",
       label: config?.label ?? tokenPlan.planName ?? "Qwen Token Plan",
       windows: [window],

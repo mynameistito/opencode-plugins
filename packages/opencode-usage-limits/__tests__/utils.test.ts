@@ -72,6 +72,23 @@ describe("utility helpers", () => {
     }
   });
 
+  test("reads BOM-prefixed JSONC", async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), "oc-usage-limits-"));
+    const filePath = path.join(directory, "config.jsonc");
+
+    try {
+      await writeFile(
+        filePath,
+        '\uFEFF{\n  // provider config\n  "enabled": true,\n}',
+        "utf-8"
+      );
+
+      await expect(readJsonFile(filePath)).resolves.toEqual({ enabled: true });
+    } finally {
+      await rm(directory, { force: true, recursive: true });
+    }
+  });
+
   test.each([
     ['{"value":"unterminated}', "unterminated string"],
     ['{"value":1} /* unterminated', "unterminated block comment"],

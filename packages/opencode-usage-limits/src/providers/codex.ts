@@ -1,4 +1,4 @@
-import { Effect, Redacted, Result } from "effect";
+import { Clock, Effect, Redacted, Result } from "effect";
 
 import {
   MissingProviderCredentialsError,
@@ -9,7 +9,6 @@ import type { ProviderError } from "@/errors.ts";
 import { limitLabelForWindow } from "@/format.ts";
 import type { ProviderDefinition } from "@/providers/definition.ts";
 import { isJsonNumber, isJsonString } from "@/providers/json.ts";
-import { ProviderClock } from "@/providers/runtime/clock.ts";
 import { ProviderEnvironment } from "@/providers/runtime/environment.ts";
 import { ProviderFileSystem } from "@/providers/runtime/filesystem.ts";
 import { ProviderHttpClient } from "@/providers/runtime/http.ts";
@@ -319,7 +318,6 @@ const fetchCodexUsageEffect = (
   Effect.gen(function* runFetchCodexUsage() {
     const environment = yield* ProviderEnvironment;
     const http = yield* ProviderHttpClient;
-    const clock = yield* ProviderClock;
     const baseUrl = resolveHttpsBaseUrl(
       config?.baseUrl,
       DEFAULT_CODEX_BASE_URL
@@ -391,7 +389,7 @@ const fetchCodexUsageEffect = (
     const resetCredits = resetCreditsFromPayload(parsedPayload);
 
     return {
-      capturedAt: yield* clock.now,
+      capturedAt: new Date(yield* Clock.currentTimeMillis),
       id: "codex",
       label: config?.label ?? "Codex",
       metadata: { resetCredits },
