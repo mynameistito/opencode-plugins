@@ -1,5 +1,12 @@
 # @mynameistito/opencode-force-input
 
+## 1.0.8
+
+### Patch Changes
+
+- 968da7f: Remount force-submit keymap layers with the prompt footer so Ctrl+Enter remains active across TUI context changes.
+- 8e00db7: Declare OpenTUI and Solid runtime peers required by the lifecycle-owned keymap component.
+
 ## 1.0.7
 
 ### Patch Changes
