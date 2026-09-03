@@ -1,5 +1,7 @@
 import { Plugin } from "@opencode-ai/plugin/tui";
 import type { Context } from "@opencode-ai/plugin/tui/context";
+import { createComponent } from "@opentui/solid";
+import type { JSX } from "@opentui/solid";
 
 /** OpenCode v2 TUI plugin identifier. */
 const PLUGIN_ID = "mynameistito.opencode-force-input";
@@ -42,14 +44,21 @@ export const registerForceSubmitLayer = (keymap: ForceSubmitKeymap): void => {
   }));
 };
 
+interface ForceSubmitLayerProps {
+  readonly context: ForceSubmitContext;
+}
+
+const forceSubmitLayer = (props: ForceSubmitLayerProps): JSX.Element => {
+  registerForceSubmitLayer(props.context.keymap);
+  // SAFETY: this component intentionally renders no UI; its owner scopes the keymap layer.
+  return null as JSX.Element;
+};
+
 /** Initializes the OpenCode v2 TUI plugin. */
 export const setup = (context: ForceSubmitContext): (() => void) =>
   context.ui.slot({
     append: "prompt.footer.status",
-    render: () => {
-      registerForceSubmitLayer(context.keymap);
-      return null;
-    },
+    render: () => createComponent(forceSubmitLayer, { context }),
   });
 
 /** OpenCode v2 TUI plugin module entrypoint. */
