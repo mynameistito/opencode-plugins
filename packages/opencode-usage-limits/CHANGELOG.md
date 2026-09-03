@@ -1,5 +1,12 @@
 # @mynameistito/opencode-usage-limits
 
+## 1.0.14
+
+### Patch Changes
+
+- f13b4d4: fall back to Codex auth when OpenCode credentials are rejected
+- 464d128: Accept BOM-prefixed config files and use Effect clock directly
+
 ## 1.0.13
 
 ### Patch Changes

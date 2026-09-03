@@ -1,5 +1,11 @@
 # @mynameistito/opencode-force-input
 
+## 1.0.6
+
+### Patch Changes
+
+- 464d128: Register force-submit bindings once during setup
+
 ## 1.0.5
 
 ### Patch Changes
