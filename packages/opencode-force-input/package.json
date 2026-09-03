@@ -58,6 +58,11 @@
     "@opentui/core": "0.5.7",
     "@opentui/solid": "0.5.7"
   },
+  "peerDependencies": {
+    "@opentui/core": "0.5.7",
+    "@opentui/solid": "0.5.7",
+    "solid-js": "1.9.12"
+  },
   "knip": {
     "ignoreDependencies": [
       "@opencode-ai/cli"

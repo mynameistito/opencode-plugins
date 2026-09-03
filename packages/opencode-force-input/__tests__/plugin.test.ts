@@ -43,7 +43,7 @@ describe("force submit", () => {
     ]);
   });
 
-  test("registers one layer across prompt footer renders and dispatches force-submit", () => {
+  test("mounts a layer for each prompt footer render and dispatches force-submit", () => {
     const claims: SlotClaim[] = [];
     const layers: (() => KeymapLayer)[] = [];
     const dispatched: string[] = [];
@@ -70,7 +70,7 @@ describe("force submit", () => {
     claim?.render({ mode: "normal" });
     claim?.render({ mode: "normal" });
 
-    expect(layers).toHaveLength(1);
+    expect(layers).toHaveLength(2);
     const [layer] = layers;
     if (!layer) {
       throw new Error("expected force-submit keymap layer");
