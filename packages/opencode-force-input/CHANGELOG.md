@@ -1,5 +1,11 @@
 # @mynameistito/opencode-force-input
 
+## 1.0.7
+
+### Patch Changes
+
+- d3d2086: Register the force-submit keymap layer within the TUI provider context.
+
 ## 1.0.6
 
 ### Patch Changes
