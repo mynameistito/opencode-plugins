@@ -43,7 +43,7 @@ describe("force submit", () => {
     ]);
   });
 
-  test("mounts the prompt footer slot and dispatches force-submit", () => {
+  test("registers one layer across prompt footer renders and dispatches force-submit", () => {
     const claims: SlotClaim[] = [];
     const layers: (() => KeymapLayer)[] = [];
     const dispatched: string[] = [];
