@@ -70,7 +70,7 @@ describe("force submit", () => {
     claim?.render({ mode: "normal" });
     claim?.render({ mode: "normal" });
 
-    expect(layers).toHaveLength(1);
+    expect(layers).toHaveLength(2);
     const [layer] = layers;
     if (!layer) {
       throw new Error("expected force-submit keymap layer");
