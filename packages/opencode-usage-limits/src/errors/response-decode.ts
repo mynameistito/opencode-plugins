@@ -11,7 +11,14 @@ export class ProviderResponseDecodeError extends Schema.TaggedErrorClass<Provide
   }
 ) {
   override get message(): string {
+    if (this.cause === "unsupported") {
+      return "Bailian CLI >= 1.15.0 is required for Alibaba Token Plan usage";
+    }
+    if (this.cause === "invalid-version") {
+      return "could not determine the Bailian CLI version; install Bailian CLI >= 1.15.0";
+    }
     const labels = {
+      "alibaba-token-plan": "Alibaba Token Plan",
       codex: "Codex",
       minimax: "MiniMax",
       "opencode-go": "OpenCode GO",

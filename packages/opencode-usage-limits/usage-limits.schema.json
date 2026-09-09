@@ -14,6 +14,7 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "alibaba-token-plan": { "$ref": "#/$defs/alibabaTokenPlanProvider" },
         "codex": { "$ref": "#/$defs/codexProvider" },
         "minimax": { "$ref": "#/$defs/minimaxProvider" },
         "opencode-go": { "$ref": "#/$defs/openCodeGoProvider" },
@@ -24,6 +25,27 @@
     }
   },
   "$defs": {
+    "alibabaTokenPlanProvider": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "$ref": "#/$defs/commonDisplayFields/properties/enabled" },
+        "label": { "$ref": "#/$defs/commonDisplayFields/properties/label" },
+        "showSidebarBar": {
+          "$ref": "#/$defs/commonDisplayFields/properties/showSidebarBar"
+        },
+        "showFooterBar": {
+          "$ref": "#/$defs/commonDisplayFields/properties/showFooterBar"
+        },
+        "sidebarWindow": {
+          "$ref": "#/$defs/commonDisplayFields/properties/sidebarWindow"
+        },
+        "footerWindow": {
+          "$ref": "#/$defs/commonDisplayFields/properties/footerWindow"
+        },
+        "region": { "enum": ["international", "china"] }
+      }
+    },
     "commonDisplayFields": {
       "type": "object",
       "additionalProperties": false,

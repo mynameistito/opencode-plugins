@@ -1,3 +1,4 @@
+import { alibabaTokenPlanProvider } from "@/providers/alibaba-token-plan.ts";
 import { codexProvider } from "@/providers/codex.ts";
 import type { ProviderDefinition } from "@/providers/definition.ts";
 import { minimaxProvider } from "@/providers/minimax.ts";
@@ -13,6 +14,7 @@ type ProviderRegistry = {
 };
 
 const PROVIDER_MANIFEST: ProviderRegistry = {
+  "alibaba-token-plan": alibabaTokenPlanProvider,
   codex: codexProvider,
   minimax: minimaxProvider,
   "opencode-go": openCodeGoProvider,

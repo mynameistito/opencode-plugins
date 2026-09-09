@@ -99,6 +99,12 @@ const openCodeGoProviderConfigSchema = Schema.Struct({
 });
 
 const providersSchema = Schema.Struct({
+  "alibaba-token-plan": Schema.optionalKey(
+    Schema.Struct({
+      ...commonProviderFields,
+      region: Schema.optionalKey(Schema.Literals(["international", "china"])),
+    })
+  ),
   codex: Schema.optionalKey(codexProviderConfigSchema),
   minimax: Schema.optionalKey(minimaxProviderConfigSchema),
   "opencode-go": Schema.optionalKey(openCodeGoProviderConfigSchema),
