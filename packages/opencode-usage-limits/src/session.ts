@@ -75,9 +75,6 @@ const windowFromState = (
  * useful window is selected from the current provider state. If the latest fetch
  * failed, the last successful data attached to the error state is used.
  *
- * When the active provider is disabled or has no data, the first enabled
- * provider with data is used as a fallback so the footer is never empty.
- *
  * @param states - Current provider states maintained by the plugin.
  * @param providerID - OpenCode provider identifier for the active session.
  * @returns The best usage window for the active provider, or `null` if none can
@@ -126,25 +123,12 @@ const selectUsageForProvider = (
     return data.windows[0] ?? null;
   };
 
-  if (usageID) {
-    const window = resolveWindow(usageID);
-    if (window) {
-      return { providerID: usageID, window };
-    }
+  if (!usageID) {
+    return null;
   }
 
-  // Fallback: first enabled provider with data.
-  for (const state of states) {
-    if (state.status === "disabled") {
-      continue;
-    }
-    const window = resolveWindow(state.id);
-    if (window) {
-      return { providerID: state.id, window };
-    }
-  }
-
-  return null;
+  const window = resolveWindow(usageID);
+  return window ? { providerID: usageID, window } : null;
 };
 
 export const usageProviderFor = (
