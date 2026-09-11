@@ -1,5 +1,11 @@
 # @mynameistito/opencode-usage-limits
 
+## 1.0.15
+
+### Patch Changes
+
+- 94b8560: Fix stale cross-provider footer usage after model switches
+
 ## 1.0.14
 
 ### Patch Changes
