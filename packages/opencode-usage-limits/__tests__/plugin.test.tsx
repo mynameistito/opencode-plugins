@@ -95,6 +95,7 @@ const createHarness = (
   const scheduled: ScheduledRefresh[] = [];
   const fetches: ProviderID[] = [];
   const auth: OpenCodeAuth = {};
+  let currentSessionModelProviderID = sessionProviderID;
   const state: HarnessState = {
     config: initialConfig,
     configError: null,
@@ -149,7 +150,10 @@ const createHarness = (
 
   const partialApi = {
     data: {
-      session: { message: { list: () => [{ providerID: sessionProviderID }] } },
+      session: {
+        get: () => ({ model: { providerID: currentSessionModelProviderID } }),
+        message: { list: () => [{ providerID: sessionProviderID }] },
+      },
     },
     theme,
     ui: {
@@ -176,6 +180,9 @@ const createHarness = (
     scheduled,
     setDispose: (cleanup: () => void) => {
       dispose = cleanup;
+    },
+    setSessionModelProviderID: (providerID: string) => {
+      currentSessionModelProviderID = providerID;
     },
     state,
   };
@@ -323,23 +330,19 @@ describe("usage-limits TUI lifecycle", () => {
     );
   });
 
-  test("uses the fallback provider footer bar setting", async () => {
-    const harness = createHarness(
-      config({
-        providers: {
-          codex: {
-            enabled: true,
-            showFooterBar: false,
-          },
-        },
-      }),
-      "anthropic"
-    );
+  test("does not keep historical provider usage after switching models", async () => {
+    const harness = createHarness();
     const registered = await initialize(harness);
 
-    const rendered = await renderSlot(registered, "prompt.footer.status");
-    expect(rendered).toContain("42%");
-    expect(rendered).not.toContain("[████░░░░░░░░]");
+    expect(await renderSlot(registered, "prompt.footer.status")).toContain(
+      "42%"
+    );
+
+    harness.setSessionModelProviderID("anthropic");
+
+    expect(await renderSlot(registered, "prompt.footer.status")).not.toContain(
+      "42%"
+    );
   });
 
   test("does not render footer usage for shell mode or missing sessions", async () => {

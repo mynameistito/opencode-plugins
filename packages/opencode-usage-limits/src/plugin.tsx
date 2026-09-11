@@ -90,9 +90,10 @@ export const createUsageLimitsPlugin =
         if (!slot.sessionID || slot.mode === "shell") {
           return null;
         }
-        const providerID = currentProviderID(
-          context.data.session.message.list(slot.sessionID)
-        );
+        const session = context.data.session.get(slot.sessionID);
+        const providerID =
+          session?.model?.providerID ??
+          currentProviderID(context.data.session.message.list(slot.sessionID));
         const selectedProviderID = usageProviderFor(
           snapshot().states,
           providerID,

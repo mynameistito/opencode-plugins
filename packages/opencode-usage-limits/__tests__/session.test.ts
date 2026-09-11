@@ -206,7 +206,7 @@ describe("session helpers", () => {
     ).toBeNull();
   });
 
-  test("retains the documented first-provider fallback when the session provider is unavailable", () => {
+  test("does not use another provider when the session provider is unavailable", () => {
     const states: ProviderState[] = [
       {
         data: {
@@ -222,42 +222,30 @@ describe("session helpers", () => {
       },
     ];
 
-    expect(usageForProvider(states, "anthropic")?.label).toBe("5h");
+    expect(usageForProvider(states, "anthropic")).toBeNull();
   });
 
-  test("falls back past disabled and empty provider states", () => {
+  test("does not use another provider when the active provider has no data", () => {
     const states: ProviderState[] = [
       {
+        data: {
+          capturedAt: new Date(),
+          id: "codex",
+          label: "Codex",
+          windows: [window("5h")],
+        },
         id: "codex",
         label: "Codex",
-        status: "disabled",
+        stale: false,
+        status: "ready",
       },
       {
-        data: {
-          capturedAt: new Date(),
-          id: "zai",
-          label: "ZAI",
-          windows: [],
-        },
         id: "zai",
         label: "ZAI",
-        stale: false,
-        status: "ready",
-      },
-      {
-        data: {
-          capturedAt: new Date(),
-          id: "minimax",
-          label: "MiniMax",
-          windows: [window("weekly")],
-        },
-        id: "minimax",
-        label: "MiniMax",
-        stale: false,
-        status: "ready",
+        status: "loading",
       },
     ];
 
-    expect(usageForProvider(states, "anthropic")?.label).toBe("weekly");
+    expect(usageForProvider(states, "zai-coding-plan")).toBeNull();
   });
 });
