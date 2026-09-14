@@ -2,11 +2,19 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "allowJs": true,
+    "jsx": "react-jsx",
+    "jsxImportSource": "@opentui/solid",
     "types": ["bun"],
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noPropertyAccessFromIndexSignature": false
   },
-  "include": ["src/**/*.ts", "__tests__/**/*.ts", "scripts/**/*.ts"],
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "__tests__/**/*.ts",
+    "__tests__/**/*.tsx",
+    "scripts/**/*.ts"
+  ],
   "exclude": ["dist"]
 }

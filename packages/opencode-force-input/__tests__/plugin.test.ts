@@ -1,9 +1,18 @@
 import { describe, expect, test } from "bun:test";
 
 import type { KeymapLayer, SlotClaim } from "@opencode-ai/plugin/tui/context";
+import { RGBA } from "@opentui/core";
 
 import { forceSubmit, registerForceSubmitLayer, setup } from "../src/index";
 import type { ForceSubmitContext } from "../src/index";
+
+const theme = {
+  text: {
+    action: { primary: { default: RGBA.fromInts(154, 176, 255) } },
+    default: RGBA.fromInts(208, 208, 208),
+    subdued: RGBA.fromInts(128, 128, 128),
+  },
+} as const;
 
 describe("force submit", () => {
   test("interrupts three times before submitting", () => {
@@ -48,10 +57,16 @@ describe("force submit", () => {
     const layers: (() => KeymapLayer)[] = [];
     const dispatched: string[] = [];
     const context = {
+      data: {
+        on: () => () => {},
+        session: { status: () => "idle" as const },
+      },
       keymap: {
         dispatch: (command: string) => dispatched.push(command),
         layer: (layer: () => KeymapLayer) => layers.push(layer),
       },
+      options: {},
+      theme,
       ui: {
         slot: (claim: SlotClaim) => {
           claims.push(claim);

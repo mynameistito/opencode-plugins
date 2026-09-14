@@ -3,6 +3,14 @@ import type { Context } from "@opencode-ai/plugin/tui/context";
 import { createComponent } from "@opentui/solid";
 import type { JSX } from "@opentui/solid";
 
+import { ForceHint } from "./force-hint.tsx";
+import { hintEnabled } from "./hint.ts";
+import type {
+  ForceHintData,
+  ForceHintOptions,
+  ForceHintTheme,
+} from "./hint.ts";
+
 /** OpenCode v2 TUI plugin identifier. */
 const PLUGIN_ID = "mynameistito.opencode-force-input";
 /** OpenCode command registered by this plugin for Ctrl+Enter force-submit. */
@@ -24,7 +32,10 @@ export const forceSubmit = (dispatch: (command: string) => void): void => {
 
 type ForceSubmitKeymap = Pick<Context["keymap"], "dispatch" | "layer">;
 export interface ForceSubmitContext {
+  readonly data: ForceHintData;
   readonly keymap: ForceSubmitKeymap;
+  readonly options: ForceHintOptions;
+  readonly theme: ForceHintTheme;
   readonly ui: Pick<Context["ui"], "slot">;
 }
 
@@ -44,21 +55,38 @@ export const registerForceSubmitLayer = (keymap: ForceSubmitKeymap): void => {
   }));
 };
 
-interface ForceSubmitLayerProps {
+interface PromptFooterContributionProps {
   readonly context: ForceSubmitContext;
+  readonly slot: {
+    readonly mode: "normal" | "shell";
+    readonly sessionID?: string;
+  };
 }
 
-const forceSubmitLayer = (props: ForceSubmitLayerProps): JSX.Element => {
+/**
+ * Owns the force-submit keymap layer and renders the in-composer hint from the
+ * same `prompt.footer.status` claim, so the binding and its affordance follow
+ * TUI context changes together.
+ */
+const promptFooterContribution = (
+  props: PromptFooterContributionProps
+): JSX.Element => {
   registerForceSubmitLayer(props.context.keymap);
-  // SAFETY: this component intentionally renders no UI; its owner scopes the keymap layer.
-  return null as JSX.Element;
+  return createComponent(ForceHint, {
+    data: props.context.data,
+    enabled: hintEnabled(props.context.options),
+    mode: props.slot.mode,
+    sessionID: props.slot.sessionID,
+    theme: props.context.theme,
+  });
 };
 
 /** Initializes the OpenCode v2 TUI plugin. */
 export const setup = (context: ForceSubmitContext): (() => void) =>
   context.ui.slot({
     append: "prompt.footer.status",
-    render: () => createComponent(forceSubmitLayer, { context }),
+    render: (slot) =>
+      createComponent(promptFooterContribution, { context, slot }),
   });
 
 /** OpenCode v2 TUI plugin module entrypoint. */

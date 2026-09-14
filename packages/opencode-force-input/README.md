@@ -56,6 +56,30 @@ Remove `ctrl+return` from `input_newline` in `cli.json` if it is also configured
 { "keybinds": { "input_newline": "shift+return,alt+return,ctrl+j" } }
 ```
 
+## Hint
+
+While a session is open the composer shows a state-aware hint in its bottom right corner, inside the prompt box:
+
+| Session state      | Hint                                |
+| ------------------ | ----------------------------------- |
+| idle               | `⏎ send`                            |
+| running            | `⏎ steer · ctrl+⏎ interrupt & send` |
+| shell mode or home | hidden                              |
+
+`steer` matches OpenCode's default delivery for prompts submitted mid-run, so the hint shows what `Enter` will do before it is pressed, and `ctrl+⏎` stays visible while it can interrupt. A retrying session still counts as running, so the steer hint stays until the run succeeds, fails, or is interrupted. The hint renders through the same `prompt.footer.status` claim that mounts the keymap layer: OpenCode publishes no slot inside the textarea, so the indicator is lifted over the footer row with an absolute overlay (`top: -2`), landing on the composer's own info row. Disable it with plugin options:
+
+```json
+{
+  "$schema": "https://opencode.ai/v2/cli.json",
+  "plugins": [
+    {
+      "package": "@mynameistito/opencode-force-input@latest",
+      "options": { "hint": false }
+    }
+  ]
+}
+```
+
 ## Windows Terminal
 
 If Windows Terminal sends plain Enter for Ctrl+Enter, configure a `sendInput` action for `\u001b[13;5u` and bind it to `ctrl+enter` in the terminal settings.
