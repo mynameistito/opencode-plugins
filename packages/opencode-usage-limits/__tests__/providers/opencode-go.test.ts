@@ -72,9 +72,21 @@ describe("OpenCode GO provider", () => {
     });
     expect(usage).toMatchObject({ id: "opencode-go", label: "OpenCode GO" });
     expect(usage.windows).toMatchObject([
-      { kind: "rolling", quota: { usedPercent: 12 } },
-      { kind: "weekly", quota: { usedPercent: 8 } },
-      { kind: "monthly", quota: { usedPercent: 35 } },
+      {
+        kind: "rolling",
+        quota: { usedPercent: 12 },
+        resetsAt: new Date("2026-08-23T00:00:00.000Z"),
+      },
+      {
+        kind: "weekly",
+        quota: { usedPercent: 8 },
+        resetsAt: new Date("2026-08-30T00:00:00.000Z"),
+      },
+      {
+        kind: "monthly",
+        quota: { usedPercent: 35 },
+        resetsAt: new Date("2026-09-01T00:00:00.000Z"),
+      },
     ]);
   });
 

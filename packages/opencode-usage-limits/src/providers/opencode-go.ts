@@ -104,7 +104,9 @@ const usageWindow = (
     kind,
     label,
     quota: percentageQuota(percent.success),
-    resetsAt: resetInstantOrNull(value.resetsAt),
+    resetsAt: resetInstantOrNull(
+      value.resetsAt === undefined ? null : new Date(value.resetsAt)
+    ),
   };
 };
 
