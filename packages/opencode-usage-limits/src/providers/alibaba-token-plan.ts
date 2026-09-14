@@ -69,7 +69,7 @@ const parseWindows = (raw: string): UsageWindow[] => {
 
 const parseCliVersion = (raw: string): [number, number, number] | null => {
   const match = raw.match(
-    /(?:\bbl\b|\bBailian CLI\b)\s+(?:version\s+)?v?(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)(?:\D|$)/iu
+    /(?:\bbl\b|\bBailian CLI\b|@bailian\/cli[/@])\s*(?:version\s+)?v?(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)(?:\D|$)/iu
   );
   if (!match?.groups) {
     return null;

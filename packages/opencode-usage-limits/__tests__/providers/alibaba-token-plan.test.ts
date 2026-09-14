@@ -14,7 +14,7 @@ import type { AlibabaTokenPlanProviderConfig } from "@/types.ts";
 const run = (
   output: string | ProviderCommandError | ProviderTimeoutError,
   config?: AlibabaTokenPlanProviderConfig,
-  version = "bl version 1.15.0"
+  version = "bl 1.15.0"
 ) => {
   const calls: ProviderCommandInput[] = [];
   const commands = Layer.succeed(ProviderCommandExecutor, {
@@ -174,6 +174,17 @@ describe("Alibaba Token Plan", () => {
     );
     expect(Exit.isFailure(result)).toBe(true);
     expect(JSON.stringify(result)).toContain('"cause":"unsupported"');
+  });
+
+  test("supports the scoped package version banner", async () => {
+    const { effect, calls } = run(
+      '{"per1WeekPercentage":0}',
+      undefined,
+      "@bailian/cli/1.15.0 darwin-arm64 node-v20.11.0"
+    );
+    const usage = await Effect.runPromise(effect);
+    expect(usage.id).toBe("alibaba-token-plan");
+    expect(calls).toHaveLength(2);
   });
 
   test("reports an unparseable Bailian version separately", async () => {
