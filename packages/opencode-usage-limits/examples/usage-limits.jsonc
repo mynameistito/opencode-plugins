@@ -5,6 +5,15 @@
   "requestTimeoutMs": 10000,
   "showErrors": true,
   "providers": {
+    "alibaba-token-plan": {
+      "enabled": true,
+      "label": "Alibaba Token Plan",
+      "showSidebarBar": true,
+      "showFooterBar": true,
+      "sidebarWindow": "all",
+      "footerWindow": "auto",
+      "region": "international",
+    },
     "codex": {
       "enabled": true,
       "label": "Codex",
@@ -12,31 +21,62 @@
       "showFooterBar": true,
       "sidebarWindow": "all",
       "footerWindow": "auto",
+      "authPath": "~/.codex/auth.json",
+      "apiKey": "{env:OPENAI_API_KEY}",
+      "authorizationScheme": "bearer",
+      "baseUrl": "https://chatgpt.com/backend-api",
     },
     "zai": {
       "enabled": true,
       "label": "ZAI",
+      "showSidebarBar": true,
+      "showFooterBar": true,
+      "sidebarWindow": "all",
+      "footerWindow": "auto",
+      "authPath": "~/.config/opencode/auth.json",
       "apiKey": "{env:OC_ZAI_API_KEY}", // Optional fallback when OpenCode auth has no ZAI key
       "authorizationScheme": "raw",
     },
     "synthetic": {
       "enabled": true,
       "label": "Synthetic",
+      "showSidebarBar": true,
+      "showFooterBar": true,
+      "sidebarWindow": "all",
+      "footerWindow": "auto",
+      "authPath": "~/.config/opencode/auth.json",
       "apiKey": "{env:OC_SYNTHETIC_API_KEY}", // Optional fallback when OpenCode auth has no Synthetic key
+      "baseUrl": "https://api.synthetic.new",
     },
     "minimax": {
       "enabled": true,
       "label": "MiniMax",
+      "showSidebarBar": true,
+      "showFooterBar": true,
+      "sidebarWindow": "all",
+      "footerWindow": "auto",
+      "authPath": "~/.config/opencode/auth.json",
       "apiKey": "{env:OC_MINIMAX_TOKEN_PLAN_KEY}", // Optional fallback when OpenCode auth has no MiniMax key
+      "baseUrl": "https://www.minimax.io",
     },
     "qwen": {
       "enabled": false,
       "label": "Qwen",
+      "showSidebarBar": true,
+      "showFooterBar": true,
+      "sidebarWindow": "all",
+      "footerWindow": "auto",
     },
     "opencode-go": {
       "enabled": true,
       "label": "OpenCode GO",
+      "showSidebarBar": true,
+      "showFooterBar": true,
+      "sidebarWindow": "all",
+      "footerWindow": "auto",
+      "authPath": "~/.config/opencode/auth.json",
       "apiKey": "{env:OPENCODE_API_KEY}", // Optional fallback when OpenCode auth has no key
+      "baseUrl": "https://opencode.ai/zen/go/v1",
     },
   },
 }
