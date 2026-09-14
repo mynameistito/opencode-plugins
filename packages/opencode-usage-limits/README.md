@@ -47,7 +47,7 @@ Restart OpenCode after changing TUI plugin config.
 
 - `@mynameistito/opencode-usage-limits/tui` is the TUI plugin entrypoint.
 - `@mynameistito/opencode-usage-limits/schema` is the JSON schema for the usage-limits configuration.
-- `examples/usage-limits.jsonc` is an annotated configuration example.
+- `examples/usage-limits.jsonc` is a complete, annotated configuration example.
 
 ### Troubleshooting
 
@@ -84,43 +84,7 @@ Both packages release from the monorepo `main` branch using normal root Changese
 
 ## Usage Config
 
-Create `~/.config/opencode/usage-limits.jsonc`. The same file lives at [`examples/usage-limits.jsonc`](examples/usage-limits.jsonc) and can be copied verbatim:
-
-```jsonc
-{
-  "$schema": "https://raw.githubusercontent.com/mynameistito/opencode-plugins/main/packages/opencode-usage-limits/usage-limits.schema.json",
-  "enabled": true,
-  "refreshIntervalSeconds": 60,
-  "requestTimeoutMs": 10000,
-  "showErrors": true,
-  "providers": {
-    "codex": {
-      "enabled": true,
-      "label": "Codex",
-      "showSidebarBar": true,
-      "showFooterBar": true,
-      "sidebarWindow": "all",
-      "footerWindow": "auto",
-    },
-    "zai": {
-      "enabled": true,
-      "label": "ZAI",
-      "apiKey": "{env:OC_ZAI_API_KEY}", // Optional fallback when OpenCode auth has no ZAI key
-      "authorizationScheme": "raw",
-    },
-    "synthetic": {
-      "enabled": true,
-      "label": "Synthetic",
-      "apiKey": "{env:OC_SYNTHETIC_API_KEY}", // Optional fallback when OpenCode auth has no Synthetic key
-    },
-    "minimax": {
-      "enabled": true,
-      "label": "MiniMax",
-      "apiKey": "{env:OC_MINIMAX_TOKEN_PLAN_KEY}", // Optional fallback when OpenCode auth has no MiniMax key
-    },
-  },
-}
-```
+Create `~/.config/opencode/usage-limits.jsonc` from the complete [`examples/usage-limits.jsonc`](examples/usage-limits.jsonc) example. It includes every top-level, provider-common, and provider-specific option.
 
 ### Minimal config
 
