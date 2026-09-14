@@ -6,10 +6,12 @@ export const ProviderIDSchema = Schema.Literals([
   "synthetic",
   "minimax",
   "qwen",
+  "alibaba-token-plan",
   "opencode-go",
 ]);
 
 export const credentialMessages = {
+  "alibaba-token-plan": "missing Bailian console login",
   codex: "missing Codex auth",
   minimax: "missing MiniMax key",
   "opencode-go": "missing OpenCode GO key",
@@ -37,6 +39,7 @@ export const safeCause = {
       "filesystem",
       "forbidden",
       "http",
+      "invalid-version",
       "network",
       "output-limit",
       "rate-limit",
@@ -44,6 +47,7 @@ export const safeCause = {
       "syntax",
       "timeout",
       "unauthorized",
+      "unsupported",
       "unknown",
     ])
   ),

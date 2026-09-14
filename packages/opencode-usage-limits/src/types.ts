@@ -18,6 +18,7 @@ export interface ProviderDisplayConfig {
 
 /** Provider adapters supported by the usage-limits plugin. */
 export type ProviderID =
+  | "alibaba-token-plan"
   | "codex"
   | "zai"
   | "synthetic"
@@ -139,6 +140,11 @@ export interface MiniMaxProviderConfig extends CommonProviderConfig {
 /** Qwen provider configuration. */
 export type QwenProviderConfig = CommonProviderConfig;
 
+/** Alibaba Personal/Solo Token Plan, read through the authenticated Bailian CLI. */
+export interface AlibabaTokenPlanProviderConfig extends CommonProviderConfig {
+  readonly region?: "international" | "china";
+}
+
 /** OpenCode GO provider configuration. */
 export interface OpenCodeGoProviderConfig extends CommonProviderConfig {
   readonly apiKey?: Credential;
@@ -148,6 +154,7 @@ export interface OpenCodeGoProviderConfig extends CommonProviderConfig {
 
 /** Provider configuration indexed by literal provider ID. */
 export interface ProviderConfigMap {
+  readonly "alibaba-token-plan": AlibabaTokenPlanProviderConfig;
   readonly codex: CodexProviderConfig;
   readonly minimax: MiniMaxProviderConfig;
   readonly qwen: QwenProviderConfig;

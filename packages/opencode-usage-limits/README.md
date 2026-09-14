@@ -1,6 +1,6 @@
 # @mynameistito/opencode-usage-limits
 
-OpenCode TUI plugin that shows Codex, OpenCode GO, ZAI, Synthetic, MiniMax Token Plan, and Qwen usage limits in the sidebar and prompt footer.
+OpenCode TUI plugin that shows Codex, OpenCode GO, ZAI, Synthetic, MiniMax Token Plan, Qwen, and Alibaba Token Plan usage limits in the sidebar and prompt footer.
 
 ## Features
 
@@ -10,6 +10,7 @@ OpenCode TUI plugin that shows Codex, OpenCode GO, ZAI, Synthetic, MiniMax Token
 - Shows current Synthetic rolling 5-hour and weekly windows.
 - Shows current MiniMax Token Plan rolling 5-hour and weekly windows.
 - Shows current Qwen Token Plan windows from the local `qwencloud` CLI.
+- Shows current Alibaba Token Plan 5-hour and weekly windows from the local `bl` CLI.
 - Shows current OpenCode GO rolling, weekly, and monthly windows.
 - Adds compact prompt-footer usage when the current session uses an OpenAI, OpenCode GO, ZAI Coding Plan, Synthetic, MiniMax Token Plan, or Qwen Token Plan model.
 - Providers are toggled from `~/.config/opencode/usage-limits.jsonc`.
@@ -150,6 +151,38 @@ Each provider's `sidebarWindow` can be `all`, `rolling`, `daily`, `weekly`, `mon
 
 ## Providers
 
+### Alibaba Token Plan (Personal/Solo)
+
+Enable `alibaba-token-plan` to read the real 5-hour and weekly quota windows through the official [Bailian CLI](https://github.com/modelstudioai/cli). This is separate from the existing `qwen` / `qwencloud` integration and from the older Alibaba Coding Plan. Team credit balances are not supported by this adapter.
+
+Install Bailian CLI following its upstream instructions, then authenticate once:
+
+```sh
+bl auth login --console --console-site international
+bl usage token-plan --console-region ap-southeast-1 --console-site international --output json
+```
+
+The CLI owns authentication; the plugin neither imports browser cookies nor stores credentials. Initial console login may open a browser, but refreshes use the API through `bl`. An OpenCode model API key alone is insufficient. `bl` must be on the PATH inherited by OpenCode. Command failures (including a missing CLI or expired login) use the plugin's normal error/stale-data display.
+
+Add to `~/.config/opencode/usage-limits.jsonc`:
+
+```jsonc
+{
+  "providers": {
+    "alibaba-token-plan": {
+      "enabled": true,
+      "region": "international",
+      "showSidebarBar": true,
+      "showFooterBar": true,
+    },
+  },
+}
+```
+
+For mainland China, use `region: "china"` and log in with `bl auth login --console --console-site domestic`. The adapter selects `cn-beijing` / `domestic`; the default is `ap-southeast-1` / `international`. Footer aliases are `alibaba`, `alibaba-cn`, and `alibaba-token-plan`. Missing quota windows are omitted rather than displayed as zero or unlimited; an entirely empty response is treated as unavailable, preserving last-good data.
+
+The response contract follows the official CLI's [`usage/token-plan.ts`](https://github.com/modelstudioai/cli/blob/main/packages/commands/src/commands/usage/token-plan.ts): `per5HourPercentage` and `per1WeekPercentage` are fractions from 0 to 1, and reset timestamps are Unix milliseconds.
+
 | Provider ID | Service | Env var | Auth header | Default base URL |
 | --- | --- | --- | --- | --- |
 | `codex` | ChatGPT Codex usage | — | Bearer | `https://chatgpt.com/backend-api` |
@@ -157,6 +190,7 @@ Each provider's `sidebarWindow` can be `all`, `rolling`, `daily`, `weekly`, `mon
 | `synthetic` | Synthetic quotas | `OC_SYNTHETIC_API_KEY` | Bearer | `https://api.synthetic.new` |
 | `minimax` | MiniMax Token Plan | `OC_MINIMAX_TOKEN_PLAN_KEY` | Bearer | `https://www.minimax.io` |
 | `qwen` | Qwen Token Plan | `qwencloud` CLI | CLI | — |
+| `alibaba-token-plan` | Alibaba Token Plan | — | CLI | — |
 | `opencode-go` | OpenCode GO usage | `OPENCODE_API_KEY` | Bearer | `https://opencode.ai/zen/go/v1` |
 
 Qwen usage requires the local `qwencloud` CLI to be installed and authenticated because the plugin calls its authentication-status and usage commands; an unauthenticated CLI state appears as missing credentials.

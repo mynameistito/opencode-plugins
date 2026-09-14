@@ -43,6 +43,7 @@ interface PublishedProviderDefinition {
 
 interface PublishedSchema {
   $defs: {
+    alibabaTokenPlanProvider: PublishedProviderDefinition;
     codexProvider: PublishedProviderDefinition;
     commonDisplayFields: PublishedProviderDefinition;
     minimaxProvider: PublishedProviderDefinition;
@@ -54,6 +55,7 @@ interface PublishedSchema {
   properties: {
     providers: {
       properties: {
+        "alibaba-token-plan": { $ref: "#/$defs/alibabaTokenPlanProvider" };
         codex: { $ref: "#/$defs/codexProvider" };
         minimax: { $ref: "#/$defs/minimaxProvider" };
         "opencode-go": { $ref: "#/$defs/openCodeGoProvider" };
@@ -102,6 +104,7 @@ describe("configuration parsing", () => {
     };
 
     expect(publishedSchema.properties.providers.properties).toEqual({
+      "alibaba-token-plan": { $ref: "#/$defs/alibabaTokenPlanProvider" },
       codex: { $ref: "#/$defs/codexProvider" },
       minimax: { $ref: "#/$defs/minimaxProvider" },
       "opencode-go": { $ref: "#/$defs/openCodeGoProvider" },
@@ -110,6 +113,11 @@ describe("configuration parsing", () => {
       zai: { $ref: "#/$defs/zaiProvider" },
     });
     expect(providerFields.qwen).toEqual(commonFields);
+    expect(
+      Object.keys(
+        publishedSchema.$defs.alibabaTokenPlanProvider.properties
+      ).toSorted()
+    ).toEqual([...commonFields, "region"].toSorted());
     expect(providerFields.zai).toEqual(
       [...commonFields, "apiKey", "authPath", "authorizationScheme"].toSorted()
     );
