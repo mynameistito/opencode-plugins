@@ -1,5 +1,11 @@
 # @mynameistito/opencode-force-input
 
+## 1.1.0
+
+### Minor Changes
+
+- d550b82: Add a state-aware composer hint for Enter and Ctrl+Enter, enabled by default and disableable with the hint plugin option.
+
 ## 1.0.8
 
 ### Patch Changes

@@ -1,5 +1,17 @@
 # @mynameistito/opencode-usage-limits
 
+## 1.1.0
+
+### Minor Changes
+
+- d4cad2b: Add Alibaba Personal/Solo Token Plan quota support through the authenticated Bailian CLI.
+
+### Patch Changes
+
+- d2dcb8b: Parse OpenCode GO reset timestamps so reset times render correctly
+- a3c9e51: Accept Bailian CLI scoped package version banners when checking the installed version.
+- 9dba4af: Document every usage-limits configuration option in the example JSONC file.
+
 ## 1.0.15
 
 ### Patch Changes
