@@ -4,7 +4,8 @@
   "private": true,
   "description": "OpenCode plugins maintained in a Bun workspace.",
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "apps/*"
   ],
   "type": "module",
   "scripts": {

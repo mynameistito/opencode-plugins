@@ -1,0 +1,86 @@
+---
+title: Force Input
+description: Interrupt the active OpenCode run and force-submit the current prompt with Ctrl+Enter.
+sidebar:
+  label: Force Input
+  order: 2
+---
+
+## `@mynameistito/opencode-force-input`
+
+Force Input makes `Ctrl+Enter` an explicit escape hatch when a run is still active. It dispatches OpenCode's guarded interrupt flow three times, then submits the current prompt.
+
+## Install
+
+```powershell
+opencode2 plugin add "@mynameistito/opencode-force-input@latest" -g
+```
+
+The package exposes only the `/tui` entrypoint. It does not provide a server plugin.
+
+To configure it manually, add the package to `~/.config/opencode/cli.json`:
+
+```json
+{
+  "$schema": "https://opencode.ai/v2/cli.json",
+  "plugins": ["@mynameistito/opencode-force-input@latest"]
+}
+```
+
+## Key behavior
+
+The plugin registers high-priority bindings for both `ctrl+return` and `ctrl+enter`. On either key:
+
+1. OpenCode receives `session.interrupt` three times.
+2. The current composer value is submitted with `prompt.submit`.
+3. OpenCode decides whether that prompt is a steer or a new turn according to the normal session state.
+
+The repeated interrupt dispatch is intentional: it preserves the TUI's guarded abort behavior across active runs and retries.
+
+## Composer hint
+
+The footer displays what the next keypress will do:
+
+| Session state       | Hint                                |
+| ------------------- | ----------------------------------- |
+| Idle                | `⏎ send`                            |
+| Running or retrying | `⏎ steer · ctrl+⏎ interrupt & send` |
+| Shell mode or home  | Hidden                              |
+
+Disable the hint while keeping the keybindings with an object plugin entry:
+
+```json
+{
+  "$schema": "https://opencode.ai/v2/cli.json",
+  "plugins": [
+    {
+      "package": "@mynameistito/opencode-force-input@latest",
+      "options": { "hint": false }
+    }
+  ]
+}
+```
+
+## Keybinding conflicts
+
+If `ctrl+return` is also configured as a newline binding, remove it from `input_newline`:
+
+```json
+{
+  "keybinds": {
+    "input_newline": "shift+return,alt+return,ctrl+j"
+  }
+}
+```
+
+On Windows Terminal, a terminal profile may need to send CSI `\u001b[13;5u` for `Ctrl+Enter` instead of plain Enter. Configure a `sendInput` action in Windows Terminal's key bindings when the plugin does not receive the chord.
+
+## Reinstall and clear cache
+
+OpenCode caches immutable package versions. For a clean reinstall, quit OpenCode and remove the cached lane:
+
+```powershell
+Remove-Item -LiteralPath "$HOME\.cache\opencode\packages\@mynameistito\opencode-force-input@latest" -Recurse -Force -ErrorAction SilentlyContinue
+```
+
+Then start OpenCode again or run the install command once more.
