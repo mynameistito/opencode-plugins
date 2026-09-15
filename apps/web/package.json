@@ -7,6 +7,7 @@
     "build": "blume build",
     "dev": "blume dev",
     "preview": "blume preview",
+    "test": "blume check --isolated",
     "deploy": "alchemy deploy",
     "destroy": "alchemy destroy",
     "typecheck": "tsc --noEmit"
@@ -18,6 +19,7 @@
     "effect": "4.0.0-rc.115"
   },
   "devDependencies": {
+    "@astrojs/check": "^0.9.10",
     "@types/node": "latest",
     "alchemy": "latest",
     "astro": "^7.3.2",
