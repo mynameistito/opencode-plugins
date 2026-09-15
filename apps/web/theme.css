@@ -22,7 +22,9 @@
   place-items: center;
   border: 1px solid color-mix(in srgb, currentColor 15%, transparent);
   border-radius: 0.35rem;
-  transition: border-color 150ms ease, transform 150ms ease;
+  transition:
+    border-color 150ms ease,
+    transform 150ms ease;
 }
 
 .provider-logo-grid a:hover,
