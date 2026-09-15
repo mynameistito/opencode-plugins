@@ -51,7 +51,7 @@ Cloudflare authentication is supplied through Alchemy's profile locally or the d
 
 ## GitHub Actions
 
-The deployment workflow uses `mynameistito/alchemy-deploy` `v2.3.1`, pinned to its full release SHA. Production runs only after successful CI on `main`; same-repository pull requests receive isolated `pr-<number>` stages and are destroyed when closed.
+The release workflow deploys the `prod` stage with `bunx --no-install alchemy deploy --stage prod --yes` on pushes to `main`. The CI workflow runs checks for pull requests but does not create or destroy `pr-<number>` stages.
 
 Required repository secrets:
 
