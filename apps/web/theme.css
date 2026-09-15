@@ -1,0 +1,67 @@
+:root {
+  --blume-accent: #e05a33;
+  --blume-action: #c84825;
+  --blume-radius: 0.35rem;
+}
+
+:root[data-theme="dark"] {
+  --blume-accent: #f18a65;
+  --blume-action: #f18a65;
+}
+
+.provider-logo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(6rem, 1fr));
+  gap: 0.75rem;
+  margin: 1.5rem 0 2.5rem;
+}
+
+.provider-logo-grid a {
+  display: grid;
+  min-height: 5rem;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, currentColor 15%, transparent);
+  border-radius: 0.35rem;
+  transition: border-color 150ms ease, transform 150ms ease;
+}
+
+.provider-logo-grid a:hover,
+.provider-logo-grid a:focus-visible {
+  border-color: var(--blume-accent);
+  transform: translateY(-2px);
+}
+
+.provider-logo-grid img {
+  width: 2rem;
+  height: 2rem;
+}
+
+.provider-logo-grid svg {
+  width: 2rem;
+  height: 2rem;
+}
+
+.provider-logo-opencode-light {
+  display: none;
+}
+
+.provider-logo-opencode {
+  width: 1.6rem !important;
+  height: 2rem !important;
+}
+
+:root[data-theme="dark"] .provider-logo-opencode-dark {
+  display: block;
+}
+
+:root[data-theme="dark"] .provider-logo-opencode-light {
+  display: none;
+}
+
+:root:not([data-theme="dark"]) .provider-logo-opencode-dark {
+  display: none;
+}
+
+:root:not([data-theme="dark"]) .provider-logo-opencode-light {
+  display: block;
+}

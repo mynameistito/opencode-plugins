@@ -4,7 +4,8 @@
   "private": true,
   "description": "OpenCode plugins maintained in a Bun workspace.",
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "apps/*"
   ],
   "type": "module",
   "scripts": {
@@ -23,11 +24,14 @@
   },
   "devDependencies": {
     "@changesets/cli": "^3.0.1",
+    "@effect/platform-bun": "4.0.0-rc.115",
+    "@effect/platform-node": "4.0.0-rc.115",
     "@opentui/core": "0.5.7",
     "@opentui/solid": "0.5.7",
     "@types/bun": "1.4.0",
     "@types/node": "26.2.0",
     "@typescript/native": "npm:typescript@^7.0.2",
+    "effect": "4.0.0-rc.115",
     "eslint-plugin-github": "6.1.2",
     "eslint-plugin-sonarjs": "^4.2.0",
     "knip": "6.33.0",

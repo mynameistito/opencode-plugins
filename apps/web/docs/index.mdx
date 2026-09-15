@@ -1,0 +1,52 @@
+---
+title: OpenCode plugins
+description: Small, opinionated TUI plugins for OpenCode v2.
+sidebar:
+  label: Overview
+  order: 1
+---
+
+OpenCode is at its best when the terminal stays out of the way. These plugins add two focused pieces of feedback to the v2 TUI without changing your models, prompts, or server configuration:
+
+- **Force Input** gives `Ctrl+Enter` one reliable meaning: interrupt the active run and submit the prompt.
+- **Usage Limits** keeps provider quotas visible in the sidebar and prompt footer.
+
+Both packages are published to npm and installed through the OpenCode CLI. They are TUI plugins, not server plugins.
+
+<CardGroup cols={2}>
+  <Card title="Force Input" href="/force-input" icon="keyboard">
+    Interrupt and submit the current prompt with Ctrl+Enter, with a state-aware
+    composer hint.
+  </Card>
+  <Card title="Usage Limits" href="/usage-limits" icon="gauge">
+    Track Codex, Z.AI, Synthetic, MiniMax, Qwen, Alibaba Token Plan, and
+    OpenCode GO windows.
+  </Card>
+</CardGroup>
+
+## Install both
+
+```powershell
+opencode2 plugin add "@mynameistito/opencode-force-input@latest" -g
+opencode2 plugin add "@mynameistito/opencode-usage-limits@latest" -g
+```
+
+Restart OpenCode after changing TUI plugin configuration. Verify the installed entries with:
+
+```powershell
+opencode2 plugin list
+```
+
+## At a glance
+
+| Plugin | Package | Entrypoint | Configuration |
+| --- | --- | --- | --- |
+| Force Input | `@mynameistito/opencode-force-input` | `/tui` | `~/.config/opencode/cli.json` |
+| Usage Limits | `@mynameistito/opencode-usage-limits` | `/tui` | `~/.config/opencode/usage-limits.jsonc` |
+
+## Project links
+
+- [Source repository](https://github.com/mynameistito/opencode-plugins)
+- [Force Input guide](/force-input)
+- [Usage Limits guide](/usage-limits)
+- [Development and releases](/development)

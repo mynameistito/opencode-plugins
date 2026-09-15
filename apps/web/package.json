@@ -1,0 +1,27 @@
+{
+  "name": "@mynameistito/opencode-plugins-docs",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "blume build",
+    "dev": "blume dev",
+    "preview": "blume preview",
+    "deploy": "alchemy deploy",
+    "destroy": "alchemy destroy",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@effect/platform-bun": "4.0.0-rc.115",
+    "@effect/platform-node": "4.0.0-rc.115",
+    "blume": "latest",
+    "effect": "4.0.0-rc.115"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "alchemy": "latest",
+    "astro": "^7.3.2",
+    "react-grab": "^0.2.0",
+    "typescript": "latest"
+  }
+}
