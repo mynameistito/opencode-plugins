@@ -1,6 +1,6 @@
 # OpenCode Plugins
 
-Personal TUI plugins for [OpenCode](https://opencode.ai) `V2` ([`@opencode-ai/cli`](https://www.npmjs.com/package/@opencode-ai/cli)).
+Personal [OpenCode](https://opencode.ai) `V2` ([`@opencode-ai/cli`](https://www.npmjs.com/package/@opencode-ai/cli)) Plugins.
 
 ## Packages
 
