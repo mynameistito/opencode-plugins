@@ -43,6 +43,8 @@ Package releases use Changesets. Do not manually edit package versions.
 
 `alchemy.run.ts` declares the site as `Cloudflare.Website.StaticSite`. Alchemy runs `bun run build`, uploads `dist/` as Worker static assets, manages the custom domain, and keeps state per stage.
 
+Run the deployment command from `apps/web/`:
+
 ```powershell
 bun run deploy -- --stage prod --yes
 ```
