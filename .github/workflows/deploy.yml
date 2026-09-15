@@ -1,0 +1,51 @@
+name: Deploy documentation
+
+on:
+  workflow_run:
+    workflows:
+      - Release
+    types:
+      - completed
+
+concurrency: deploy-documentation-prod
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout release commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Confirm documentation release
+        id: docs-release
+        shell: bash
+        run: |
+          if ! git diff HEAD^ HEAD -- apps/web/package.json | grep -q '^+.*"version":'; then
+            echo "Documentation package was not versioned; skipping documentation deployment."
+            exit 0
+          fi
+          echo "deploy=true" >> "$GITHUB_OUTPUT"
+      - name: Setup Bun
+        if: steps.docs-release.outputs.deploy == 'true'
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.4.2
+      - name: Install dependencies
+        if: steps.docs-release.outputs.deploy == 'true'
+        run: bun install --frozen-lockfile
+      - name: Deploy documentation to production
+        if: steps.docs-release.outputs.deploy == 'true'
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: bunx --no-install alchemy deploy --stage prod --yes
+        working-directory: apps/web

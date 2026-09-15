@@ -1,0 +1,16 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "ignoreDependencies": [
+    "@opencode-ai/cli",
+    "@opentui/core",
+    "@opentui/solid",
+    "lefthook",
+    "react-grab"
+  ],
+  "workspaces": {
+    "apps/web": {
+      "entry": ["alchemy.run.ts", "blume.config.ts"],
+      "ignoreDependencies": ["@astrojs/check"]
+    }
+  }
+}

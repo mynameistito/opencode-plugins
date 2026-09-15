@@ -24,8 +24,9 @@ if (!isSupportedTask(task)) {
   process.exit(1);
 }
 
+const packageManifestFile = "package.json";
 const manifest: { workspaces?: string[] } = JSON.parse(
-  await Bun.file("package.json").text()
+  await Bun.file(packageManifestFile).text()
 );
 const workspacePatterns = manifest.workspaces ?? [];
 const packages = workspacePatterns
@@ -42,7 +43,23 @@ const packages = workspacePatterns
   })
   .toSorted();
 
-for (const packageDirectory of packages) {
+const packageManifests = await Promise.all(
+  packages.map(async (packageDirectory) => {
+    const packageManifest: { scripts?: Record<string, string> } = JSON.parse(
+      await Bun.file(path.join(packageDirectory, packageManifestFile)).text()
+    );
+    return { directory: packageDirectory, manifest: packageManifest };
+  })
+);
+
+for (const {
+  directory: packageDirectory,
+  manifest: packageManifest,
+} of packageManifests) {
+  if (packageManifest.scripts?.[task] === undefined) {
+    continue;
+  }
+
   console.log(`\n==> ${packageDirectory} ${task}`);
   const result = Bun.spawnSync(["bun", "run", task], {
     cwd: path.resolve(packageDirectory),

@@ -1,0 +1,70 @@
+---
+title: Development and releases
+description: Build, test, release, and deploy the OpenCode plugins and their documentation.
+sidebar:
+  label: Development
+  order: 4
+---
+
+The repository is a Bun workspace. Plugin source lives under `packages/`; this site lives under `apps/web/`.
+
+## Local site development
+
+From the app directory:
+
+```powershell
+bun install --frozen-lockfile
+bun run dev
+```
+
+Build and preview the exact static output:
+
+```powershell
+bun run build
+bun run preview
+```
+
+Blume also emits `llms.txt`, `llms-full.txt`, raw Markdown mirrors, sitemap, robots, and structured data for the configured production domain.
+
+## Repository checks
+
+From the repository root:
+
+```powershell
+bun run typecheck
+bun run check
+bun run test
+bun run build
+```
+
+Package releases use Changesets. Do not manually edit package versions.
+
+## Cloudflare deployment
+
+`alchemy.run.ts` declares the site as `Cloudflare.Website.StaticSite`. Alchemy runs `bun run build`, uploads `dist/` as Worker static assets, manages the custom domain, and keeps state per stage.
+
+Run the deployment command from `apps/web/`:
+
+```powershell
+bun run deploy -- --stage prod --yes
+```
+
+Cloudflare authentication is supplied through Alchemy's profile locally or the deployment workflow's `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN` secrets in CI. No credentials belong in this repository.
+
+## GitHub Actions
+
+The release workflow deploys the `prod` stage with `bunx --no-install alchemy deploy --stage prod --yes` on pushes to `main`. The CI workflow runs checks for pull requests but does not create or destroy `pr-<number>` stages.
+
+Required repository secrets:
+
+- `CLOUDFLARE_ACCOUNT_ID`
+- `CLOUDFLARE_API_TOKEN`
+
+The Cloudflare token should be narrowly scoped to the account and deployment operations this site needs.
+
+## Source of truth
+
+- [Plugin repository](https://github.com/mynameistito/opencode-plugins)
+- [Force Input README](https://github.com/mynameistito/opencode-plugins/blob/main/packages/opencode-force-input/README.md)
+- [Usage Limits README](https://github.com/mynameistito/opencode-plugins/blob/main/packages/opencode-usage-limits/README.md)
+- [OpenCode v2 plugin docs](https://opencode.ai/v2/docs/build/plugins)
