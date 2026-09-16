@@ -1,4 +1,4 @@
-import { Stack } from "alchemy";
+import { Stack, Stage } from "alchemy";
 import { providers, state, Website } from "alchemy/Cloudflare";
 import { gen } from "effect/Effect";
 
@@ -6,6 +6,7 @@ export default Stack(
   "OpenCodePluginsDocs",
   { providers: providers(), state: state() },
   gen(function* docsStack() {
+    const stage = yield* Stage;
     const site = yield* Website.StaticSite("Docs", {
       assets: {
         htmlHandling: "drop-trailing-slash",
@@ -23,6 +24,7 @@ export default Stack(
           "../../bun.lock",
         ],
       },
+      name: `opencode-plugins-docs-${stage}`,
       outdir: "dist",
     });
 
