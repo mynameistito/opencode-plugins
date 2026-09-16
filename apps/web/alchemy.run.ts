@@ -13,7 +13,8 @@ export default Stack(
         notFoundHandling: "404-page",
       },
       command: "bun run build",
-      domain: "opencode-plugins.mynameistito.com",
+      domain:
+        stage === "prod" ? "opencode-plugins.mynameistito.com" : undefined,
       memo: {
         include: [
           "docs/**",
@@ -24,7 +25,10 @@ export default Stack(
           "../../bun.lock",
         ],
       },
-      name: `opencode-plugins-docs-${stage}`,
+      name:
+        stage === "prod"
+          ? "opencode-plugins-docs"
+          : `opencode-plugins-docs-${stage}`,
       outdir: "dist",
     });
 

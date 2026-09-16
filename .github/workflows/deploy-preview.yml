@@ -6,12 +6,12 @@ on:
       - CI
     types:
       - completed
-  pull_request:
+  pull_request_target:
     types:
       - closed
 
 concurrency:
-  group: deploy-documentation-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('run-{0}', github.event.workflow_run.id) }}
+  group: deploy-documentation-${{ (github.event_name == 'pull_request' || github.event_name == 'pull_request_target') && format('pr-{0}', github.event.pull_request.number) || format('run-{0}', github.event.workflow_run.id) }}
   cancel-in-progress: false
 
 permissions:
@@ -23,7 +23,7 @@ permissions:
 jobs:
   deploy:
     if: >-
-      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') || (github.event_name == 'pull_request' && github.event.action == 'closed')
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'pull_request') || (github.event_name == 'pull_request_target' && github.event.action == 'closed')
     runs-on: ubuntu-latest
     steps:
       - name: Run Alchemy deployment
@@ -34,8 +34,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           worker-name: opencode-plugins-docs
-          deploy-command: bunx --no-install alchemy deploy --stage "$STAGE" --yes
-          destroy-command: bunx --no-install alchemy destroy --stage "$STAGE" --yes
+          deploy-command: cd apps/web && bunx --no-install alchemy deploy --stage "$STAGE" --yes
+          destroy-command: cd apps/web && bunx --no-install alchemy destroy --stage "$STAGE" --yes
           production-stage: prod
           production-url: https://opencode-plugins.mynameistito.com
           use-adopt: false
