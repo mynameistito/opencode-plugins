@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Run Alchemy deployment
-        uses: mynameistito/alchemy-deploy@eb0bfa48c6f692119db4eefde9e8b093541767c7 # v2.3.1
+        uses: mynameistito/alchemy-deploy@1dcc57360107b79eee03f9d7e8bdfbea36576e88 # fork cleanup support; use v2.3.2 after release
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
