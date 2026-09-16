@@ -28,7 +28,7 @@ jobs:
     environment: docs-preview
     steps:
       - name: Run Alchemy deployment
-        uses: mynameistito/alchemy-deploy@1dcc57360107b79eee03f9d7e8bdfbea36576e88 # fork cleanup support; use v2.3.2 after release
+        uses: mynameistito/alchemy-deploy@aed01de4143eaf43e26bb9a1393f8a8f6564676c # fork cleanup support; use v2.3.2 after release
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
