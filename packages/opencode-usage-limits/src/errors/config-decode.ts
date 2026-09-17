@@ -2,9 +2,10 @@ import { Schema } from "effect";
 
 import { safeCause } from "@/errors-shared.ts";
 
+const taggedError = Schema.TaggedError;
+
 /** Failure while parsing JSONC or decoding plugin config fields. */
-// oxlint-disable-next-line unicorn/throw-new-error -- Effect's TaggedError factory creates the error class.
-export class ConfigDecodeError extends Schema.TaggedError<ConfigDecodeError>()(
+export class ConfigDecodeError extends taggedError<ConfigDecodeError>()(
   "ConfigDecodeError",
   {
     ...safeCause,

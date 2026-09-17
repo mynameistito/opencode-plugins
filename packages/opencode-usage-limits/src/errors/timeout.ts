@@ -6,9 +6,10 @@ import {
   safeCause,
 } from "@/errors-shared.ts";
 
+const taggedError = Schema.TaggedError;
+
 /** Provider operation exceeded its configured timeout. */
-// oxlint-disable-next-line unicorn/throw-new-error -- Effect's TaggedError factory creates the error class.
-export class ProviderTimeoutError extends Schema.TaggedError<ProviderTimeoutError>()(
+export class ProviderTimeoutError extends taggedError<ProviderTimeoutError>()(
   "ProviderTimeoutError",
   { ...providerContext, ...safeCause, timeoutMs: NonNegativeFiniteSchema }
 ) {

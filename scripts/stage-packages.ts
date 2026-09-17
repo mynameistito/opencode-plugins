@@ -1,11 +1,59 @@
 import { execFileSync } from "node:child_process";
-import { readdirSync, readFileSync } from "node:fs";
+import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
+
+type DependencyField =
+  | "dependencies"
+  | "devDependencies"
+  | "optionalDependencies"
+  | "peerDependencies";
+type DependencyMap = Record<string, string>;
+const manifestFilename = "package.json";
 
 interface PackageManifest {
   name: string;
   version: string;
+  dependencies?: DependencyMap;
+  devDependencies?: DependencyMap;
+  optionalDependencies?: DependencyMap;
+  peerDependencies?: DependencyMap;
 }
+
+// SAFETY: The root manifest is maintained in this repository and its catalog values are strings.
+const rootManifest = JSON.parse(readFileSync(manifestFilename, "utf-8")) as {
+  catalog?: Record<string, string>;
+};
+const catalog = rootManifest.catalog ?? {};
+
+const resolveCatalog = (dependencies: DependencyMap): DependencyMap =>
+  Object.fromEntries(
+    Object.entries(dependencies).map(([name, value]) => {
+      if (!value.startsWith("catalog:")) {
+        return [name, value];
+      }
+      const dependency = value.slice("catalog:".length) || "default";
+      const version = catalog[dependency];
+      if (!version) {
+        throw new Error(`Missing catalog entry for ${dependency}`);
+      }
+      return [name, version];
+    })
+  );
+
+const resolveManifestCatalog = (manifest: PackageManifest): void => {
+  const dependencyFields: DependencyField[] = [
+    "dependencies",
+    "devDependencies",
+    "optionalDependencies",
+    "peerDependencies",
+  ];
+  for (const field of dependencyFields) {
+    const dependencies = manifest[field];
+    if (dependencies) {
+      manifest[field] = resolveCatalog(dependencies);
+    }
+  }
+};
 
 const npmPath = Bun.which("npm");
 if (!npmPath) {
@@ -15,7 +63,7 @@ if (!npmPath) {
 const stagePackage = (directory: { name: string }): void => {
   const packageDirectory = path.join("packages", directory.name);
   const manifest: PackageManifest = JSON.parse(
-    readFileSync(path.join(packageDirectory, "package.json"), "utf-8")
+    readFileSync(path.join(packageDirectory, manifestFilename), "utf-8")
   );
   const packageSpec = `${manifest.name}@${manifest.version}`;
 
@@ -38,19 +86,33 @@ const stagePackage = (directory: { name: string }): void => {
   }
 
   try {
-    execFileSync(
-      npmPath,
-      [
-        "stage",
-        "publish",
-        "--access",
-        "public",
-        "--tag",
-        "latest",
-        "--provenance",
-      ],
-      { cwd: packageDirectory, stdio: ["ignore", "inherit", "pipe"] }
+    const packageManifestPath = path.join(packageDirectory, manifestFilename);
+    const packageManifestText = readFileSync(packageManifestPath, "utf-8");
+    // SAFETY: package.json is parsed and only known dependency sections are changed below.
+    const packageManifest = JSON.parse(packageManifestText) as PackageManifest;
+    resolveManifestCatalog(packageManifest);
+    writeFileSync(
+      packageManifestPath,
+      `${JSON.stringify(packageManifest, null, 2)}\n`,
+      "utf-8"
     );
+    try {
+      execFileSync(
+        npmPath,
+        [
+          "stage",
+          "publish",
+          "--access",
+          "public",
+          "--tag",
+          "latest",
+          "--provenance",
+        ],
+        { cwd: packageDirectory, stdio: ["ignore", "inherit", "pipe"] }
+      );
+    } finally {
+      writeFileSync(packageManifestPath, packageManifestText, "utf-8");
+    }
   } catch (error) {
     const details =
       error instanceof Error && "stderr" in error ? String(error.stderr) : "";
