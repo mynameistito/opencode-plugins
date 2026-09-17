@@ -7,6 +7,7 @@ import {
   ProviderTransportError,
 } from "@/errors.ts";
 import type { ProviderID } from "@/types.ts";
+import { parseJsonValue } from "@/utils.ts";
 import type { JsonValue } from "@/utils.ts";
 
 const MAX_RESPONSE_BYTES = 2 * 1024 * 1024;
@@ -41,22 +42,17 @@ const readChunks = async (
   chunks: Uint8Array[],
   length: number
 ): Promise<number> => {
-  let totalLength = length;
-  while (true) {
-    // eslint-disable-next-line no-await-in-loop -- A stream reader must be consumed sequentially.
-    const result = await reader.read();
-    if (result.done) {
-      return totalLength;
-    }
-    const nextLength = totalLength + result.value.byteLength;
-    if (nextLength > MAX_RESPONSE_BYTES) {
-      // eslint-disable-next-line no-await-in-loop -- Finish cancellation before reporting the bounded-read failure.
-      await reader.cancel();
-      throw new RangeError("response limit exceeded");
-    }
-    chunks.push(result.value);
-    totalLength = nextLength;
+  const result = await reader.read();
+  if (result.done) {
+    return length;
   }
+  const nextLength = length + result.value.byteLength;
+  if (nextLength > MAX_RESPONSE_BYTES) {
+    await reader.cancel();
+    throw new RangeError("response limit exceeded");
+  }
+  chunks.push(result.value);
+  return readChunks(reader, chunks, nextLength);
 };
 
 /** A bounded provider JSON request. */
@@ -180,8 +176,7 @@ export const makeProviderHttpClient = (fetchImplementation: ProviderFetch) =>
           }
           const body = await readBoundedBody(response, signal);
           try {
-            // SAFETY: The transport only accepts JSON values at this boundary.
-            return JSON.parse(new TextDecoder().decode(body)) as JsonValue;
+            return parseJsonValue(new TextDecoder().decode(body));
           } catch {
             throw new ProviderResponseDecodeError({
               cause: "decode",

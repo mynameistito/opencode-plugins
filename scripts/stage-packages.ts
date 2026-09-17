@@ -1,5 +1,13 @@
 import { execFileSync } from "node:child_process";
-import { readdirSync, readFileSync, writeFileSync } from "node:fs";
+import {
+  cpSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
 import path from "node:path";
 
 type DependencyField =
@@ -19,10 +27,9 @@ interface PackageManifest {
   peerDependencies?: DependencyMap;
 }
 
-// SAFETY: The root manifest is maintained in this repository and its catalog values are strings.
-const rootManifest = JSON.parse(readFileSync(manifestFilename, "utf-8")) as {
-  catalog?: Record<string, string>;
-};
+const rootManifest: { catalog?: Record<string, string> } = JSON.parse(
+  readFileSync(manifestFilename, "utf-8")
+);
 const catalog = rootManifest.catalog ?? {};
 
 const resolveCatalog = (dependencies: DependencyMap): DependencyMap =>
@@ -85,34 +92,33 @@ const stagePackage = (directory: { name: string }): void => {
     console.log(`Staging ${packageSpec} with npm latest`);
   }
 
+  const stagedDirectory = mkdtempSync(path.join(tmpdir(), "opencode-plugin-"));
   try {
-    const packageManifestPath = path.join(packageDirectory, manifestFilename);
-    const packageManifestText = readFileSync(packageManifestPath, "utf-8");
-    // SAFETY: package.json is parsed and only known dependency sections are changed below.
-    const packageManifest = JSON.parse(packageManifestText) as PackageManifest;
+    cpSync(packageDirectory, stagedDirectory, { recursive: true });
+    const packageManifestPath = path.join(stagedDirectory, manifestFilename);
+    const packageManifest: PackageManifest = JSON.parse(
+      readFileSync(packageManifestPath, "utf-8")
+    );
     resolveManifestCatalog(packageManifest);
     writeFileSync(
       packageManifestPath,
       `${JSON.stringify(packageManifest, null, 2)}\n`,
       "utf-8"
     );
-    try {
-      execFileSync(
-        npmPath,
-        [
-          "stage",
-          "publish",
-          "--access",
-          "public",
-          "--tag",
-          "latest",
-          "--provenance",
-        ],
-        { cwd: packageDirectory, stdio: ["ignore", "inherit", "pipe"] }
-      );
-    } finally {
-      writeFileSync(packageManifestPath, packageManifestText, "utf-8");
-    }
+    execFileSync(
+      npmPath,
+      [
+        "stage",
+        "publish",
+        "--access",
+        "public",
+        "--tag",
+        "latest",
+        "--provenance",
+        "--ignore-scripts",
+      ],
+      { cwd: stagedDirectory, stdio: ["ignore", "inherit", "pipe"] }
+    );
   } catch (error) {
     const details =
       error instanceof Error && "stderr" in error ? String(error.stderr) : "";
@@ -126,6 +132,8 @@ const stagePackage = (directory: { name: string }): void => {
     }
 
     console.log(`${packageSpec} is already staged`);
+  } finally {
+    rmSync(stagedDirectory, { force: true, recursive: true });
   }
 };
 

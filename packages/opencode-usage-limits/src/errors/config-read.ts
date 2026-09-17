@@ -2,10 +2,9 @@ import { Schema } from "effect";
 
 import { safeCause } from "@/errors-shared.ts";
 
-const taggedError = Schema.TaggedError;
-
 /** Failure while reading an existing plugin config file. */
-export class ConfigReadError extends taggedError<ConfigReadError>()(
+// oxlint-disable-next-line unicorn/throw-new-error -- Effect's TaggedError factory creates the error class.
+export class ConfigReadError extends Schema.TaggedError<ConfigReadError>()(
   "ConfigReadError",
   {
     ...safeCause,

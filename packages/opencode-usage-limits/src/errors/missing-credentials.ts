@@ -6,10 +6,9 @@ import {
   ProviderOperationSchema,
 } from "@/errors-shared.ts";
 
-const taggedError = Schema.TaggedError;
-
 /** Expected provider error raised when no usable credentials are configured. */
-export class MissingProviderCredentialsError extends taggedError<MissingProviderCredentialsError>()(
+// oxlint-disable-next-line unicorn/throw-new-error -- Effect's TaggedError factory creates the error class.
+export class MissingProviderCredentialsError extends Schema.TaggedError<MissingProviderCredentialsError>()(
   "MissingProviderCredentialsError",
   {
     operation: ProviderOperationSchema,
