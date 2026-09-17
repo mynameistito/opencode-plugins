@@ -1,6 +1,5 @@
-import { describe, expect, test } from "bun:test";
-
 import { Result } from "effect";
+import { describe, expect, test } from "vitest";
 
 import { currentProviderID, usageForProvider } from "@/session.ts";
 import type { ProviderState, UsageWindow } from "@/types.ts";

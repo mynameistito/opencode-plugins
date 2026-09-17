@@ -1,10 +1,9 @@
-/* @jsxImportSource @opentui/solid */
-import { afterEach, describe, expect, test } from "bun:test";
-
 import { RGBA } from "@opentui/core";
 import type { TestRendererSetup } from "@opentui/core/testing";
 import { testRender } from "@opentui/solid";
 import { createSignal } from "solid-js";
+/* @jsxImportSource @opentui/solid */
+import { afterEach, describe, expect, test } from "vitest";
 
 import { ForceHint } from "../src/force-hint.tsx";
 import { hintEnabled, resolveHintColors } from "../src/hint.ts";

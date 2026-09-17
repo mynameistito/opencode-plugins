@@ -1,6 +1,5 @@
-import { describe, expect, test } from "bun:test";
-
 import { Result } from "effect";
+import { describe, expect, test } from "vitest";
 
 import {
   bottomWindowMainText,

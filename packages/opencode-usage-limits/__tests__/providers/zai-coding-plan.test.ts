@@ -1,7 +1,8 @@
-import { describe, expect, test } from "bun:test";
-import { rm } from "node:fs/promises";
+import { rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
+
+import { describe, expect, test } from "vitest";
 
 import { fetchZaiCodingPlanUsage } from "@/providers/zai-coding-plan.ts";
 import type { OpenCodeAuth } from "@/types.ts";
@@ -21,7 +22,7 @@ describe("ZAI provider", () => {
         `oc-usage-limits-${crypto.randomUUID()}.json`
       );
       if (contents !== undefined) {
-        await Bun.write(authPath, contents);
+        await writeFile(authPath, contents);
       }
       try {
         const fetchMock = installFetchMock(

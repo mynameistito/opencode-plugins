@@ -1,6 +1,5 @@
-import { describe, expect, test } from "bun:test";
-
 import { Result } from "effect";
+import { describe, expect, test } from "vitest";
 
 import { shouldRenderProviderState } from "@/components.tsx";
 import type { ProviderState, ProviderUsage } from "@/types.ts";

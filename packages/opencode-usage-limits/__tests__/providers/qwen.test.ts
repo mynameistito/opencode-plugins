@@ -1,6 +1,5 @@
-import { describe, expect, test } from "bun:test";
-
 import { Clock, Effect, Exit, Layer } from "effect";
+import { describe, expect, test } from "vitest";
 
 import { ProviderCommandError, ProviderTimeoutError } from "@/errors.ts";
 import { qwenProvider } from "@/providers/qwen.ts";

@@ -1,7 +1,8 @@
-import { describe, expect, test } from "bun:test";
-import { rm } from "node:fs/promises";
+import { rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
+
+import { describe, expect, test } from "vitest";
 
 import { fetchCodexUsage } from "@/providers/codex.ts";
 
@@ -13,7 +14,7 @@ describe("Codex provider", () => {
       tmpdir(),
       `oc-usage-limits-${crypto.randomUUID()}.json`
     );
-    await Bun.write(
+    await writeFile(
       authPath,
       JSON.stringify({
         tokens: { access_token: "file-access", account_id: "file-account" },
@@ -42,7 +43,7 @@ describe("Codex provider", () => {
       tmpdir(),
       `oc-usage-limits-${crypto.randomUUID()}.json`
     );
-    await Bun.write(
+    await writeFile(
       authPath,
       JSON.stringify({
         tokens: { access_token: "codex-access", account_id: "codex-account" },

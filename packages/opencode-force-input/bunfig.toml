@@ -1,5 +1,0 @@
-[test]
-coverage = true
-coverageDir = "coverage"
-coverageReporter = ["text", "lcov"]
-preload = ["@opentui/solid/preload"]
