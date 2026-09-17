@@ -25,7 +25,6 @@ jobs:
     if: >-
       (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'pull_request') || (github.event_name == 'pull_request_target' && github.event.action == 'closed')
     runs-on: ubuntu-latest
-    environment: docs-preview
     steps:
       - name: Run Alchemy deployment
         uses: mynameistito/alchemy-deploy@aed01de4143eaf43e26bb9a1393f8a8f6564676c # fork cleanup support; use v2.3.2 after release
