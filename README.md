@@ -32,7 +32,7 @@ Supported providers:
 Install it with:
 
 ```bash
-opencode2 plugin add @mynameistito/opencode-usage-limits@latest -g
+opencode2 plugin add "@mynameistito/opencode-usage-limits@latest" -g
 ```
 
 See the [usage-limits README](packages/opencode-usage-limits/README.md) for provider credentials, configuration, and troubleshooting.
