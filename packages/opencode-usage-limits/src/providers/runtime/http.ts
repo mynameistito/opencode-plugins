@@ -7,6 +7,7 @@ import {
   ProviderTransportError,
 } from "@/errors.ts";
 import type { ProviderID } from "@/types.ts";
+import { parseJsonValue } from "@/utils.ts";
 import type { JsonValue } from "@/utils.ts";
 
 const MAX_RESPONSE_BYTES = 2 * 1024 * 1024;
@@ -180,8 +181,7 @@ export const makeProviderHttpClient = (fetchImplementation: ProviderFetch) =>
           }
           const body = await readBoundedBody(response, signal);
           try {
-            // SAFETY: The transport only accepts JSON values at this boundary.
-            return JSON.parse(new TextDecoder().decode(body)) as JsonValue;
+            return parseJsonValue(new TextDecoder().decode(body));
           } catch {
             throw new ProviderResponseDecodeError({
               cause: "decode",

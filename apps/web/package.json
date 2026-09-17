@@ -15,7 +15,7 @@
   "dependencies": {
     "@effect/platform-bun": "4.0.0-rc.112",
     "@effect/platform-node": "4.0.0-rc.112",
-    "effect": "4.0.0-rc.112"
+    "effect": "catalog:"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",

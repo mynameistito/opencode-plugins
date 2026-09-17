@@ -1,11 +1,71 @@
 import { execFileSync } from "node:child_process";
-import { readdirSync, readFileSync } from "node:fs";
+import {
+  cpSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
 import path from "node:path";
+
+type DependencyField =
+  | "dependencies"
+  | "devDependencies"
+  | "optionalDependencies"
+  | "peerDependencies";
+type DependencyMap = Record<string, string>;
+const manifestFilename = "package.json";
 
 interface PackageManifest {
   name: string;
   version: string;
+  dependencies?: DependencyMap;
+  devDependencies?: DependencyMap;
+  optionalDependencies?: DependencyMap;
+  peerDependencies?: DependencyMap;
 }
+
+const rootManifest: {
+  catalog?: DependencyMap;
+  catalogs?: Record<string, DependencyMap>;
+} = JSON.parse(readFileSync(manifestFilename, "utf-8"));
+
+const resolveCatalog = (dependencies: DependencyMap): DependencyMap =>
+  Object.fromEntries(
+    Object.entries(dependencies).map(([name, value]) => {
+      if (!value.startsWith("catalog:")) {
+        return [name, value];
+      }
+      const catalogName = value.slice("catalog:".length);
+      const catalog = catalogName
+        ? rootManifest.catalogs?.[catalogName]
+        : rootManifest.catalog;
+      const version = catalog?.[name];
+      if (!version) {
+        throw new Error(
+          `Missing catalog entry for ${catalogName || "default"}:${name}`
+        );
+      }
+      return [name, version];
+    })
+  );
+
+const resolveManifestCatalog = (manifest: PackageManifest): void => {
+  const dependencyFields: DependencyField[] = [
+    "dependencies",
+    "devDependencies",
+    "optionalDependencies",
+    "peerDependencies",
+  ];
+  for (const field of dependencyFields) {
+    const dependencies = manifest[field];
+    if (dependencies) {
+      manifest[field] = resolveCatalog(dependencies);
+    }
+  }
+};
 
 const npmPath = Bun.which("npm");
 if (!npmPath) {
@@ -15,7 +75,7 @@ if (!npmPath) {
 const stagePackage = (directory: { name: string }): void => {
   const packageDirectory = path.join("packages", directory.name);
   const manifest: PackageManifest = JSON.parse(
-    readFileSync(path.join(packageDirectory, "package.json"), "utf-8")
+    readFileSync(path.join(packageDirectory, manifestFilename), "utf-8")
   );
   const packageSpec = `${manifest.name}@${manifest.version}`;
 
@@ -37,7 +97,19 @@ const stagePackage = (directory: { name: string }): void => {
     console.log(`Staging ${packageSpec} with npm latest`);
   }
 
+  const stagedDirectory = mkdtempSync(path.join(tmpdir(), "opencode-plugin-"));
   try {
+    cpSync(packageDirectory, stagedDirectory, { recursive: true });
+    const packageManifestPath = path.join(stagedDirectory, manifestFilename);
+    const packageManifest: PackageManifest = JSON.parse(
+      readFileSync(packageManifestPath, "utf-8")
+    );
+    resolveManifestCatalog(packageManifest);
+    writeFileSync(
+      packageManifestPath,
+      `${JSON.stringify(packageManifest, null, 2)}\n`,
+      "utf-8"
+    );
     execFileSync(
       npmPath,
       [
@@ -48,8 +120,9 @@ const stagePackage = (directory: { name: string }): void => {
         "--tag",
         "latest",
         "--provenance",
+        "--ignore-scripts",
       ],
-      { cwd: packageDirectory, stdio: ["ignore", "inherit", "pipe"] }
+      { cwd: stagedDirectory, stdio: ["ignore", "inherit", "pipe"] }
     );
   } catch (error) {
     const details =
@@ -64,6 +137,8 @@ const stagePackage = (directory: { name: string }): void => {
     }
 
     console.log(`${packageSpec} is already staged`);
+  } finally {
+    rmSync(stagedDirectory, { force: true, recursive: true });
   }
 };
 
