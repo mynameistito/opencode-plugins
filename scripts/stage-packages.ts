@@ -27,10 +27,10 @@ interface PackageManifest {
   peerDependencies?: DependencyMap;
 }
 
-const rootManifest: { catalog?: Record<string, string> } = JSON.parse(
-  readFileSync(manifestFilename, "utf-8")
-);
-const catalog = rootManifest.catalog ?? {};
+const rootManifest: {
+  catalog?: DependencyMap;
+  catalogs?: Record<string, DependencyMap>;
+} = JSON.parse(readFileSync(manifestFilename, "utf-8"));
 
 const resolveCatalog = (dependencies: DependencyMap): DependencyMap =>
   Object.fromEntries(
@@ -38,10 +38,15 @@ const resolveCatalog = (dependencies: DependencyMap): DependencyMap =>
       if (!value.startsWith("catalog:")) {
         return [name, value];
       }
-      const dependency = value.slice("catalog:".length) || "default";
-      const version = catalog[dependency];
+      const catalogName = value.slice("catalog:".length);
+      const catalog = catalogName
+        ? rootManifest.catalogs?.[catalogName]
+        : rootManifest.catalog;
+      const version = catalog?.[name];
       if (!version) {
-        throw new Error(`Missing catalog entry for ${dependency}`);
+        throw new Error(
+          `Missing catalog entry for ${catalogName || "default"}:${name}`
+        );
       }
       return [name, version];
     })
