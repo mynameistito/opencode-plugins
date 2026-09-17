@@ -35,6 +35,8 @@ const createRuntime = (auth: CommandResult, usage: CommandResult = "") => {
     currentTimeMillisUnsafe: () => NOW.getTime(),
     currentTimeNanos: Effect.succeed(BigInt(NOW.getTime()) * 1_000_000n),
     currentTimeNanosUnsafe: () => BigInt(NOW.getTime()) * 1_000_000n,
+    monotonicTimeNanos: Effect.succeed(BigInt(NOW.getTime()) * 1_000_000n),
+    monotonicTimeNanosUnsafe: () => BigInt(NOW.getTime()) * 1_000_000n,
     sleep: () => Effect.void,
   });
 

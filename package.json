@@ -24,8 +24,8 @@
   },
   "devDependencies": {
     "@changesets/cli": "^3.0.1",
-    "@opentui/core": "0.5.7",
-    "@opentui/solid": "0.5.7",
+    "@opentui/core": "catalog:",
+    "@opentui/solid": "catalog:",
     "@types/bun": "1.4.0",
     "@types/node": "26.2.0",
     "@typescript/native": "npm:typescript@^7.0.2",
@@ -42,5 +42,12 @@
   "overrides": {
     "@effect/platform-node-shared": "4.0.0-rc.112"
   },
-  "packageManager": "bun@1.4.2"
+  "packageManager": "bun@1.4.2",
+  "catalog": {
+    "@opencode-ai/plugin": "0.0.0-beta-18050",
+    "@opentui/core": "0.5.7",
+    "@opentui/solid": "0.5.7",
+    "effect": "4.0.0-rc.112",
+    "solid-js": "1.9.12"
+  }
 }

@@ -47,7 +47,7 @@ const QuotaCountSchema = Schema.Finite.check(
 ).pipe(Schema.brand("QuotaCount"));
 
 /** Schema for valid absolute reset instants. */
-const ResetInstantSchema = Schema.DateValid;
+const ResetInstantSchema = Schema.Date;
 
 const parsePercentage = Schema.decodeUnknownResult(PercentageSchema);
 const parseQuotaCount = Schema.decodeUnknownResult(QuotaCountSchema);
