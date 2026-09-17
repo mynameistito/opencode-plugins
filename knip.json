@@ -9,8 +9,7 @@
   ],
   "workspaces": {
     "apps/web": {
-      "entry": ["alchemy.run.ts", "blume.config.ts"],
-      "ignoreDependencies": ["@astrojs/check"]
+      "entry": ["alchemy.run.ts", "blume.config.ts"]
     }
   }
 }

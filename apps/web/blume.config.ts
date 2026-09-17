@@ -1,7 +1,7 @@
-import type { AstroIntegration } from "astro";
 import { defineConfig } from "blume";
+import type { BlumeConfig } from "blume";
 
-const reactGrab: AstroIntegration = {
+const reactGrab = {
   hooks: {
     "astro:config:setup": ({ injectScript }) => {
       injectScript(
@@ -11,7 +11,7 @@ const reactGrab: AstroIntegration = {
     },
   },
   name: "react-grab",
-};
+} satisfies NonNullable<BlumeConfig["integrations"]>[number];
 
 export default defineConfig({
   ai: {

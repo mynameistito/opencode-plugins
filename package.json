@@ -23,21 +23,21 @@
     "changeset-add": "bun run scripts/changeset-add.ts"
   },
   "devDependencies": {
-    "@changesets/cli": "^3.0.1",
+    "@changesets/cli": "^3.0.3",
     "@opentui/core": "catalog:",
     "@opentui/solid": "catalog:",
-    "@types/bun": "1.4.0",
+    "@types/bun": "1.4.2",
     "@types/node": "26.2.0",
     "@typescript/native": "npm:typescript@^7.0.2",
     "eslint-plugin-github": "6.1.2",
-    "eslint-plugin-sonarjs": "^4.2.0",
-    "knip": "6.33.0",
-    "lefthook": "^2.1.10",
-    "oxfmt": "^0.65.0",
-    "oxlint": "^1.80.0",
-    "tsdown": "^0.22.14",
+    "eslint-plugin-sonarjs": "^4.2.1",
+    "knip": "6.36.0",
+    "lefthook": "^2.1.14",
+    "oxfmt": "^0.68.0",
+    "oxlint": "^1.83.0",
+    "tsdown": "^0.23.0",
     "typescript": "npm:@typescript/typescript6@^6.0.2",
-    "ultracite": "7.10.7"
+    "ultracite": "7.12.0"
   },
   "overrides": {
     "@effect/platform-node-shared": "4.0.0-rc.112"
@@ -45,9 +45,9 @@
   "packageManager": "bun@1.4.2",
   "catalog": {
     "@opencode-ai/plugin": "0.0.0-beta-18050",
-    "@opentui/core": "0.5.7",
-    "@opentui/solid": "0.5.7",
+    "@opentui/core": "0.5.11",
+    "@opentui/solid": "0.5.11",
     "effect": "4.0.0-rc.112",
-    "solid-js": "1.9.12"
+    "solid-js": "1.9.15"
   }
 }
