@@ -18,11 +18,9 @@
     "effect": "catalog:"
   },
   "devDependencies": {
-    "@astrojs/check": "^0.9.10",
     "@types/node": "26.5.1",
     "alchemy": "2.0.0-beta.77",
-    "astro": "^7.3.2",
-    "blume": "1.6.6",
+    "blume": "1.7.0",
     "react-grab": "^0.2.0",
     "typescript": "6.0.2"
   }
