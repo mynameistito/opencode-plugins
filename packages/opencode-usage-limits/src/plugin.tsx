@@ -1,5 +1,5 @@
 /* @jsxImportSource @opentui/solid */
-import type { Context } from "@opencode-ai/plugin/tui/context";
+import type { Context } from "@opencode/plugin/tui/context";
 import { Effect, Fiber } from "effect";
 import { createSignal } from "solid-js";
 

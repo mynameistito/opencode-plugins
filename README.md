@@ -1,6 +1,6 @@
 # OpenCode Plugins
 
-Personal [OpenCode](https://opencode.ai) `V2` ([`@opencode-ai/cli`](https://www.npmjs.com/package/@opencode-ai/cli)) Plugins.
+Personal [OpenCode](https://opencode.ai) `V2` ([`@opencode/cli`](https://www.npmjs.com/package/@opencode/cli)) Plugins.
 
 ## Packages
 

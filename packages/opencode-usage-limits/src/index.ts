@@ -1,4 +1,4 @@
-import { Plugin } from "@opencode-ai/plugin/tui";
+import { Plugin } from "@opencode/plugin/tui";
 
 import { setupUsageLimitsPlugin } from "@/plugin.tsx";
 

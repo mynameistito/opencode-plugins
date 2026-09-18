@@ -1,6 +1,6 @@
 import { setTimeout as delay } from "node:timers/promises";
 
-import type { Context } from "@opencode-ai/plugin/tui/context";
+import type { Context } from "@opencode/plugin/tui/context";
 import { RGBA } from "@opentui/core";
 import { testRender } from "@opentui/solid";
 import type { JSX } from "@opentui/solid";
