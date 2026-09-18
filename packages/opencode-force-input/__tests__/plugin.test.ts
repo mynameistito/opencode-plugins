@@ -1,7 +1,7 @@
-import { describe, expect, test } from "bun:test";
-
 import type { KeymapLayer, SlotClaim } from "@opencode-ai/plugin/tui/context";
 import { RGBA } from "@opentui/core";
+import { testRender } from "@opentui/solid";
+import { describe, expect, test } from "vitest";
 
 import { forceSubmit, registerForceSubmitLayer, setup } from "../src/index";
 import type { ForceSubmitContext } from "../src/index";
@@ -52,7 +52,7 @@ describe("force submit", () => {
     ]);
   });
 
-  test("mounts a layer for each prompt footer render and dispatches force-submit", () => {
+  test("mounts a layer for each prompt footer render and dispatches force-submit", async () => {
     const claims: SlotClaim[] = [];
     const layers: (() => KeymapLayer)[] = [];
     const dispatched: string[] = [];
@@ -82,29 +82,43 @@ describe("force submit", () => {
         candidate.append === "prompt.footer.status"
     );
     expect(claim).toBeDefined();
-    claim?.render({ mode: "normal" });
-    claim?.render({ mode: "normal" });
 
-    expect(layers).toHaveLength(2);
-    const [layer] = layers;
-    if (!layer) {
-      throw new Error("expected force-submit keymap layer");
+    if (!claim) {
+      throw new Error("expected prompt footer slot claim");
     }
-    const { commands } = layer();
-    if (!commands) {
-      throw new Error("expected force-submit keymap commands");
-    }
-    const [command] = commands;
-    if (!command) {
-      throw new Error("expected force-submit command");
-    }
-    command.run();
+    const renderSetup = await testRender(
+      () => {
+        claim.render({ mode: "normal" });
+        return claim.render({ mode: "normal" });
+      },
+      { height: 3, width: 70 }
+    );
+    try {
+      await renderSetup.flush();
 
-    expect(dispatched).toEqual([
-      "session.interrupt",
-      "session.interrupt",
-      "session.interrupt",
-      "prompt.submit",
-    ]);
+      expect(layers).toHaveLength(2);
+      const [layer] = layers;
+      if (!layer) {
+        throw new Error("expected force-submit keymap layer");
+      }
+      const { commands } = layer();
+      if (!commands) {
+        throw new Error("expected force-submit keymap commands");
+      }
+      const [command] = commands;
+      if (!command) {
+        throw new Error("expected force-submit command");
+      }
+      command.run();
+
+      expect(dispatched).toEqual([
+        "session.interrupt",
+        "session.interrupt",
+        "session.interrupt",
+        "prompt.submit",
+      ]);
+    } finally {
+      renderSetup.renderer.destroy();
+    }
   });
 });

@@ -1,6 +1,7 @@
-import { describe, expect, test } from "bun:test";
+import { setTimeout as delay } from "node:timers/promises";
 
 import { Deferred, Effect, Fiber, Result } from "effect";
+import { describe, expect, test } from "vitest";
 
 import { usageCoordinator } from "@/coordinator.ts";
 import type { CoordinatorSnapshot } from "@/coordinator.ts";
@@ -75,6 +76,8 @@ const dependencies = (
   };
 };
 
+const yieldToEventLoop = () => delay(0);
+
 describe("usage coordinator", () => {
   test("publishes loading before concurrent providers reach terminal state", async () => {
     const gates = new Map<ProviderID, Deferred.Deferred<boolean>>();
@@ -90,7 +93,7 @@ describe("usage coordinator", () => {
       Effect.scoped(usageCoordinator(harness.dependencies))
     );
 
-    await Bun.sleep(0);
+    await yieldToEventLoop();
     expect(harness.snapshots[0]).toEqual(["loading", "loading"]);
     expect(gates.size).toBe(2);
 
@@ -99,14 +102,14 @@ describe("usage coordinator", () => {
       throw new Error("codex gate was not created");
     }
     await Effect.runPromise(Deferred.succeed(codexGate, true));
-    await Bun.sleep(0);
+    await yieldToEventLoop();
     expect(harness.snapshots).toHaveLength(1);
     const zaiGate = gates.get("zai");
     if (!zaiGate) {
       throw new Error("zai gate was not created");
     }
     await Effect.runPromise(Deferred.succeed(zaiGate, true));
-    await Bun.sleep(0);
+    await yieldToEventLoop();
     expect(harness.snapshots[1]).toEqual(["ready", "ready"]);
     await Effect.runPromise(Fiber.interrupt(fiber));
   });
@@ -120,11 +123,11 @@ describe("usage coordinator", () => {
       Effect.scoped(usageCoordinator(harness.dependencies))
     );
 
-    await Bun.sleep(0);
+    await yieldToEventLoop();
     expect(harness.snapshots).toEqual([["loading", "loading"]]);
     await Effect.runPromise(Fiber.interrupt(fiber));
     await Effect.runPromise(Deferred.succeed(gate, true));
-    await Bun.sleep(0);
+    await yieldToEventLoop();
     expect(harness.snapshots).toHaveLength(1);
   });
 
@@ -140,7 +143,7 @@ describe("usage coordinator", () => {
       Effect.scoped(usageCoordinator(harness.dependencies))
     );
 
-    await Bun.sleep(0);
+    await yieldToEventLoop();
     expect(harness.fetches).toEqual(["zai"]);
     expect(harness.snapshots[0]).toEqual(["loading"]);
     await Effect.runPromise(Fiber.interrupt(fiber));
@@ -166,14 +169,14 @@ describe("usage coordinator", () => {
       Effect.scoped(usageCoordinator(harness.dependencies))
     );
 
-    await Bun.sleep(0);
+    await yieldToEventLoop();
     expect(harness.snapshots[1]).toEqual(["error"]);
     const [firstSleep] = harness.sleeps;
     if (!firstSleep) {
       throw new Error("first refresh did not schedule a sleep");
     }
     await Effect.runPromise(Deferred.succeed(firstSleep, true));
-    await Bun.sleep(0);
+    await yieldToEventLoop();
     expect(harness.snapshots.at(-1)).toEqual(["ready"]);
     await Effect.runPromise(Fiber.interrupt(fiber));
   });
@@ -196,14 +199,14 @@ describe("usage coordinator", () => {
       Effect.scoped(usageCoordinator(harness.dependencies))
     );
 
-    await Bun.sleep(0);
+    await yieldToEventLoop();
     expect(harness.snapshots).toEqual([["ready"]]);
     const [firstSleep] = harness.sleeps;
     if (!firstSleep) {
       throw new Error("first refresh did not schedule a sleep");
     }
     await Effect.runPromise(Deferred.succeed(firstSleep, true));
-    await Bun.sleep(0);
+    await yieldToEventLoop();
     expect(harness.snapshots.at(-1)).toEqual(["ready"]);
     await Effect.runPromise(Fiber.interrupt(fiber));
   });
@@ -228,14 +231,14 @@ describe("usage coordinator", () => {
       Effect.scoped(usageCoordinator(harness.dependencies))
     );
 
-    await Bun.sleep(0);
+    await yieldToEventLoop();
     expect(harness.snapshots.at(-1)).toEqual([]);
     const [firstSleep] = harness.sleeps;
     if (!firstSleep) {
       throw new Error("first refresh did not schedule a sleep");
     }
     await Effect.runPromise(Deferred.succeed(firstSleep, true));
-    await Bun.sleep(0);
+    await yieldToEventLoop();
     expect(harness.snapshots.at(-1)).toEqual(["ready"]);
     await Effect.runPromise(Fiber.interrupt(fiber));
   });
@@ -257,7 +260,7 @@ describe("usage coordinator", () => {
       Effect.scoped(usageCoordinator(harness.dependencies))
     );
 
-    await Bun.sleep(0);
+    await yieldToEventLoop();
     expect(snapshots.at(-1)?.diagnostics).toEqual([
       { kind: "auth-read", message: "OpenCode auth could not be read" },
     ]);

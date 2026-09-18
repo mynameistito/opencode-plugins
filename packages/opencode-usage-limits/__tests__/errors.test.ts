@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vitest";
 
 import type { ProviderError } from "@/errors.ts";
 import { ProviderCommandError } from "@/errors/command.ts";

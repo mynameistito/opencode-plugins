@@ -1,6 +1,5 @@
-import { describe, expect, test } from "bun:test";
-
 import { Effect, Exit, Layer, Result } from "effect";
+import { describe, expect, test } from "vitest";
 
 import { parseUsageLimitsConfig } from "@/config-schema.ts";
 import { ProviderCommandError, ProviderTimeoutError } from "@/errors.ts";

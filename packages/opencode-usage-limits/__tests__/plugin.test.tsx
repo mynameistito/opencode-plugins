@@ -1,11 +1,12 @@
-/* @jsxImportSource @opentui/solid */
-import { describe, expect, test } from "bun:test";
+import { setTimeout as delay } from "node:timers/promises";
 
 import type { Context } from "@opencode-ai/plugin/tui/context";
 import { RGBA } from "@opentui/core";
 import { testRender } from "@opentui/solid";
 import type { JSX } from "@opentui/solid";
 import { Deferred, Effect, Result } from "effect";
+/* @jsxImportSource @opentui/solid */
+import { describe, expect, test } from "vitest";
 
 import type { UsageTheme } from "@/components.tsx";
 import { ConfigDecodeError } from "@/errors.ts";
@@ -215,7 +216,7 @@ const initialize = async (harness: ReturnType<typeof createHarness>) => {
       asHostContext(harness.context)
     )
   );
-  await Bun.sleep(0);
+  await delay(0);
   const registered = harness.getRegistered();
   if (!registered) {
     throw new Error("plugin did not register slots");
@@ -251,7 +252,7 @@ describe("usage-limits TUI lifecycle", () => {
     harness.state.fetchError = new Error("provider unavailable");
 
     await harness.scheduled[0]?.callback();
-    await Bun.sleep(0);
+    await delay(0);
 
     const sidebar = await renderSlot(registered, "sidebar.content");
     expect(sidebar).toContain("Codex Work cached");
@@ -383,7 +384,7 @@ describe("usage-limits TUI lifecycle", () => {
     harness.state.config = config({ refreshIntervalSeconds: 45 });
 
     await harness.scheduled[0]?.callback();
-    await Bun.sleep(0);
+    await delay(0);
 
     expect(harness.scheduled.map(({ delayMs }) => delayMs)).toEqual([
       20_000, 45_000,
@@ -399,7 +400,7 @@ describe("usage-limits TUI lifecycle", () => {
     }
 
     dispose();
-    await Bun.sleep(0);
+    await delay(0);
 
     expect(harness.scheduled[0]?.cancelled).toBe(true);
     expect(harness.getSlotDisposals()).toBe(2);

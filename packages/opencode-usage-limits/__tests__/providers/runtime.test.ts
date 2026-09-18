@@ -1,9 +1,10 @@
-import { afterEach, describe, expect, test } from "bun:test";
-import { rm, stat } from "node:fs/promises";
+import { rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { setTimeout as delay } from "node:timers/promises";
 
 import { Effect, Exit } from "effect";
+import { afterEach, describe, expect, test } from "vitest";
 
 import {
   ProviderCommandExecutor,
@@ -63,7 +64,7 @@ describe("provider runtime services", () => {
       `oc-usage-limits-${crypto.randomUUID()}.json`
     );
     temporaryFiles.push(file);
-    await Bun.write(file, "x".repeat(1024 * 1024 + 1));
+    await writeFile(file, "x".repeat(1024 * 1024 + 1));
 
     const result = await Effect.runPromise(
       Effect.gen(function* result() {
@@ -91,7 +92,7 @@ describe("provider runtime services", () => {
       accessToken: "token",
       padding: "x".repeat(1024),
     });
-    await Bun.write(file, content);
+    await writeFile(file, content);
 
     const result = await Effect.runPromise(
       Effect.gen(function* result() {
@@ -308,9 +309,10 @@ describe("provider runtime services", () => {
     );
     temporaryFiles.push(file);
     const script = `
-      const file = process.argv[1];
-      const write = () => Bun.write(file, String(Date.now())).then(() => setTimeout(write, 10));
-      write();
+       const { writeFile } = require("node:fs/promises");
+       const file = process.argv[1];
+       const write = () => writeFile(file, String(Date.now())).then(() => setTimeout(write, 10));
+       write();
     `;
 
     const result = await Effect.runPromiseExit(
@@ -331,9 +333,9 @@ describe("provider runtime services", () => {
       expect(serializedCause).toContain('"_tag":"ProviderTimeoutError"');
     }
 
-    await Bun.sleep(100);
+    await delay(100);
     const before = await stat(file);
-    await Bun.sleep(100);
+    await delay(100);
     const after = await stat(file);
     expect(after.mtimeMs).toBe(before.mtimeMs);
   });

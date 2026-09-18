@@ -1,9 +1,8 @@
-/* @jsxImportSource @opentui/solid */
-import { describe, expect, test } from "bun:test";
-
 import { RGBA } from "@opentui/core";
 import { testRender } from "@opentui/solid";
 import { Result } from "effect";
+/* @jsxImportSource @opentui/solid */
+import { describe, expect, test } from "vitest";
 
 import { UsageLimitsPanel } from "@/components.tsx";
 import type {

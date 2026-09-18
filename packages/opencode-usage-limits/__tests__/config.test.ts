@@ -1,9 +1,10 @@
-import { afterEach, describe, expect, mock, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { Redacted, Result } from "effect";
+import { afterEach, describe, expect, test, vi } from "vitest";
 
 import {
   credentialValue,
@@ -11,12 +12,10 @@ import {
   parseUsageLimitsConfig,
 } from "@/config-schema.ts";
 import { ConfigDecodeError, ConfigReadError } from "@/errors.ts";
+import type { JsonValue } from "@/utils.ts";
 
-const actualUtils = await import("@/utils.ts");
-const originalReadJsonFile = actualUtils.readJsonFile;
-const readJsonFile = mock(originalReadJsonFile);
-
-mock.module("@/utils.ts", () => ({ ...actualUtils, readJsonFile }));
+type ReadJsonFile = (filePath: string) => Promise<JsonValue>;
+const readJsonFile = vi.fn<ReadJsonFile>();
 
 const testXdgConfigHome = path.join(homedir(), ".opencode-test-config");
 const testXdgDataHome = path.join(homedir(), ".opencode-test-data");
@@ -69,14 +68,13 @@ interface PublishedSchema {
 
 const publishedSchema: PublishedSchema = JSON.parse(
   readFileSync(
-    path.join(import.meta.dir, "..", "usage-limits.schema.json"),
+    fileURLToPath(new URL("../usage-limits.schema.json", import.meta.url)),
     "utf-8"
   )
 );
 
 afterEach(() => {
   readJsonFile.mockReset();
-  readJsonFile.mockImplementation(originalReadJsonFile);
 });
 
 describe("configuration parsing", () => {
@@ -212,7 +210,7 @@ describe("configuration parsing", () => {
     ],
     [{ providers: { unknown: {} } }, "unknown provider"],
     [{ unknown: true }, "unknown top-level key"],
-  ])("rejects %s (%s)", (input) => {
+  ])("rejects %s (%s)", (input, _label) => {
     const result = parseUsageLimitsConfig(input);
     expect(Result.isFailure(result)).toBe(true);
     if (Result.isFailure(result)) {
@@ -257,7 +255,7 @@ describe("configuration loading", () => {
       Object.assign(new Error("missing"), { code: "ENOENT" })
     );
 
-    const result = await loadConfig();
+    const result = await loadConfig(readJsonFile);
     expect(Result.isSuccess(result)).toBe(true);
     if (Result.isSuccess(result)) {
       expect(result.success.refreshIntervalSeconds).toBe(60);
@@ -269,14 +267,14 @@ describe("configuration loading", () => {
 
   test("returns typed read and JSONC decode failures", async () => {
     readJsonFile.mockRejectedValueOnce(new Error("permission denied"));
-    const readResult = await loadConfig();
+    const readResult = await loadConfig(readJsonFile);
     expect(Result.isFailure(readResult)).toBe(true);
     if (Result.isFailure(readResult)) {
       expect(readResult.failure).toBeInstanceOf(ConfigReadError);
     }
 
     readJsonFile.mockRejectedValueOnce(new SyntaxError("malformed"));
-    const decodeResult = await loadConfig();
+    const decodeResult = await loadConfig(readJsonFile);
     expect(Result.isFailure(decodeResult)).toBe(true);
     if (Result.isFailure(decodeResult)) {
       expect(decodeResult.failure).toBeInstanceOf(ConfigDecodeError);
@@ -289,7 +287,7 @@ describe("configuration loading", () => {
       openai: { access: "token", accountId: "account" },
     });
 
-    const result = await loadOpenCodeAuth();
+    const result = await loadOpenCodeAuth(readJsonFile);
     expect(Redacted.isRedacted(result.auth.openai?.access)).toBe(true);
     expect(String(result.auth.openai?.access)).not.toContain("token");
     expect(result.diagnostic).toBeUndefined();
@@ -300,7 +298,7 @@ describe("configuration loading", () => {
 
   test("treats absent or malformed auth as empty", async () => {
     readJsonFile.mockRejectedValueOnce(new Error("missing"));
-    await expect(loadOpenCodeAuth()).resolves.toMatchObject({
+    await expect(loadOpenCodeAuth(readJsonFile)).resolves.toMatchObject({
       auth: {},
       diagnostic: { kind: "auth-read" },
     });
@@ -314,7 +312,7 @@ describe("configuration loading", () => {
     async (input, message) => {
       readJsonFile.mockResolvedValueOnce(input);
 
-      await expect(loadOpenCodeAuth()).resolves.toEqual({
+      await expect(loadOpenCodeAuth(readJsonFile)).resolves.toEqual({
         auth: {},
         diagnostic: { kind: "auth-decode", message },
       });
@@ -323,7 +321,7 @@ describe("configuration loading", () => {
 
   test("classifies auth parse and filesystem read errors separately", async () => {
     readJsonFile.mockRejectedValueOnce(new SyntaxError("malformed"));
-    await expect(loadOpenCodeAuth()).resolves.toMatchObject({
+    await expect(loadOpenCodeAuth(readJsonFile)).resolves.toMatchObject({
       auth: {},
       diagnostic: {
         kind: "auth-decode",
@@ -332,7 +330,7 @@ describe("configuration loading", () => {
     });
 
     readJsonFile.mockRejectedValueOnce(new Error("permission denied"));
-    await expect(loadOpenCodeAuth()).resolves.toMatchObject({
+    await expect(loadOpenCodeAuth(readJsonFile)).resolves.toMatchObject({
       auth: {},
       diagnostic: {
         kind: "auth-read",
@@ -345,7 +343,7 @@ describe("configuration loading", () => {
     readJsonFile.mockRejectedValueOnce(
       Object.assign(new Error("missing"), { code: "ENOENT" })
     );
-    await expect(loadOpenCodeAuth()).resolves.toMatchObject({
+    await expect(loadOpenCodeAuth(readJsonFile)).resolves.toMatchObject({
       auth: {},
       diagnostic: { kind: "auth-missing" },
     });
@@ -353,7 +351,7 @@ describe("configuration loading", () => {
     readJsonFile.mockResolvedValueOnce({
       minimax: { apiKey: { secret: "do-not-log" }, key: "valid-key" },
     });
-    const result = await loadOpenCodeAuth();
+    const result = await loadOpenCodeAuth(readJsonFile);
     expect(credentialValue(result.auth.minimax?.key)).toBe("valid-key");
     expect(result.diagnostic).toEqual({
       kind: "auth-decode",

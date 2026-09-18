@@ -9,6 +9,8 @@ import type { OpenCodeAuth, ResolvedUsageLimitsConfig } from "@/types.ts";
 import { isRecord, isString, readJsonFile } from "@/utils.ts";
 import type { JsonValue } from "@/utils.ts";
 
+export type ConfigFileReader = (filePath: string) => Promise<JsonValue>;
+
 /**
  * Resolves an XDG directory only when the environment value is absolute.
  *
@@ -88,11 +90,13 @@ const hasMalformedAuthField = (input: JsonValue): boolean => {
 };
 
 /** Loads and parses the usage-limits plugin configuration. */
-export const loadConfig = async (): Promise<
+export const loadConfig = async (
+  read: ConfigFileReader = readJsonFile
+): Promise<
   Result.Result<ResolvedUsageLimitsConfig, ConfigReadError | ConfigDecodeError>
 > => {
   try {
-    return parseUsageLimitsConfig(await readJsonFile(CONFIG_PATH));
+    return parseUsageLimitsConfig(await read(CONFIG_PATH));
   } catch (error) {
     if (error instanceof Error && isMissingFile(error)) {
       return Result.succeed(DEFAULT_CONFIG);
@@ -113,9 +117,11 @@ export const loadConfig = async (): Promise<
 };
 
 /** Loads recognized OpenCode auth fields without making auth absence fatal. */
-export const loadOpenCodeAuth = async (): Promise<OpenCodeAuthLoad> => {
+export const loadOpenCodeAuth = async (
+  read: ConfigFileReader = readJsonFile
+): Promise<OpenCodeAuthLoad> => {
   try {
-    const input = await readJsonFile(OPENCODE_AUTH_PATH);
+    const input = await read(OPENCODE_AUTH_PATH);
     if (!isRecord(input)) {
       return {
         auth: {},
