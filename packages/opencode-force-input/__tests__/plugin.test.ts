@@ -88,8 +88,8 @@ describe("force submit", () => {
     }
     const renderSetup = await testRender(
       () => {
-          claim.render({ mode: "normal", showDetails: false });
-          return claim.render({ mode: "normal", showDetails: false });
+        claim.render({ mode: "normal", showDetails: false });
+        return claim.render({ mode: "normal", showDetails: false });
       },
       { height: 3, width: 70 }
     );
