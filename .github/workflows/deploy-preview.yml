@@ -46,6 +46,16 @@ jobs:
 
             let pullRequest;
             const workflowRun = context.payload.workflow_run;
+            const baseRepositoryId = String(context.payload.repository?.id ?? "");
+            const headRepositoryId = String(workflowRun?.head_repository?.id ?? "");
+            const headBranch = workflowRun?.head_branch;
+            const headSha = workflowRun?.head_sha;
+            const matchesWorkflowRun = (candidate) =>
+              String(candidate.head?.repo?.id ?? "") === headRepositoryId &&
+              candidate.head?.ref === headBranch &&
+              candidate.head?.sha === headSha &&
+              String(candidate.base?.repo?.id ?? "") === baseRepositoryId &&
+              candidate.base?.ref === defaultBranch;
 
             if (context.eventName === "pull_request_target") {
               const response = await github.rest.pulls.get({
@@ -54,14 +64,25 @@ jobs:
               });
               pullRequest = response.data;
             } else {
+              if (!baseRepositoryId || !headRepositoryId || !headBranch || !headSha) {
+                core.setFailed("The workflow run is missing pull request identity data.");
+                return;
+              }
+
               const candidates = Array.isArray(workflowRun.pull_requests)
                 ? workflowRun.pull_requests
                 : [];
-              const candidate =
-                candidates.find(({ head }) => head?.sha === workflowRun.head_sha) ??
-                (candidates.length === 1 ? candidates[0] : undefined);
+              const matchingCandidates = candidates.filter(matchesWorkflowRun);
 
-              if (candidate?.number) {
+              if (matchingCandidates.length > 1) {
+                core.setFailed(
+                  `Expected one pull request for ${headBranch} at ${headSha}, found ${matchingCandidates.length}.`,
+                );
+                return;
+              }
+
+              if (matchingCandidates.length === 1) {
+                const [candidate] = matchingCandidates;
                 const response = await github.rest.pulls.get({
                   ...context.repo,
                   pull_number: candidate.number,
@@ -69,30 +90,23 @@ jobs:
                 pullRequest = response.data;
               } else {
                 const headOwner = workflowRun.head_repository?.owner?.login;
-                const headBranch = workflowRun.head_branch;
-                if (!headOwner || !headBranch) {
+                if (!headOwner) {
                   core.setFailed("The workflow run is missing pull request head repository data.");
                   return;
                 }
 
-                const { data: pullRequests } = await github.rest.pulls.list({
+                const pullRequests = await github.paginate(github.rest.pulls.list, {
                   ...context.repo,
                   state: "all",
                   base: defaultBranch,
                   head: `${headOwner}:${headBranch}`,
                   per_page: 100,
                 });
-                const matches = pullRequests.filter(
-                  (pullRequest) =>
-                    pullRequest.base.ref === defaultBranch &&
-                    pullRequest.head.ref === headBranch &&
-                    pullRequest.head.sha === workflowRun.head_sha &&
-                    pullRequest.head.repo?.owner?.login === headOwner,
-                );
+                const matches = pullRequests.filter(matchesWorkflowRun);
 
                 if (matches.length !== 1) {
                   core.setFailed(
-                    `Expected one pull request for ${headOwner}:${headBranch} at ${workflowRun.head_sha}, found ${matches.length}.`,
+                    `Expected one pull request for ${headOwner}:${headBranch} at ${headSha}, found ${matches.length}.`,
                   );
                   return;
                 }
@@ -106,9 +120,9 @@ jobs:
             }
             if (
               context.eventName === "workflow_run" &&
-              pullRequest.head.sha !== workflowRun.head_sha
+              !matchesWorkflowRun(pullRequest)
             ) {
-              core.setFailed("The pull request head changed before preview deployment.");
+              core.setFailed("The pull request no longer matches the workflow run head metadata.");
               return;
             }
 
@@ -193,19 +207,17 @@ jobs:
     # does not have write access and the deployment executes pull-request code.
     environment: docs-preview
     steps:
-      - name: Run Alchemy deployment
-        uses: mynameistito/alchemy-deploy@aed01de4143eaf43e26bb9a1393f8a8f6564676c # fork cleanup support; use v2.3.2 after release
-        env:
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Check out workflow action
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          worker-name: opencode-plugins-docs
-          deploy-command: cd apps/web && bunx --no-install alchemy deploy --stage "$STAGE" --yes
-          destroy-command: cd apps/web && bunx --no-install alchemy destroy --stage "$STAGE" --yes
-          production-stage: prod
-          production-url: https://opencode-plugins.mynameistito.com
-          use-adopt: false
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+      - name: Run Alchemy deployment
+        uses: ./.github/actions/deploy-documentation-preview
+        with:
+          cloudflare-account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
   deploy-trusted:
     name: Deploy preview (trusted author)
@@ -215,16 +227,57 @@ jobs:
     # A write-level PR author is trusted to run pull-request code with the
     # repository's Cloudflare credentials, so no reviewer gate is needed.
     steps:
-      - name: Run Alchemy deployment
-        uses: mynameistito/alchemy-deploy@aed01de4143eaf43e26bb9a1393f8a8f6564676c # fork cleanup support; use v2.3.2 after release
-        env:
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Check out workflow action
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          worker-name: opencode-plugins-docs
-          deploy-command: cd apps/web && bunx --no-install alchemy deploy --stage "$STAGE" --yes
-          destroy-command: cd apps/web && bunx --no-install alchemy destroy --stage "$STAGE" --yes
-          production-stage: prod
-          production-url: https://opencode-plugins.mynameistito.com
-          use-adopt: false
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+      - name: Recheck author access
+        id: verify-access
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        env:
+          PULL_REQUEST_NUMBER: ${{ needs.resolve.outputs.pull_request_number }}
+        with:
+          script: |
+            const pullRequestNumber = Number(process.env.PULL_REQUEST_NUMBER);
+            if (!Number.isInteger(pullRequestNumber)) {
+              core.setFailed("The preview pull request number is missing.");
+              return;
+            }
+
+            const { data: pullRequest } = await github.rest.pulls.get({
+              ...context.repo,
+              pull_number: pullRequestNumber,
+            });
+            const username = pullRequest.user?.login;
+            if (!username) {
+              core.setFailed("The preview pull request author is missing.");
+              return;
+            }
+
+            let permission = "none";
+            try {
+              const response = await github.rest.repos.getCollaboratorPermissionLevel({
+                ...context.repo,
+                username,
+              });
+              permission = response.data.permission ?? response.data.role_name ?? "none";
+            } catch (error) {
+              const message = error instanceof Error ? error.message : String(error);
+              core.setFailed(`Could not verify ${username}'s repository access: ${message}`);
+              return;
+            }
+
+            const trusted = ["admin", "write", "maintain", "push"].includes(permission);
+            core.info(`Pull request #${pullRequest.number} author ${username} currently has ${permission} access.`);
+            core.setOutput("trusted", String(trusted));
+            if (!trusted) {
+              core.setFailed(`${username} no longer has write access to the repository.`);
+            }
+      - name: Run Alchemy deployment
+        if: success() && steps.verify-access.outputs.trusted == 'true'
+        uses: ./.github/actions/deploy-documentation-preview
+        with:
+          cloudflare-account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}

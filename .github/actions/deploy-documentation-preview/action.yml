@@ -1,0 +1,30 @@
+name: Deploy documentation preview
+description: Deploy the documentation preview with the pinned Alchemy action
+
+inputs:
+  cloudflare-account-id:
+    description: Cloudflare account ID used by Alchemy
+    required: true
+  cloudflare-api-token:
+    description: Cloudflare API token used by Alchemy
+    required: true
+  github-token:
+    description: GitHub token used by Alchemy
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Run Alchemy deployment
+      uses: mynameistito/alchemy-deploy@aed01de4143eaf43e26bb9a1393f8a8f6564676c # fork cleanup support; use v2.3.2 after release
+      env:
+        CLOUDFLARE_ACCOUNT_ID: ${{ inputs.cloudflare-account-id }}
+        CLOUDFLARE_API_TOKEN: ${{ inputs.cloudflare-api-token }}
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+      with:
+        worker-name: opencode-plugins-docs
+        deploy-command: cd apps/web && bunx --no-install alchemy deploy --stage "$STAGE" --yes
+        destroy-command: cd apps/web && bunx --no-install alchemy destroy --stage "$STAGE" --yes
+        production-stage: prod
+        production-url: https://opencode-plugins.mynameistito.com
+        use-adopt: false
