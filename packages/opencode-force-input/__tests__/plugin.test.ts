@@ -1,4 +1,4 @@
-import type { KeymapLayer, SlotClaim } from "@opencode-ai/plugin/tui/context";
+import type { KeymapLayer, SlotClaim } from "@opencode/plugin/tui/context";
 import { RGBA } from "@opentui/core";
 import { testRender } from "@opentui/solid";
 import { describe, expect, test } from "vitest";
@@ -88,8 +88,8 @@ describe("force submit", () => {
     }
     const renderSetup = await testRender(
       () => {
-        claim.render({ mode: "normal" });
-        return claim.render({ mode: "normal" });
+        claim.render({ mode: "normal", showDetails: false });
+        return claim.render({ mode: "normal", showDetails: false });
       },
       { height: 3, width: 70 }
     );

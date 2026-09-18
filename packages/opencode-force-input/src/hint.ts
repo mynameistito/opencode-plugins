@@ -1,4 +1,4 @@
-import type { Context } from "@opencode-ai/plugin/tui/context";
+import type { Context } from "@opencode/plugin/tui/context";
 import type { RGBA } from "@opentui/core";
 
 /** Execution lifecycle events that can change the session's idle/running state. */

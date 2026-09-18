@@ -1,7 +1,6 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "ignoreDependencies": [
-    "@opencode-ai/cli",
     "@opentui/core",
     "@opentui/solid",
     "lefthook",

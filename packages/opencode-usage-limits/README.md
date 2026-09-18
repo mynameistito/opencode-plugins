@@ -75,7 +75,7 @@ Start OpenCode again and it will reinstall the plugin from the existing `cli.jso
 opencode2 plugin add @mynameistito/opencode-usage-limits -g
 ```
 
-- **Dependency conflicts involving `@opencode-ai/plugin`** usually mean OpenCode's package cache contains an older plugin API package. Update OpenCode, clear the cached plugin as above, then retry the install. This package does not publish OpenCode runtime packages as peer dependencies.
+- **Dependency conflicts involving `@opencode/plugin`** usually mean OpenCode's package cache contains an older plugin API package. Update OpenCode, clear the cached plugin as above, then retry the install. This package does not publish OpenCode runtime packages as peer dependencies.
 - **`No versions available`** right after a release means a supply-chain cooldown policy (e.g. `min-release-age`) is blocking the fresh version. Wait for the cooldown window to pass, or install a previously vetted version instead.
 
 ## Releases

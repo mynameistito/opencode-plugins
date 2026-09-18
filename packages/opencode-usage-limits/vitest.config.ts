@@ -33,7 +33,7 @@ export default defineConfig({
     include: ["__tests__/**/*.test.{ts,tsx}"],
     server: {
       deps: {
-        inline: ["@opencode-ai/plugin", "@opentui/solid", "solid-js"],
+        inline: ["@opencode/plugin", "@opentui/solid", "solid-js"],
       },
     },
     setupFiles: ["./vitest.setup.ts"],

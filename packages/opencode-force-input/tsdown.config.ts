@@ -4,9 +4,9 @@ export default defineConfig({
   clean: true,
   deps: {
     neverBundle: [
-      "@opencode-ai/plugin",
-      "@opencode-ai/plugin/tui",
-      "@opencode-ai/plugin/tui/context",
+      "@opencode/plugin",
+      "@opencode/plugin/tui",
+      "@opencode/plugin/tui/context",
       "@opentui/core",
       "@opentui/solid",
       "@opentui/solid/jsx-runtime",
