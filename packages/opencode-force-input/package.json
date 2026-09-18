@@ -61,10 +61,5 @@
     "@opentui/core": "catalog:",
     "@opentui/solid": "catalog:",
     "solid-js": "catalog:"
-  },
-  "knip": {
-    "ignoreDependencies": [
-      "@opencode-ai/cli"
-    ]
   }
 }
