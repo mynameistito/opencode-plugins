@@ -47,7 +47,7 @@
   },
   "packageManager": "bun@1.4.2",
   "catalog": {
-    "@opencode-ai/plugin": "0.0.0-beta-18050",
+    "@opencode/plugin": "2.0.8",
     "@opentui/core": "0.5.11",
     "@opentui/solid": "0.5.11",
     "effect": "4.0.0-rc.112",
