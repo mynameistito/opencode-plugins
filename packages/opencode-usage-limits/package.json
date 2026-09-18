@@ -60,7 +60,7 @@
     "fix": "ultracite fix"
   },
   "dependencies": {
-    "@opencode-ai/plugin": "catalog:",
+    "@opencode/plugin": "catalog:",
     "effect": "catalog:"
   },
   "devDependencies": {

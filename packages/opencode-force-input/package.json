@@ -51,10 +51,9 @@
     "test:package": "bun run build && bun ./scripts/test-package.ts"
   },
   "dependencies": {
-    "@opencode-ai/plugin": "catalog:"
+    "@opencode/plugin": "catalog:"
   },
   "devDependencies": {
-    "@opencode-ai/cli": "0.0.0-beta-18050",
     "@opentui/core": "catalog:",
     "@opentui/solid": "catalog:"
   },
