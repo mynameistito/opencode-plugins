@@ -11,6 +11,13 @@ inputs:
   github-token:
     description: GitHub token used by Alchemy
     required: true
+  pull-request-number:
+    description: Resolved pull request number used by Alchemy
+    required: true
+  allow-fork-commits:
+    description: Allow the protected deployment to use an approved fork commit
+    default: "false"
+    required: false
 
 runs:
   using: composite
@@ -21,6 +28,8 @@ runs:
         CLOUDFLARE_ACCOUNT_ID: ${{ inputs.cloudflare-account-id }}
         CLOUDFLARE_API_TOKEN: ${{ inputs.cloudflare-api-token }}
         GITHUB_TOKEN: ${{ inputs.github-token }}
+        PULL_REQUEST_NUMBER: ${{ inputs.pull-request-number }}
+        ALLOW_FORK_COMMITS: ${{ inputs.allow-fork-commits }}
       with:
         worker-name: opencode-plugins-docs
         deploy-command: cd apps/web && bunx --no-install alchemy deploy --stage "$STAGE" --yes

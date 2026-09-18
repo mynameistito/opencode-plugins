@@ -207,17 +207,14 @@ jobs:
     # does not have write access and the deployment executes pull-request code.
     environment: docs-preview
     steps:
-      - name: Check out workflow action
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ github.event.repository.default_branch }}
-          persist-credentials: false
       - name: Run Alchemy deployment
-        uses: ./.github/actions/deploy-documentation-preview
+        uses: $/.github/actions/deploy-documentation-preview
         with:
           cloudflare-account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          pull-request-number: ${{ needs.resolve.outputs.pull_request_number }}
+          allow-fork-commits: true
 
   deploy-trusted:
     name: Deploy preview (trusted author)
@@ -227,11 +224,6 @@ jobs:
     # A write-level PR author is trusted to run pull-request code with the
     # repository's Cloudflare credentials, so no reviewer gate is needed.
     steps:
-      - name: Check out workflow action
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ github.event.repository.default_branch }}
-          persist-credentials: false
       - name: Recheck author access
         id: verify-access
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
@@ -276,8 +268,9 @@ jobs:
             }
       - name: Run Alchemy deployment
         if: success() && steps.verify-access.outputs.trusted == 'true'
-        uses: ./.github/actions/deploy-documentation-preview
+        uses: $/.github/actions/deploy-documentation-preview
         with:
           cloudflare-account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          pull-request-number: ${{ needs.resolve.outputs.pull_request_number }}
