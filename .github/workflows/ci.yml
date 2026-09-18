@@ -13,6 +13,8 @@ jobs:
   check:
     name: ${{ matrix.task }}
     runs-on: ubuntu-latest
+    env:
+      CODECOV_TOKEN_AVAILABLE: ${{ secrets.CODECOV_TOKEN != '' }}
     strategy:
       fail-fast: false
       matrix:
@@ -36,8 +38,19 @@ jobs:
         run: bun install --frozen-lockfile
       - name: Run task
         run: bun run ${{ matrix.task }}
-      - name: Upload coverage reports to Codecov
-        if: matrix.task == 'test'
+      - name: Upload force-input coverage to Codecov
+        if: matrix.task == 'test' && env.CODECOV_TOKEN_AVAILABLE == 'true'
         uses: codecov/codecov-action@0fb7174895f61a3b6b78fc075e0cd60383518dac # v5.5.5
         with:
+          disable_search: true
+          files: packages/opencode-force-input/coverage/lcov.info
+          flags: force-input
+          token: ${{ secrets.CODECOV_TOKEN }}
+      - name: Upload usage-limits coverage to Codecov
+        if: matrix.task == 'test' && env.CODECOV_TOKEN_AVAILABLE == 'true'
+        uses: codecov/codecov-action@0fb7174895f61a3b6b78fc075e0cd60383518dac # v5.5.5
+        with:
+          disable_search: true
+          files: packages/opencode-usage-limits/coverage/lcov.info
+          flags: usage-limits
           token: ${{ secrets.CODECOV_TOKEN }}
