@@ -21,10 +21,139 @@ permissions:
   pull-requests: write
 
 jobs:
+  resolve:
+    name: Resolve preview pull request
+    if: >-
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'pull_request') || (github.event_name == 'pull_request_target' && github.event.action == 'closed')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      pull_request_number: ${{ steps.resolve.outputs.pull_request_number }}
+      trusted: ${{ steps.resolve.outputs.trusted }}
+    steps:
+      - name: Resolve pull request and author access
+        id: resolve
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        with:
+          script: |
+            const defaultBranch = context.payload.repository?.default_branch;
+            if (!defaultBranch) {
+              core.setFailed("The repository default branch is missing from the event payload.");
+              return;
+            }
+
+            let pullRequest;
+            const workflowRun = context.payload.workflow_run;
+            const baseRepositoryId = String(context.payload.repository?.id ?? "");
+            const headRepositoryId = String(workflowRun?.head_repository?.id ?? "");
+            const headBranch = workflowRun?.head_branch;
+            const headSha = workflowRun?.head_sha;
+            const matchesWorkflowRun = (candidate) =>
+              String(candidate.head?.repo?.id ?? "") === headRepositoryId &&
+              candidate.head?.ref === headBranch &&
+              candidate.head?.sha === headSha &&
+              String(candidate.base?.repo?.id ?? "") === baseRepositoryId &&
+              candidate.base?.ref === defaultBranch;
+
+            if (context.eventName === "pull_request_target") {
+              const response = await github.rest.pulls.get({
+                ...context.repo,
+                pull_number: context.payload.pull_request.number,
+              });
+              pullRequest = response.data;
+            } else {
+              if (!baseRepositoryId || !headRepositoryId || !headBranch || !headSha) {
+                core.setFailed("The workflow run is missing pull request identity data.");
+                return;
+              }
+
+              const candidates = Array.isArray(workflowRun.pull_requests)
+                ? workflowRun.pull_requests
+                : [];
+              const matchingCandidates = candidates.filter(matchesWorkflowRun);
+
+              if (matchingCandidates.length > 1) {
+                core.setFailed(
+                  `Expected one pull request for ${headBranch} at ${headSha}, found ${matchingCandidates.length}.`,
+                );
+                return;
+              }
+
+              if (matchingCandidates.length === 1) {
+                const [candidate] = matchingCandidates;
+                const response = await github.rest.pulls.get({
+                  ...context.repo,
+                  pull_number: candidate.number,
+                });
+                pullRequest = response.data;
+              } else {
+                const headOwner = workflowRun.head_repository?.owner?.login;
+                if (!headOwner) {
+                  core.setFailed("The workflow run is missing pull request head repository data.");
+                  return;
+                }
+
+                const pullRequests = await github.paginate(github.rest.pulls.list, {
+                  ...context.repo,
+                  state: "all",
+                  base: defaultBranch,
+                  head: `${headOwner}:${headBranch}`,
+                  per_page: 100,
+                });
+                const matches = pullRequests.filter(matchesWorkflowRun);
+
+                if (matches.length !== 1) {
+                  core.setFailed(
+                    `Expected one pull request for ${headOwner}:${headBranch} at ${headSha}, found ${matches.length}.`,
+                  );
+                  return;
+                }
+                [pullRequest] = matches;
+              }
+            }
+
+            if (!pullRequest || pullRequest.base.ref !== defaultBranch) {
+              core.setFailed("The preview pull request does not target the default branch.");
+              return;
+            }
+            if (
+              context.eventName === "workflow_run" &&
+              !matchesWorkflowRun(pullRequest)
+            ) {
+              core.setFailed("The pull request no longer matches the workflow run head metadata.");
+              return;
+            }
+
+            const username = pullRequest.user?.login;
+            if (!username) {
+              core.setFailed("The preview pull request author is missing.");
+              return;
+            }
+
+            let permission = "none";
+            try {
+              const response = await github.rest.repos.getCollaboratorPermissionLevel({
+                ...context.repo,
+                username,
+              });
+              permission = response.data.permission ?? response.data.role_name ?? "none";
+            } catch (error) {
+              const message = error instanceof Error ? error.message : String(error);
+              core.warning(`Could not verify ${username}'s repository access; treating the PR as untrusted: ${message}`);
+            }
+
+            const trusted = ["admin", "write", "maintain", "push"].includes(permission);
+            core.info(`Pull request #${pullRequest.number} author ${username} has ${permission} access.`);
+            core.setOutput("pull_request_number", String(pullRequest.number));
+            core.setOutput("trusted", String(trusted));
+
   announce:
     name: Announce preview approval
+    needs: resolve
     if: >-
-      github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.pull_requests[0].head.repo.full_name == github.repository
+      github.event_name == 'workflow_run' && needs.resolve.outputs.trusted != 'true'
     runs-on: ubuntu-latest
     permissions:
       issues: write
@@ -34,14 +163,19 @@ jobs:
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
         with:
           script: |
-            const pullRequest = context.payload.workflow_run.pull_requests[0];
+            const pullRequestNumber = Number(process.env.PULL_REQUEST_NUMBER);
+            if (!Number.isInteger(pullRequestNumber)) {
+              core.setFailed("The preview pull request number is missing.");
+              return;
+            }
+
             const marker = "<!-- docs-preview-approval -->";
             const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
             const body = `${marker}\nThe documentation preview is waiting for approval. [Open the workflow run and click **Review deployments**](${runUrl}).`;
             const comments = await github.paginate(github.rest.issues.listComments, {
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: pullRequest.number,
+              issue_number: pullRequestNumber,
               per_page: 100,
             });
             const existing = comments.find((comment) => comment.body?.includes(marker));
@@ -57,21 +191,24 @@ jobs:
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                issue_number: pullRequest.number,
+                issue_number: pullRequestNumber,
                 body,
               });
             }
+        env:
+          PULL_REQUEST_NUMBER: ${{ needs.resolve.outputs.pull_request_number }}
 
   deploy:
-    if: >-
-      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'pull_request') || (github.event_name == 'pull_request_target' && github.event.action == 'closed')
+    name: Deploy preview (review required)
+    needs: resolve
+    if: needs.resolve.outputs.trusted != 'true'
     runs-on: ubuntu-latest
-    # Required reviewers on this environment protect the Cloudflare credentials
-    # because the deployment action executes pull-request source code.
+    # Required reviewers protect the Cloudflare credentials when the PR author
+    # does not have write access and the deployment executes pull-request code.
     environment: docs-preview
     steps:
       - name: Run Alchemy deployment
-        uses: mynameistito/alchemy-deploy@aed01de4143eaf43e26bb9a1393f8a8f6564676c # fork cleanup support; use v2.3.2 after release
+        uses: mynameistito/alchemy-deploy@c508ae6038e5936b9f19e3eb6284c3aa42312b43 # approved fork preview support
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -83,3 +220,71 @@ jobs:
           production-stage: prod
           production-url: https://opencode-plugins.mynameistito.com
           use-adopt: false
+          pull-request-number: ${{ needs.resolve.outputs.pull_request_number }}
+          allow-fork-commits: true
+
+  deploy-trusted:
+    name: Deploy preview (trusted author)
+    needs: resolve
+    if: needs.resolve.outputs.trusted == 'true'
+    runs-on: ubuntu-latest
+    # A write-level PR author is trusted to run pull-request code with the
+    # repository's Cloudflare credentials, so no reviewer gate is needed.
+    steps:
+      - name: Recheck author access
+        id: verify-access
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        env:
+          PULL_REQUEST_NUMBER: ${{ needs.resolve.outputs.pull_request_number }}
+        with:
+          script: |
+            const pullRequestNumber = Number(process.env.PULL_REQUEST_NUMBER);
+            if (!Number.isInteger(pullRequestNumber)) {
+              core.setFailed("The preview pull request number is missing.");
+              return;
+            }
+
+            const { data: pullRequest } = await github.rest.pulls.get({
+              ...context.repo,
+              pull_number: pullRequestNumber,
+            });
+            const username = pullRequest.user?.login;
+            if (!username) {
+              core.setFailed("The preview pull request author is missing.");
+              return;
+            }
+
+            let permission = "none";
+            try {
+              const response = await github.rest.repos.getCollaboratorPermissionLevel({
+                ...context.repo,
+                username,
+              });
+              permission = response.data.permission ?? response.data.role_name ?? "none";
+            } catch (error) {
+              const message = error instanceof Error ? error.message : String(error);
+              core.setFailed(`Could not verify ${username}'s repository access: ${message}`);
+              return;
+            }
+
+            const trusted = ["admin", "write", "maintain", "push"].includes(permission);
+            core.info(`Pull request #${pullRequest.number} author ${username} currently has ${permission} access.`);
+            core.setOutput("trusted", String(trusted));
+            if (!trusted) {
+              core.setFailed(`${username} no longer has write access to the repository.`);
+            }
+      - name: Run Alchemy deployment
+        if: success() && steps.verify-access.outputs.trusted == 'true'
+        uses: mynameistito/alchemy-deploy@c508ae6038e5936b9f19e3eb6284c3aa42312b43 # approved fork preview support
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          worker-name: opencode-plugins-docs
+          deploy-command: cd apps/web && bunx --no-install alchemy deploy --stage "$STAGE" --yes
+          destroy-command: cd apps/web && bunx --no-install alchemy destroy --stage "$STAGE" --yes
+          production-stage: prod
+          production-url: https://opencode-plugins.mynameistito.com
+          use-adopt: false
+          pull-request-number: ${{ needs.resolve.outputs.pull_request_number }}
