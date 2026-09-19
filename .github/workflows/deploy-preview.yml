@@ -208,11 +208,18 @@ jobs:
     environment: docs-preview
     steps:
       - name: Run Alchemy deployment
-        uses: $/.github/actions/deploy-documentation-preview
+        uses: mynameistito/alchemy-deploy@c508ae6038e5936b9f19e3eb6284c3aa42312b43 # approved fork preview support
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          cloudflare-account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          worker-name: opencode-plugins-docs
+          deploy-command: cd apps/web && bunx --no-install alchemy deploy --stage "$STAGE" --yes
+          destroy-command: cd apps/web && bunx --no-install alchemy destroy --stage "$STAGE" --yes
+          production-stage: prod
+          production-url: https://opencode-plugins.mynameistito.com
+          use-adopt: false
           pull-request-number: ${{ needs.resolve.outputs.pull_request_number }}
           allow-fork-commits: true
 
@@ -268,9 +275,16 @@ jobs:
             }
       - name: Run Alchemy deployment
         if: success() && steps.verify-access.outputs.trusted == 'true'
-        uses: $/.github/actions/deploy-documentation-preview
+        uses: mynameistito/alchemy-deploy@c508ae6038e5936b9f19e3eb6284c3aa42312b43 # approved fork preview support
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          cloudflare-account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          worker-name: opencode-plugins-docs
+          deploy-command: cd apps/web && bunx --no-install alchemy deploy --stage "$STAGE" --yes
+          destroy-command: cd apps/web && bunx --no-install alchemy destroy --stage "$STAGE" --yes
+          production-stage: prod
+          production-url: https://opencode-plugins.mynameistito.com
+          use-adopt: false
           pull-request-number: ${{ needs.resolve.outputs.pull_request_number }}
