@@ -1,5 +1,14 @@
 # @mynameistito/opencode-force-input
 
+## 1.1.1
+
+### Patch Changes
+
+- e35ef83: Updated @opencode/plugin to 2.0.10
+- 15f375e: chore: Migrate to @opencode/plugin@2.08
+- 968dd53: Centralize shared OpenTUI, Solid, Effect, and OpenCode plugin dependency versions in the workspace Bun catalog.
+- 5b9f242: Migrate package tests to Vitest.
+
 ## 1.1.0
 
 ### Minor Changes
