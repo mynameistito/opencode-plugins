@@ -13,15 +13,16 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@effect/platform-bun": "4.0.0-rc.112",
-    "@effect/platform-node": "4.0.0-rc.112",
+    "@effect/platform-bun": "catalog:",
+    "@effect/platform-node": "catalog:",
     "effect": "catalog:"
   },
   "devDependencies": {
     "@types/node": "26.5.1",
-    "alchemy": "2.0.0-beta.77",
+    "@typescript/native": "catalog:",
+    "alchemy": "2.0.0-beta.79",
     "blume": "1.7.0",
     "react-grab": "^0.2.0",
-    "typescript": "6.0.2"
+    "typescript": "catalog:"
   }
 }

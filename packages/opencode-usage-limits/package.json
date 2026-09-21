@@ -66,23 +66,13 @@
   "devDependencies": {
     "@opentui/core": "catalog:",
     "@opentui/solid": "catalog:",
-    "solid-js": "catalog:"
+    "@typescript/native": "catalog:",
+    "solid-js": "catalog:",
+    "typescript": "catalog:"
   },
   "peerDependencies": {
     "@opentui/core": "catalog:",
     "@opentui/solid": "catalog:",
     "solid-js": "catalog:"
-  },
-  "overrides": {
-    "@babel/core": "7.29.7",
-    "js-yaml": "5.2.3",
-    "read-yaml-file": "3.0.0",
-    "seroval": "1.6.2"
-  },
-  "knip": {
-    "ignoreDependencies": [
-      "eslint-plugin-github",
-      "eslint-plugin-sonarjs"
-    ]
   }
 }
