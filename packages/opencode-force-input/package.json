@@ -55,7 +55,9 @@
   },
   "devDependencies": {
     "@opentui/core": "catalog:",
-    "@opentui/solid": "catalog:"
+    "@opentui/solid": "catalog:",
+    "@typescript/native": "catalog:",
+    "typescript": "catalog:"
   },
   "peerDependencies": {
     "@opentui/core": "catalog:",

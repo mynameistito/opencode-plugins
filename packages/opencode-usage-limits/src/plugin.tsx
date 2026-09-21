@@ -120,8 +120,8 @@ export const createUsageLimitsPlugin =
 
     const coordinator = usageCoordinator({
       fetchProvider: dependencies.fetchProvider,
-      loadConfig: Effect.tryPromise(dependencies.loadConfig),
-      loadOpenCodeAuth: Effect.tryPromise(dependencies.loadOpenCodeAuth),
+      loadConfig: Effect.promise(() => dependencies.loadConfig()),
+      loadOpenCodeAuth: Effect.promise(() => dependencies.loadOpenCodeAuth()),
       now: Effect.sync(dependencies.now),
       publish: (nextSnapshot) => Effect.sync(() => setSnapshot(nextSnapshot)),
       sleep: (milliseconds) =>
