@@ -1,5 +1,12 @@
 # @mynameistito/opencode-usage-limits
 
+## 1.1.2
+
+### Patch Changes
+
+- 091e12f: Update the Effect and TypeScript workspace dependencies and keep the TUI lifecycle type-safe.
+- 2cd6cb3: chore: Migrate to @opencode/plugin@2.0.11
+
 ## 1.1.1
 
 ### Patch Changes
