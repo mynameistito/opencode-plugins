@@ -1,5 +1,11 @@
 # @mynameistito/opencode-plugins-docs
 
+## 0.0.4
+
+### Patch Changes
+
+- 091e12f: Align the documentation app with the shared Effect and TypeScript workspace tooling.
+
 ## 0.0.3
 
 ### Patch Changes

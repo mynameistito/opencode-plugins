@@ -1,5 +1,12 @@
 # @mynameistito/opencode-force-input
 
+## 1.1.2
+
+### Patch Changes
+
+- 2cd6cb3: chore: Migrate to @opencode/plugin@2.0.11
+- 091e12f: Align the plugin with the shared TypeScript workspace tooling.
+
 ## 1.1.1
 
 ### Patch Changes
