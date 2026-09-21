@@ -45,15 +45,23 @@ describe("Alibaba Token Plan", () => {
       })
     );
     const usage = await Effect.runPromise(effect);
-    expect(usage.id).toBe("alibaba-token-plan");
-    expect(usage.label).toBe("Alibaba Token Plan");
-    expect(usage.windows.map((w) => w.quota)).toMatchObject([
-      { _tag: "Percentage", remainingPercent: 75, usedPercent: 25 },
-      { _tag: "Percentage", remainingPercent: 0, usedPercent: 100 },
-    ]);
-    expect(usage.windows[0]?.resetsAt?.getTime()).toBe(reset);
-    expect(usage.windows[1]?.kind).toBe("weekly");
-    expect(calls).toEqual([
+    expect({
+      id: usage.id,
+      label: usage.label,
+      quotas: usage.windows.map((window) => window.quota),
+      reset: usage.windows[0]?.resetsAt?.getTime(),
+      secondWindowKind: usage.windows[1]?.kind,
+    }).toMatchObject({
+      id: "alibaba-token-plan",
+      label: "Alibaba Token Plan",
+      quotas: [
+        { _tag: "Percentage", remainingPercent: 75, usedPercent: 25 },
+        { _tag: "Percentage", remainingPercent: 0, usedPercent: 100 },
+      ],
+      reset,
+      secondWindowKind: "weekly",
+    });
+    expect(calls).toStrictEqual([
       {
         args: ["--version"],
         command: "bl",
@@ -95,8 +103,9 @@ describe("Alibaba Token Plan", () => {
     expect(calls[1]?.args).toContain("domestic");
   });
 
-  for (const reset of [null, false, "2026-09-10", -1, 0, 1e30]) {
-    test(`does not invent a reset from ${JSON.stringify(reset)}`, async () => {
+  test.each([null, false, "2026-09-10", -1, 0, 1e30])(
+    "does not invent a reset from %s",
+    async (reset) => {
       const { effect } = run(
         JSON.stringify({
           per1WeekPercentage: null,
@@ -106,10 +115,10 @@ describe("Alibaba Token Plan", () => {
       );
       const usage = await Effect.runPromise(effect);
       expect(usage.windows[0]?.resetsAt).toBeNull();
-    });
-  }
+    }
+  );
 
-  for (const payload of [
+  test.each([
     "not JSON",
     "null",
     "[]",
@@ -120,13 +129,11 @@ describe("Alibaba Token Plan", () => {
     '{"per5HourPercentage":-0.1}',
     '{"per5HourPercentage":1.1}',
     '{"per5HourPercentage":1e400}',
-  ]) {
-    test(`rejects missing or invalid quota: ${payload}`, async () => {
-      const result = await Effect.runPromiseExit(run(payload).effect);
-      expect(Exit.isFailure(result)).toBe(true);
-      expect(JSON.stringify(result)).toContain("ProviderResponseDecodeError");
-    });
-  }
+  ])("rejects missing or invalid quota: %s", async (payload) => {
+    const result = await Effect.runPromiseExit(run(payload).effect);
+    expect(Exit.isFailure(result)).toBeTruthy();
+    expect(JSON.stringify(result)).toContain("ProviderResponseDecodeError");
+  });
 
   test("preserves bounded runtime command errors and timeouts", async () => {
     await Promise.all(
@@ -144,23 +151,18 @@ describe("Alibaba Token Plan", () => {
         }),
       ].map(async (error) => {
         const result = await Effect.runPromiseExit(run(error).effect);
-        expect(Exit.isFailure(result)).toBe(true);
+        expect(Exit.isFailure(result)).toBeTruthy();
         expect(JSON.stringify(result)).toContain(error._tag);
       })
     );
   });
 
   test("rejects an unsupported Bailian CLI version with an upgrade diagnostic", async () => {
-    try {
-      await Effect.runPromise(
+    await expect(
+      Effect.runPromise(
         run('{"per1WeekPercentage":0}', undefined, "bl version 1.14.3").effect
-      );
-      throw new Error("expected unsupported CLI version");
-    } catch (error) {
-      expect(error instanceof Error ? error.message : "").toContain(
-        "Bailian CLI >= 1.15.0 is required"
-      );
-    }
+      )
+    ).rejects.toThrow("Bailian CLI >= 1.15.0 is required");
   });
 
   test("checks the Bailian version instead of an unrelated runtime version", async () => {
@@ -171,7 +173,7 @@ describe("Alibaba Token Plan", () => {
         "node v20.11.0\nbl version 1.14.3"
       ).effect
     );
-    expect(Exit.isFailure(result)).toBe(true);
+    expect(Exit.isFailure(result)).toBeTruthy();
     expect(JSON.stringify(result)).toContain('"cause":"unsupported"');
   });
 
@@ -190,7 +192,7 @@ describe("Alibaba Token Plan", () => {
     const result = await Effect.runPromiseExit(
       run('{"per1WeekPercentage":0}', undefined, "Bailian CLI").effect
     );
-    expect(Exit.isFailure(result)).toBe(true);
+    expect(Exit.isFailure(result)).toBeTruthy();
     expect(JSON.stringify(result)).toContain('"cause":"invalid-version"');
   });
 
@@ -203,14 +205,14 @@ describe("Alibaba Token Plan", () => {
           },
         })
       )
-    ).toBe(true);
+    ).toBeTruthy();
     expect(
       Result.isFailure(
         parseUsageLimitsConfig({
           providers: { "alibaba-token-plan": { region: "unknown" } },
         })
       )
-    ).toBe(true);
+    ).toBeTruthy();
     expect(pluginProviderForOpenCode("alibaba")).toBe("alibaba-token-plan");
     expect(pluginProviderForOpenCode("alibaba-cn")).toBe("alibaba-token-plan");
     expect(pluginProviderForOpenCode("qwen")).toBe("qwen");

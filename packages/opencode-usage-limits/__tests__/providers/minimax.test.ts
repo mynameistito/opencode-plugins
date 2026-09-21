@@ -2,12 +2,12 @@ import { rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test } from "vitest";
 
 import { fetchMiniMaxTokenPlanUsage } from "@/providers/minimax.ts";
 import type { OpenCodeAuth } from "@/types.ts";
 
-import { installFetchMock } from "./helpers.ts";
+import { installFetchMock, resetFetchMock } from "./helpers.ts";
 
 const successEnvelope = <T>(modelRemains: T) => ({
   base_resp: { status_code: 0, status_msg: "success" },
@@ -15,6 +15,8 @@ const successEnvelope = <T>(modelRemains: T) => ({
 });
 
 describe("MiniMax provider", () => {
+  afterEach(resetFetchMock);
+
   const fiveHourRemains = 90 * 60 * 1000;
   const weeklyRemains = 3 * 24 * 60 * 60 * 1000;
 
@@ -89,35 +91,49 @@ describe("MiniMax provider", () => {
       1000
     );
 
-    expect(fetchMock.mock.calls[0]?.[0]).toBe(
-      "https://www.minimax.io/v1/token_plan/remains"
+    const [request] = fetchMock.mock.calls;
+    const resetTimes = usage.windows.map((window) =>
+      window.resetsAt?.getTime()
     );
-    expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({
-      headers: {
-        Accept: "application/json",
-        Authorization: "Bearer mm-key",
-        "Content-Type": "application/json",
+    expect({
+      init: request?.[1],
+      url: request?.[0],
+      usage: {
+        id: usage.id,
+        label: usage.label,
+        windows: usage.windows.map((window) => ({
+          label: window.label,
+          quota: window.quota,
+        })),
       },
-      method: "GET",
+    }).toMatchObject({
+      init: {
+        headers: {
+          Accept: "application/json",
+          Authorization: "Bearer mm-key",
+          "Content-Type": "application/json",
+        },
+        method: "GET",
+      },
+      url: "https://www.minimax.io/v1/token_plan/remains",
+      usage: {
+        id: "minimax",
+        label: "MiniMax CN",
+        windows: [
+          {
+            label: "5h",
+            quota: { remainingPercent: 60, usedPercent: 40 },
+          },
+          {
+            label: "weekly",
+            quota: { remainingPercent: 40, usedPercent: 60 },
+          },
+        ],
+      },
     });
-    expect(usage).toMatchObject({ id: "minimax", label: "MiniMax CN" });
-    expect(usage.windows).toHaveLength(2);
-    expect(usage.windows[0]).toMatchObject({
-      label: "5h",
-      quota: { remainingPercent: 60, usedPercent: 40 },
-    });
-    expect(usage.windows[1]).toMatchObject({
-      label: "weekly",
-      quota: { remainingPercent: 40, usedPercent: 60 },
-    });
-    expect(usage.windows[0]?.resetsAt?.getTime()).toBeGreaterThan(Date.now());
-    expect(usage.windows[1]?.resetsAt?.getTime()).toBeGreaterThan(Date.now());
-    expect(usage.windows[0]?.resetsAt?.getTime()).toBeGreaterThan(
-      Date.now() + fiveHourRemains - 5000
-    );
-    expect(usage.windows[1]?.resetsAt?.getTime()).toBeGreaterThan(
-      Date.now() + weeklyRemains - 5000
-    );
+    expect(resetTimes).toHaveLength(2);
+    expect(resetTimes[0]).toBeGreaterThan(Date.now() + fiveHourRemains - 5000);
+    expect(resetTimes[1]).toBeGreaterThan(Date.now() + weeklyRemains - 5000);
   });
 
   test("honours a baseUrl override for the China region", async () => {

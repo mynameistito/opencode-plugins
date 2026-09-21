@@ -70,7 +70,7 @@ const expectFailure = <ErrorTag extends string>(
   exit: Exit.Exit<unknown, { readonly _tag: ErrorTag }>,
   tag: ErrorTag
 ) => {
-  expect(Exit.isFailure(exit)).toBe(true);
+  expect(Exit.isFailure(exit)).toBeTruthy();
   if (Exit.isFailure(exit)) {
     const serialized = JSON.stringify(exit.cause);
     expect(serialized).toContain(`"_tag":"${tag}"`);
@@ -97,7 +97,7 @@ describe("Qwen provider", () => {
 
     const usage = await fetchUsage(runtime);
 
-    expect(calls).toEqual([
+    expect(calls).toStrictEqual([
       {
         acceptedExitCodes: new Set([2]),
         args: ["auth", "status", "--format", "json"],
@@ -140,7 +140,7 @@ describe("Qwen provider", () => {
 
     const exit = await fetchUsageExit(runtime);
 
-    expect(calls[0]?.acceptedExitCodes).toEqual(new Set([2]));
+    expect(calls[0]?.acceptedExitCodes).toStrictEqual(new Set([2]));
     const serialized = expectFailure(exit, "MissingProviderCredentialsError");
     expect(serialized).toContain('"operation":"run-command"');
     expect(serialized).toContain('"providerID":"qwen"');

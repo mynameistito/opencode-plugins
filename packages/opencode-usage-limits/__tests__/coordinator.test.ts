@@ -94,7 +94,7 @@ describe("usage coordinator", () => {
     );
 
     await yieldToEventLoop();
-    expect(harness.snapshots[0]).toEqual(["loading", "loading"]);
+    expect(harness.snapshots[0]).toStrictEqual(["loading", "loading"]);
     expect(gates.size).toBe(2);
 
     const codexGate = gates.get("codex");
@@ -110,7 +110,7 @@ describe("usage coordinator", () => {
     }
     await Effect.runPromise(Deferred.succeed(zaiGate, true));
     await yieldToEventLoop();
-    expect(harness.snapshots[1]).toEqual(["ready", "ready"]);
+    expect(harness.snapshots[1]).toStrictEqual(["ready", "ready"]);
     await Effect.runPromise(Fiber.interrupt(fiber));
   });
 
@@ -124,7 +124,7 @@ describe("usage coordinator", () => {
     );
 
     await yieldToEventLoop();
-    expect(harness.snapshots).toEqual([["loading", "loading"]]);
+    expect(harness.snapshots).toStrictEqual([["loading", "loading"]]);
     await Effect.runPromise(Fiber.interrupt(fiber));
     await Effect.runPromise(Deferred.succeed(gate, true));
     await yieldToEventLoop();
@@ -144,8 +144,8 @@ describe("usage coordinator", () => {
     );
 
     await yieldToEventLoop();
-    expect(harness.fetches).toEqual(["zai"]);
-    expect(harness.snapshots[0]).toEqual(["loading"]);
+    expect(harness.fetches).toStrictEqual(["zai"]);
+    expect(harness.snapshots[0]).toStrictEqual(["loading"]);
     await Effect.runPromise(Fiber.interrupt(fiber));
   });
 
@@ -170,14 +170,14 @@ describe("usage coordinator", () => {
     );
 
     await yieldToEventLoop();
-    expect(harness.snapshots[1]).toEqual(["error"]);
+    expect(harness.snapshots[1]).toStrictEqual(["error"]);
     const [firstSleep] = harness.sleeps;
     if (!firstSleep) {
       throw new Error("first refresh did not schedule a sleep");
     }
     await Effect.runPromise(Deferred.succeed(firstSleep, true));
     await yieldToEventLoop();
-    expect(harness.snapshots.at(-1)).toEqual(["ready"]);
+    expect(harness.snapshots.at(-1)).toStrictEqual(["ready"]);
     await Effect.runPromise(Fiber.interrupt(fiber));
   });
 
@@ -200,14 +200,14 @@ describe("usage coordinator", () => {
     );
 
     await yieldToEventLoop();
-    expect(harness.snapshots).toEqual([["ready"]]);
+    expect(harness.snapshots).toStrictEqual([["ready"]]);
     const [firstSleep] = harness.sleeps;
     if (!firstSleep) {
       throw new Error("first refresh did not schedule a sleep");
     }
     await Effect.runPromise(Deferred.succeed(firstSleep, true));
     await yieldToEventLoop();
-    expect(harness.snapshots.at(-1)).toEqual(["ready"]);
+    expect(harness.snapshots.at(-1)).toStrictEqual(["ready"]);
     await Effect.runPromise(Fiber.interrupt(fiber));
   });
 
@@ -232,14 +232,14 @@ describe("usage coordinator", () => {
     );
 
     await yieldToEventLoop();
-    expect(harness.snapshots.at(-1)).toEqual([]);
+    expect(harness.snapshots.at(-1)).toStrictEqual([]);
     const [firstSleep] = harness.sleeps;
     if (!firstSleep) {
       throw new Error("first refresh did not schedule a sleep");
     }
     await Effect.runPromise(Deferred.succeed(firstSleep, true));
     await yieldToEventLoop();
-    expect(harness.snapshots.at(-1)).toEqual(["ready"]);
+    expect(harness.snapshots.at(-1)).toStrictEqual(["ready"]);
     await Effect.runPromise(Fiber.interrupt(fiber));
   });
 
@@ -261,11 +261,11 @@ describe("usage coordinator", () => {
     );
 
     await yieldToEventLoop();
-    expect(snapshots.at(-1)?.diagnostics).toEqual([
+    expect(snapshots.at(-1)?.diagnostics).toStrictEqual([
       { kind: "auth-read", message: "OpenCode auth could not be read" },
     ]);
     expect(snapshots.at(-1)?.states).toMatchObject([{ status: "ready" }]);
-    expect(harness.auths).toEqual([{}]);
+    expect(harness.auths).toStrictEqual([{}]);
     await Effect.runPromise(Fiber.interrupt(fiber));
   });
 });

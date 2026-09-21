@@ -73,10 +73,6 @@ const publishedSchema: PublishedSchema = JSON.parse(
   )
 );
 
-afterEach(() => {
-  readJsonFile.mockReset();
-});
-
 describe("configuration parsing", () => {
   test("published schema matches provider-specific runtime fields", () => {
     const commonFields = Object.keys(
@@ -101,7 +97,7 @@ describe("configuration parsing", () => {
       zai: Object.keys(publishedSchema.$defs.zaiProvider.properties).toSorted(),
     };
 
-    expect(publishedSchema.properties.providers.properties).toEqual({
+    expect(publishedSchema.properties.providers.properties).toStrictEqual({
       "alibaba-token-plan": { $ref: "#/$defs/alibabaTokenPlanProvider" },
       codex: { $ref: "#/$defs/codexProvider" },
       minimax: { $ref: "#/$defs/minimaxProvider" },
@@ -110,16 +106,16 @@ describe("configuration parsing", () => {
       synthetic: { $ref: "#/$defs/syntheticProvider" },
       zai: { $ref: "#/$defs/zaiProvider" },
     });
-    expect(providerFields.qwen).toEqual(commonFields);
+    expect(providerFields.qwen).toStrictEqual(commonFields);
     expect(
       Object.keys(
         publishedSchema.$defs.alibabaTokenPlanProvider.properties
       ).toSorted()
-    ).toEqual([...commonFields, "region"].toSorted());
-    expect(providerFields.zai).toEqual(
+    ).toStrictEqual([...commonFields, "region"].toSorted());
+    expect(providerFields.zai).toStrictEqual(
       [...commonFields, "apiKey", "authPath", "authorizationScheme"].toSorted()
     );
-    expect(providerFields.codex).toEqual(
+    expect(providerFields.codex).toStrictEqual(
       [
         ...commonFields,
         "apiKey",
@@ -134,7 +130,7 @@ describe("configuration parsing", () => {
       providerFields.synthetic,
     ];
     for (const fields of apiKeyProviders) {
-      expect(fields).toEqual(
+      expect(fields).toStrictEqual(
         [...commonFields, "apiKey", "authPath", "baseUrl"].toSorted()
       );
     }
@@ -149,16 +145,15 @@ describe("configuration parsing", () => {
       showErrors: false,
     });
 
-    expect(Result.isSuccess(result)).toBe(true);
-    if (Result.isSuccess(result)) {
-      expect(result.success).toEqual({
-        enabled: true,
-        providers: {},
-        refreshIntervalSeconds: 15,
-        requestTimeoutMs: 1000,
-        showErrors: false,
-      });
-    }
+    const success = Result.isSuccess(result) ? result.success : undefined;
+    expect(Result.isSuccess(result)).toBeTruthy();
+    expect(success).toStrictEqual({
+      enabled: true,
+      providers: {},
+      refreshIntervalSeconds: 15,
+      requestTimeoutMs: 1000,
+      showErrors: false,
+    });
   });
 
   test("parses every provider field and redacts API keys", () => {
@@ -179,23 +174,22 @@ describe("configuration parsing", () => {
       },
     });
 
-    expect(Result.isSuccess(result)).toBe(true);
-    if (Result.isSuccess(result)) {
-      const apiKey = result.success.providers.codex?.apiKey;
-      expect(Redacted.isRedacted(apiKey)).toBe(true);
-      expect(String(apiKey)).not.toContain("do-not-log");
-      expect(result.success.providers.codex).toMatchObject({
-        authPath: "~/.codex/auth.json",
-        authorizationScheme: "bearer",
-        baseUrl: "https://example.com",
-        enabled: true,
-        footerWindow: "weekly",
-        label: "Work",
-        showFooterBar: false,
-        showSidebarBar: true,
-        sidebarWindow: "weekly",
-      });
-    }
+    const success = Result.isSuccess(result) ? result.success : undefined;
+    const apiKey = success?.providers.codex?.apiKey;
+    expect(Result.isSuccess(result)).toBeTruthy();
+    expect(Redacted.isRedacted(apiKey)).toBeTruthy();
+    expect(String(apiKey)).not.toContain("do-not-log");
+    expect(success?.providers.codex).toMatchObject({
+      authPath: "~/.codex/auth.json",
+      authorizationScheme: "bearer",
+      baseUrl: "https://example.com",
+      enabled: true,
+      footerWindow: "weekly",
+      label: "Work",
+      showFooterBar: false,
+      showSidebarBar: true,
+      sidebarWindow: "weekly",
+    });
   });
 
   test.each([
@@ -212,10 +206,9 @@ describe("configuration parsing", () => {
     [{ unknown: true }, "unknown top-level key"],
   ])("rejects %s (%s)", (input, _label) => {
     const result = parseUsageLimitsConfig(input);
-    expect(Result.isFailure(result)).toBe(true);
-    if (Result.isFailure(result)) {
-      expect(result.failure).toBeInstanceOf(ConfigDecodeError);
-    }
+    const failure = Result.isFailure(result) ? result.failure : undefined;
+    expect(Result.isFailure(result)).toBeTruthy();
+    expect(failure).toBeInstanceOf(ConfigDecodeError);
   });
 
   test("redacts malformed credential values from diagnostics", () => {
@@ -224,14 +217,17 @@ describe("configuration parsing", () => {
       providers: { synthetic: { apiKey: credential } },
     });
 
-    expect(Result.isFailure(result)).toBe(true);
-    if (Result.isFailure(result)) {
-      expect(String(result.failure.cause)).not.toContain("never-render-this");
-    }
+    expect(Result.isFailure(result)).toBeTruthy();
+    const failure = Result.isFailure(result) ? result.failure : undefined;
+    expect(String(failure?.cause)).not.toContain("never-render-this");
   });
 });
 
 describe("configuration loading", () => {
+  afterEach(() => {
+    readJsonFile.mockReset();
+  });
+
   test.each([
     ["unset", undefined],
     ["empty", ""],
@@ -256,10 +252,9 @@ describe("configuration loading", () => {
     );
 
     const result = await loadConfig(readJsonFile);
-    expect(Result.isSuccess(result)).toBe(true);
-    if (Result.isSuccess(result)) {
-      expect(result.success.refreshIntervalSeconds).toBe(60);
-    }
+    const success = Result.isSuccess(result) ? result.success : undefined;
+    expect(Result.isSuccess(result)).toBeTruthy();
+    expect(success?.refreshIntervalSeconds).toBe(60);
     expect(readJsonFile).toHaveBeenCalledWith(
       path.join(testXdgConfigHome, "opencode", "usage-limits.jsonc")
     );
@@ -268,17 +263,19 @@ describe("configuration loading", () => {
   test("returns typed read and JSONC decode failures", async () => {
     readJsonFile.mockRejectedValueOnce(new Error("permission denied"));
     const readResult = await loadConfig(readJsonFile);
-    expect(Result.isFailure(readResult)).toBe(true);
-    if (Result.isFailure(readResult)) {
-      expect(readResult.failure).toBeInstanceOf(ConfigReadError);
-    }
+    const readFailure = Result.isFailure(readResult)
+      ? readResult.failure
+      : undefined;
+    expect(Result.isFailure(readResult)).toBeTruthy();
+    expect(readFailure).toBeInstanceOf(ConfigReadError);
 
     readJsonFile.mockRejectedValueOnce(new SyntaxError("malformed"));
     const decodeResult = await loadConfig(readJsonFile);
-    expect(Result.isFailure(decodeResult)).toBe(true);
-    if (Result.isFailure(decodeResult)) {
-      expect(decodeResult.failure).toBeInstanceOf(ConfigDecodeError);
-    }
+    const decodeFailure = Result.isFailure(decodeResult)
+      ? decodeResult.failure
+      : undefined;
+    expect(Result.isFailure(decodeResult)).toBeTruthy();
+    expect(decodeFailure).toBeInstanceOf(ConfigDecodeError);
   });
 
   test("loads recognized auth fields as redacted values", async () => {
@@ -288,7 +285,7 @@ describe("configuration loading", () => {
     });
 
     const result = await loadOpenCodeAuth(readJsonFile);
-    expect(Redacted.isRedacted(result.auth.openai?.access)).toBe(true);
+    expect(Redacted.isRedacted(result.auth.openai?.access)).toBeTruthy();
     expect(String(result.auth.openai?.access)).not.toContain("token");
     expect(result.diagnostic).toBeUndefined();
     expect(readJsonFile).toHaveBeenCalledWith(
@@ -312,7 +309,7 @@ describe("configuration loading", () => {
     async (input, message) => {
       readJsonFile.mockResolvedValueOnce(input);
 
-      await expect(loadOpenCodeAuth(readJsonFile)).resolves.toEqual({
+      await expect(loadOpenCodeAuth(readJsonFile)).resolves.toStrictEqual({
         auth: {},
         diagnostic: { kind: "auth-decode", message },
       });
@@ -353,12 +350,12 @@ describe("configuration loading", () => {
     });
     const result = await loadOpenCodeAuth(readJsonFile);
     expect(credentialValue(result.auth.minimax?.key)).toBe("valid-key");
-    expect(result.diagnostic).toEqual({
+    expect(result.diagnostic).toStrictEqual({
       kind: "auth-decode",
       message: "Some OpenCode auth fields could not be read",
     });
     expect(JSON.stringify(result.diagnostic)).not.toContain("do-not-log");
-    expect(parseOpenCodeAuth({ openai: { access: 42 } })).toEqual({});
+    expect(parseOpenCodeAuth({ openai: { access: 42 } })).toStrictEqual({});
   });
 
   test("keeps valid auth entries when another recognized entry is malformed", () => {

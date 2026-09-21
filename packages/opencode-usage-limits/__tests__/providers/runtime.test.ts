@@ -73,13 +73,13 @@ describe("provider runtime services", () => {
       }).pipe(Effect.provide(ProviderFileSystemLive), Effect.exit)
     );
 
-    expect(Exit.isFailure(result)).toBe(true);
-    if (Exit.isFailure(result)) {
-      const serializedCause = JSON.stringify(result.cause);
-      expect(serializedCause).toContain('"_tag":"ProviderTransportError"');
-      expect(serializedCause).toContain('"cause":"output-limit"');
-      expect(serializedCause).toContain('"operation":"read-auth"');
-    }
+    const serializedCause = JSON.stringify(
+      Exit.isFailure(result) ? result.cause : undefined
+    );
+    expect(Exit.isFailure(result)).toBeTruthy();
+    expect(serializedCause).toContain('"_tag":"ProviderTransportError"');
+    expect(serializedCause).toContain('"cause":"output-limit"');
+    expect(serializedCause).toContain('"operation":"read-auth"');
   });
 
   test("reads the complete contents of a bounded provider auth file", async () => {
@@ -122,10 +122,9 @@ describe("provider runtime services", () => {
       }).pipe(Effect.provide(layer), Effect.exit)
     );
 
-    expect(Exit.isFailure(result)).toBe(true);
-    if (Exit.isFailure(result)) {
-      expect(result.cause).toBeDefined();
-    }
+    const cause = Exit.isFailure(result) ? result.cause : undefined;
+    expect(Exit.isFailure(result)).toBeTruthy();
+    expect(cause).toBeDefined();
   });
 
   test("cancels a response rejected by its declared size", async () => {
@@ -157,8 +156,8 @@ describe("provider runtime services", () => {
       }).pipe(Effect.provide(layer), Effect.exit)
     );
 
-    expect(Exit.isFailure(result)).toBe(true);
-    expect(cancelled).toBe(true);
+    expect(Exit.isFailure(result)).toBeTruthy();
+    expect(cancelled).toBeTruthy();
   });
 
   test("cancels a rate-limited response body", async () => {
@@ -185,8 +184,8 @@ describe("provider runtime services", () => {
       }).pipe(Effect.provide(layer), Effect.exit)
     );
 
-    expect(Exit.isFailure(result)).toBe(true);
-    expect(cancelled).toBe(true);
+    expect(Exit.isFailure(result)).toBeTruthy();
+    expect(cancelled).toBeTruthy();
   });
 
   test("cancels a non-success response body", async () => {
@@ -213,8 +212,8 @@ describe("provider runtime services", () => {
       }).pipe(Effect.provide(layer), Effect.exit)
     );
 
-    expect(Exit.isFailure(result)).toBe(true);
-    expect(cancelled).toBe(true);
+    expect(Exit.isFailure(result)).toBeTruthy();
+    expect(cancelled).toBeTruthy();
   });
 
   test("decodes JSON split across response chunks", async () => {
@@ -244,7 +243,7 @@ describe("provider runtime services", () => {
       }).pipe(Effect.provide(layer))
     );
 
-    expect(result).toEqual({ plan: "pro" });
+    expect(result).toStrictEqual({ plan: "pro" });
   });
 
   test("classifies commands that cannot be spawned", async () => {
@@ -260,10 +259,11 @@ describe("provider runtime services", () => {
       }).pipe(Effect.provide(ProviderCommandExecutorLive))
     );
 
-    expect(Exit.isFailure(result)).toBe(true);
-    if (Exit.isFailure(result)) {
-      expect(JSON.stringify(result.cause)).toContain('"cause":"command"');
-    }
+    const serializedCause = JSON.stringify(
+      Exit.isFailure(result) ? result.cause : undefined
+    );
+    expect(Exit.isFailure(result)).toBeTruthy();
+    expect(serializedCause).toContain('"cause":"command"');
   });
 
   test("executes a controlled command and returns trimmed stdout", async () => {
@@ -279,15 +279,15 @@ describe("provider runtime services", () => {
     const args = ["-e", 'process.stdout.write("status"); process.exit(2)'];
 
     const rejected = await executeCommandExit(args);
-    expect(Exit.isFailure(rejected)).toBe(true);
-    if (Exit.isFailure(rejected)) {
-      const serializedCause = JSON.stringify(rejected.cause);
-      expect(serializedCause).toContain('"_tag":"ProviderCommandError"');
-      expect(serializedCause).toContain('"exitCode":2');
-    }
+    const serializedCause = JSON.stringify(
+      Exit.isFailure(rejected) ? rejected.cause : undefined
+    );
+    expect(Exit.isFailure(rejected)).toBeTruthy();
+    expect(serializedCause).toContain('"_tag":"ProviderCommandError"');
+    expect(serializedCause).toContain('"exitCode":2');
 
     const accepted = await executeCommandExit(args, new Set([2]));
-    expect(accepted).toEqual(Exit.succeed("status"));
+    expect(accepted).toStrictEqual(Exit.succeed("status"));
   });
 
   test.each([
@@ -296,10 +296,11 @@ describe("provider runtime services", () => {
   ])("caps oversized command %s output", async (_stream, script) => {
     const result = await executeCommandExit(["-e", script]);
 
-    expect(Exit.isFailure(result)).toBe(true);
-    if (Exit.isFailure(result)) {
-      expect(JSON.stringify(result.cause)).toContain('"cause":"output-limit"');
-    }
+    const serializedCause = JSON.stringify(
+      Exit.isFailure(result) ? result.cause : undefined
+    );
+    expect(Exit.isFailure(result)).toBeTruthy();
+    expect(serializedCause).toContain('"cause":"output-limit"');
   });
 
   test("kills a timed-out command", async () => {
@@ -327,11 +328,11 @@ describe("provider runtime services", () => {
       }).pipe(Effect.provide(ProviderCommandExecutorLive))
     );
 
-    expect(Exit.isFailure(result)).toBe(true);
-    if (Exit.isFailure(result)) {
-      const serializedCause = JSON.stringify(result.cause);
-      expect(serializedCause).toContain('"_tag":"ProviderTimeoutError"');
-    }
+    const serializedCause = JSON.stringify(
+      Exit.isFailure(result) ? result.cause : undefined
+    );
+    expect(Exit.isFailure(result)).toBeTruthy();
+    expect(serializedCause).toContain('"_tag":"ProviderTimeoutError"');
 
     await delay(100);
     const before = await stat(file);
@@ -355,10 +356,9 @@ describe("provider runtime services", () => {
       }).pipe(Effect.provide(layer), Effect.exit)
     );
 
-    expect(Exit.isFailure(result)).toBe(true);
-    if (Exit.isFailure(result)) {
-      expect(result.cause).toBeDefined();
-    }
+    const cause = Exit.isFailure(result) ? result.cause : undefined;
+    expect(Exit.isFailure(result)).toBeTruthy();
+    expect(cause).toBeDefined();
   });
 
   test.each([
@@ -382,10 +382,11 @@ describe("provider runtime services", () => {
       }).pipe(Effect.provide(layer), Effect.exit)
     );
 
-    expect(Exit.isFailure(result)).toBe(true);
-    if (Exit.isFailure(result)) {
-      expect(JSON.stringify(result.cause)).toContain(`"cause":"${cause}"`);
-    }
+    const serializedCause = JSON.stringify(
+      Exit.isFailure(result) ? result.cause : undefined
+    );
+    expect(Exit.isFailure(result)).toBeTruthy();
+    expect(serializedCause).toContain(`"cause":"${cause}"`);
   });
 
   test("caps streamed HTTP bodies and classifies network failures", async () => {
@@ -417,11 +418,12 @@ describe("provider runtime services", () => {
         });
       }).pipe(Effect.provide(layer), Effect.exit)
     );
-    expect(Exit.isFailure(capped)).toBe(true);
-    expect(cancelled).toBe(true);
-    if (Exit.isFailure(capped)) {
-      expect(JSON.stringify(capped.cause)).toContain('"cause":"output-limit"');
-    }
+    expect(Exit.isFailure(capped)).toBeTruthy();
+    expect(cancelled).toBeTruthy();
+    const cappedCause = JSON.stringify(
+      Exit.isFailure(capped) ? capped.cause : undefined
+    );
+    expect(cappedCause).toContain('"cause":"output-limit"');
 
     const networkLayer = makeProviderHttpClient(() =>
       Promise.reject(new Error("offline"))
@@ -438,9 +440,10 @@ describe("provider runtime services", () => {
         });
       }).pipe(Effect.provide(networkLayer), Effect.exit)
     );
-    expect(Exit.isFailure(network)).toBe(true);
-    if (Exit.isFailure(network)) {
-      expect(JSON.stringify(network.cause)).toContain('"cause":"network"');
-    }
+    expect(Exit.isFailure(network)).toBeTruthy();
+    const networkCause = JSON.stringify(
+      Exit.isFailure(network) ? network.cause : undefined
+    );
+    expect(networkCause).toContain('"cause":"network"');
   });
 });

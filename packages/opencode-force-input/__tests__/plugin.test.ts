@@ -20,7 +20,7 @@ describe("force submit", () => {
 
     forceSubmit((command) => commands.push(command));
 
-    expect(commands).toEqual([
+    expect(commands).toStrictEqual([
       "session.interrupt",
       "session.interrupt",
       "session.interrupt",
@@ -42,11 +42,11 @@ describe("force submit", () => {
     const layer = layers[0]?.();
     const commands = layer?.commands ?? [];
     expect(layer?.mode).toBe("global");
-    expect(layer?.bindings).toEqual([
+    expect(layer?.bindings).toStrictEqual([
       "oc-ctrl-enter.force-submit.return",
       "oc-ctrl-enter.force-submit.enter",
     ]);
-    expect(commands.map((command) => command.bind)).toEqual([
+    expect(commands.map((command) => command.bind)).toStrictEqual([
       "ctrl+return",
       "ctrl+enter",
     ]);
@@ -111,7 +111,7 @@ describe("force submit", () => {
       }
       command.run();
 
-      expect(dispatched).toEqual([
+      expect(dispatched).toStrictEqual([
         "session.interrupt",
         "session.interrupt",
         "session.interrupt",

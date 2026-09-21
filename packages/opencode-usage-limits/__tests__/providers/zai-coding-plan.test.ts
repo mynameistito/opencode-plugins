@@ -2,14 +2,16 @@ import { rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test } from "vitest";
 
 import { fetchZaiCodingPlanUsage } from "@/providers/zai-coding-plan.ts";
 import type { OpenCodeAuth } from "@/types.ts";
 
-import { installFetchMock } from "./helpers.ts";
+import { installFetchMock, resetFetchMock } from "./helpers.ts";
 
 describe("ZAI provider", () => {
+  afterEach(resetFetchMock);
+
   test.each([
     ["valid", JSON.stringify({ zai: { key: "file-key" } }), "file-key"],
     ["missing", undefined, "auth-key"],
@@ -82,26 +84,40 @@ describe("ZAI provider", () => {
       1000
     );
 
-    expect(fetchMock.mock.calls[0]?.[0]).toBe(
-      "https://api.z.ai/api/monitor/usage/quota/limit"
-    );
-    expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({
-      headers: { Authorization: "Bearer auth-key" },
-      method: "GET",
-    });
-    expect(usage).toMatchObject({
-      id: "zai",
-      label: "Zed",
-      tierName: "Max",
-    });
-    expect(usage.windows).toHaveLength(1);
-    expect(usage.windows[0]).toMatchObject({
-      label: "5h",
-      quota: {
-        current: 4440,
-        remainingPercent: 55.6,
-        total: 10_000,
-        usedPercent: 44.4,
+    const [request] = fetchMock.mock.calls;
+    expect({
+      init: request?.[1],
+      url: request?.[0],
+      usage: {
+        id: usage.id,
+        label: usage.label,
+        tierName: usage.tierName,
+        windows: usage.windows.map((window) => ({
+          label: window.label,
+          quota: window.quota,
+        })),
+      },
+    }).toMatchObject({
+      init: {
+        headers: { Authorization: "Bearer auth-key" },
+        method: "GET",
+      },
+      url: "https://api.z.ai/api/monitor/usage/quota/limit",
+      usage: {
+        id: "zai",
+        label: "Zed",
+        tierName: "Max",
+        windows: [
+          {
+            label: "5h",
+            quota: {
+              current: 4440,
+              remainingPercent: 55.6,
+              total: 10_000,
+              usedPercent: 44.4,
+            },
+          },
+        ],
       },
     });
     expect(usage.windows[0]?.resetsAt?.getTime()).toBeGreaterThan(Date.now());

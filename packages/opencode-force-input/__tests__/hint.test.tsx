@@ -101,17 +101,11 @@ const infoRow = (setup: TestRendererSetup): string | undefined =>
     .split("\n")
     .find((line) => line.includes("composer info"));
 
-afterEach(() => {
-  for (const setup of mounted.splice(0)) {
-    setup.renderer.destroy();
-  }
-});
-
 describe("hint options and colors", () => {
   test("defaults on and can be disabled", () => {
-    expect(hintEnabled({})).toBe(true);
-    expect(hintEnabled({ hint: true })).toBe(true);
-    expect(hintEnabled({ hint: false })).toBe(false);
+    expect(hintEnabled({})).toBeTruthy();
+    expect(hintEnabled({ hint: true })).toBeTruthy();
+    expect(hintEnabled({ hint: false })).toBeFalsy();
   });
 
   test("resolves structured and legacy theme colors", () => {
@@ -126,19 +120,32 @@ describe("hint options and colors", () => {
       warning: RGBA.fromInts(7, 8, 9),
     };
     const flat = resolveHintColors(legacy);
-    expect(flat.key).toBe(legacy.text);
-    expect(flat.label).toBe(legacy.textMuted);
-    expect(flat.force).toBe(legacy.warning);
 
     const bareColor = RGBA.fromInts(9, 9, 9);
     const bare = resolveHintColors({ text: bareColor });
-    expect(bare.key).toBe(bareColor);
-    expect(bare.label).toBe(bareColor);
-    expect(bare.force).toBe(bareColor);
+    expect([structured, flat, bare]).toStrictEqual([
+      {
+        force: v2Theme.text.action.primary.default,
+        key: v2Theme.text.default,
+        label: v2Theme.text.subdued,
+      },
+      {
+        force: legacy.warning,
+        key: legacy.text,
+        label: legacy.textMuted,
+      },
+      { force: bareColor, key: bareColor, label: bareColor },
+    ]);
   });
 });
 
 describe("hint rendering", () => {
+  afterEach(() => {
+    for (const setup of mounted.splice(0)) {
+      setup.renderer.destroy();
+    }
+  });
+
   test("shows the idle send hint on the composer info row", async () => {
     const { setup } = await mountHint({});
     mounted.push(setup);
@@ -147,7 +154,7 @@ describe("hint rendering", () => {
     expect(frame).not.toContain("steer");
   });
 
-  test("drives steer and idle from the execution events", async () => {
+  test("shows the steer hint while an execution is running", async () => {
     const { fire, setup } = await mountHint({});
     mounted.push(setup);
 
@@ -157,8 +164,15 @@ describe("hint rendering", () => {
     expect(infoRow(setup)).toContain("ctrl+⏎");
     expect(infoRow(setup)).toContain("interrupt & send");
     expect(setup.captureCharFrame()).not.toContain("⏎ send");
+  });
 
-    // A retry is still part of the active run, so the hint stays on steer.
+  test("keeps the steer hint during retries and returns to idle after success", async () => {
+    const { fire, setup } = await mountHint({});
+    mounted.push(setup);
+
+    fire("session.execution.started");
+    await setup.flush();
+
     fire("session.retry.scheduled");
     await setup.flush();
     expect(infoRow(setup)).toContain("steer");
@@ -169,22 +183,27 @@ describe("hint rendering", () => {
     expect(setup.captureCharFrame()).not.toContain("steer");
   });
 
-  const expectIdleAfterExecutionEvent = async (
+  const idleInfoAfterExecutionEvent = async (
     event: "session.execution.failed" | "session.execution.interrupted"
-  ): Promise<void> => {
+  ): Promise<string | undefined> => {
     const { fire, setup } = await mountHint({});
     mounted.push(setup);
     fire("session.execution.started");
     await setup.flush();
-    expect(infoRow(setup)).toContain("steer");
     fire(event);
     await setup.flush();
-    expect(infoRow(setup)).toContain("⏎ send");
+    return infoRow(setup);
   };
 
   test("returns to idle after failed and interrupted runs", async () => {
-    await expectIdleAfterExecutionEvent("session.execution.failed");
-    await expectIdleAfterExecutionEvent("session.execution.interrupted");
+    const failed = await idleInfoAfterExecutionEvent(
+      "session.execution.failed"
+    );
+    const interrupted = await idleInfoAfterExecutionEvent(
+      "session.execution.interrupted"
+    );
+    expect(failed).toContain("⏎ send");
+    expect(interrupted).toContain("⏎ send");
   });
 
   test("hides in shell mode, without a session, and when disabled", async () => {

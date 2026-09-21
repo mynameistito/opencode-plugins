@@ -2,13 +2,15 @@ import { rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test } from "vitest";
 
 import { fetchCodexUsage } from "@/providers/codex.ts";
 
-import { installFetchMock } from "./helpers.ts";
+import { installFetchMock, resetFetchMock } from "./helpers.ts";
 
 describe("Codex provider", () => {
+  afterEach(resetFetchMock);
+
   test("uses credentials from the configured Codex auth file", async () => {
     const authPath = path.join(
       tmpdir(),
@@ -71,7 +73,7 @@ describe("Codex provider", () => {
         1000
       );
 
-      expect(fetchMock.mock.calls).toHaveLength(2);
+      expect(fetchMock).toHaveBeenCalledTimes(2);
       expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({
         headers: {
           Authorization: "Bearer expired-access",

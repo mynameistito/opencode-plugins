@@ -31,7 +31,7 @@
     "@typescript/native": "catalog:",
     "@vitest/coverage-v8": "5.0.1",
     "eslint-plugin-github": "6.1.2",
-    "eslint-plugin-sonarjs": "^4.2.1",
+    "eslint-plugin-sonarjs": "^4.2.0",
     "knip": "6.37.0",
     "lefthook": "^2.1.14",
     "oxfmt": "^0.68.0",
