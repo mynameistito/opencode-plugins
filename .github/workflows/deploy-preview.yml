@@ -35,7 +35,7 @@ jobs:
     steps:
       - name: Resolve pull request and author access
         id: resolve
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
             const defaultBranch = context.payload.repository?.default_branch;
@@ -160,7 +160,7 @@ jobs:
       pull-requests: write
     steps:
       - name: Comment approval link
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
             const pullRequestNumber = Number(process.env.PULL_REQUEST_NUMBER);
@@ -233,7 +233,7 @@ jobs:
     steps:
       - name: Recheck author access
         id: verify-access
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           PULL_REQUEST_NUMBER: ${{ needs.resolve.outputs.pull_request_number }}
         with:
