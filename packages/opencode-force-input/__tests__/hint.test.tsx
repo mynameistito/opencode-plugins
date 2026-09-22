@@ -101,6 +101,18 @@ const infoRow = (setup: TestRendererSetup): string | undefined =>
     .split("\n")
     .find((line) => line.includes("composer info"));
 
+const idleInfoAfterExecutionEvent = async (
+  event: "session.execution.failed" | "session.execution.interrupted"
+): Promise<string | undefined> => {
+  const { fire, setup } = await mountHint({});
+  mounted.push(setup);
+  fire("session.execution.started");
+  await setup.flush();
+  fire(event);
+  await setup.flush();
+  return infoRow(setup);
+};
+
 describe("hint options and colors", () => {
   test("defaults on and can be disabled", () => {
     expect(hintEnabled({})).toBeTruthy();
@@ -182,18 +194,6 @@ describe("hint rendering", () => {
     expect(infoRow(setup)).toContain("⏎ send");
     expect(setup.captureCharFrame()).not.toContain("steer");
   });
-
-  const idleInfoAfterExecutionEvent = async (
-    event: "session.execution.failed" | "session.execution.interrupted"
-  ): Promise<string | undefined> => {
-    const { fire, setup } = await mountHint({});
-    mounted.push(setup);
-    fire("session.execution.started");
-    await setup.flush();
-    fire(event);
-    await setup.flush();
-    return infoRow(setup);
-  };
 
   test("returns to idle after failed and interrupted runs", async () => {
     const failed = await idleInfoAfterExecutionEvent(
