@@ -14,6 +14,9 @@ interface ParsedOpenAIEntry {
   access?: ParsedCredential;
   accountId?: ParsedCredential;
 }
+type OpenCodeAuthBuilder = {
+  -readonly [Key in keyof OpenCodeAuth]?: OpenCodeAuth[Key];
+};
 
 const defaultKey = <S extends Schema.Top>(schema: S, value: S["Encoded"]) =>
   schema.pipe(Schema.withDecodingDefaultKey(Effect.succeed(value)));
@@ -216,20 +219,35 @@ export const parseOpenCodeAuth = (input: JsonValue): OpenCodeAuth => {
   const opencode = parseAuthEntry(input.opencode);
   const direct = parseAuthEntry(input);
 
-  return {
-    ...(direct ?? {}),
-    ...(minimax ? { minimax } : {}),
-    ...(minimaxCodingPlan
-      ? { "minimax-coding-plan": minimaxCodingPlan }
-      : {}),
-    ...(minimaxTokenPlan ? { "minimax-token-plan": minimaxTokenPlan } : {}),
-    ...(openai ? { openai } : {}),
-    ...(synthetic ? { synthetic } : {}),
-    ...(zai ? { zai } : {}),
-    ...(zaiCodingPlan ? { "zai-coding-plan": zaiCodingPlan } : {}),
-    ...(openCodeGo ? { "opencode-go": openCodeGo } : {}),
-    ...(opencode ? { opencode } : {}),
-  };
+  const auth: OpenCodeAuthBuilder = direct ?? {};
+  if (minimax) {
+    auth.minimax = minimax;
+  }
+  if (minimaxCodingPlan) {
+    auth["minimax-coding-plan"] = minimaxCodingPlan;
+  }
+  if (minimaxTokenPlan) {
+    auth["minimax-token-plan"] = minimaxTokenPlan;
+  }
+  if (openai) {
+    auth.openai = openai;
+  }
+  if (synthetic) {
+    auth.synthetic = synthetic;
+  }
+  if (zai) {
+    auth.zai = zai;
+  }
+  if (zaiCodingPlan) {
+    auth["zai-coding-plan"] = zaiCodingPlan;
+  }
+  if (openCodeGo) {
+    auth["opencode-go"] = openCodeGo;
+  }
+  if (opencode) {
+    auth.opencode = opencode;
+  }
+  return auth;
 };
 
 /** Reveals a credential only at an adapter boundary that needs the raw value. */

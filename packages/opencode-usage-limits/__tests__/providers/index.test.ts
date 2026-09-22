@@ -115,9 +115,7 @@ describe("provider manifest", () => {
     const unknownEffect = fetchProviderEffect("unknown", undefined, {}, 1000);
     expect(unknownEffect).toBeDefined();
     await expect(
-      Effect.runPromise(
-        unknownEffect.pipe(Effect.provide(ProviderRuntimeLive))
-      )
+      Effect.runPromise(unknownEffect.pipe(Effect.provide(ProviderRuntimeLive)))
     ).rejects.toThrow("unknown provider: unknown");
 
     const unknownPromise = fetchProvider("unknown", undefined, {}, 1000);

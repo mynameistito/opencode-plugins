@@ -41,12 +41,13 @@ const chunksFromReader = (
   reader: ReadableStreamDefaultReader<Uint8Array>
 ): AsyncIterable<Uint8Array> => ({
   [Symbol.asyncIterator]: () => ({
-    next: () =>
-      reader.read().then((result) =>
-        result.done
-          ? { done: true as const, value: undefined }
-          : { done: false as const, value: result.value }
-      ),
+    next: async () => {
+      const result = await reader.read();
+      if (result.done) {
+        return { done: true as const, value: null };
+      }
+      return { done: false as const, value: result.value };
+    },
   }),
 });
 
