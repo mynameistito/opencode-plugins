@@ -16,6 +16,20 @@ import type {
   ResolvedUsageLimitsConfig,
 } from "@/types.ts";
 
+const fetchProviderEffectInternal = (
+  id: string,
+  config: ProviderConfigMap[ProviderID] | undefined,
+  openCodeAuth: OpenCodeAuth,
+  timeoutMs: number
+): Effect.Effect<ProviderUsage, ProviderError, ProviderRuntime> =>
+  Effect.suspend<ProviderUsage, ProviderError, ProviderRuntime>(() => {
+    if (!isProviderID(id)) {
+      throw new Error(`unknown provider: ${id}`);
+    }
+
+    return PROVIDER_REGISTRY[id].fetch(config, openCodeAuth, timeoutMs);
+  });
+
 export function fetchProviderEffect<ID extends ProviderID>(
   id: ID,
   config: ProviderConfigMap[ID] | undefined,
@@ -24,7 +38,7 @@ export function fetchProviderEffect<ID extends ProviderID>(
 ): Effect.Effect<ProviderUsage<ID>, ProviderError, ProviderRuntime>;
 export function fetchProviderEffect(
   id: string,
-  config: ProviderConfigMap[ProviderID] | undefined,
+  config: undefined,
   openCodeAuth: OpenCodeAuth,
   timeoutMs: number
 ): Effect.Effect<ProviderUsage, ProviderError, ProviderRuntime>;
@@ -34,11 +48,7 @@ export function fetchProviderEffect(
   openCodeAuth: OpenCodeAuth,
   timeoutMs: number
 ): Effect.Effect<ProviderUsage, ProviderError, ProviderRuntime> {
-  if (!isProviderID(id)) {
-    throw new Error(`unknown provider: ${id}`);
-  }
-
-  return PROVIDER_REGISTRY[id].fetch(config, openCodeAuth, timeoutMs);
+  return fetchProviderEffectInternal(id, config, openCodeAuth, timeoutMs);
 }
 
 /** Stable Promise export for direct consumers of the provider dispatcher. */
@@ -50,7 +60,7 @@ export function fetchProvider<ID extends ProviderID>(
 ): Promise<ProviderUsage<ID>>;
 export function fetchProvider(
   id: string,
-  config: ProviderConfigMap[ProviderID] | undefined,
+  config: undefined,
   openCodeAuth: OpenCodeAuth,
   timeoutMs: number
 ): Promise<ProviderUsage>;
@@ -61,7 +71,7 @@ export function fetchProvider(
   timeoutMs: number
 ): Promise<ProviderUsage> {
   return Effect.runPromise(
-    fetchProviderEffect(id, config, openCodeAuth, timeoutMs).pipe(
+    fetchProviderEffectInternal(id, config, openCodeAuth, timeoutMs).pipe(
       Effect.provide(ProviderRuntimeLive)
     )
   );

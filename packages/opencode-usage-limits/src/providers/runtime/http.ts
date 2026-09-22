@@ -37,22 +37,40 @@ const cancelBody = async (response: Response) => {
   }
 };
 
+const chunksFromReader = (
+  reader: ReadableStreamDefaultReader<Uint8Array>
+): AsyncIterable<Uint8Array> => ({
+  [Symbol.asyncIterator]: () => ({
+    next: () =>
+      reader.read().then((result) =>
+        result.done
+          ? { done: true as const, value: undefined }
+          : { done: false as const, value: result.value }
+      ),
+  }),
+});
+
 const readChunks = async (
   reader: ReadableStreamDefaultReader<Uint8Array>,
   chunks: Uint8Array[],
   length: number
 ): Promise<number> => {
-  const result = await reader.read();
-  if (result.done) {
-    return length;
+  let totalLength = length;
+  let exceeded = false;
+  for await (const chunk of chunksFromReader(reader)) {
+    const nextLength = totalLength + chunk.byteLength;
+    if (nextLength > MAX_RESPONSE_BYTES) {
+      exceeded = true;
+      break;
+    }
+    chunks.push(chunk);
+    totalLength = nextLength;
   }
-  const nextLength = length + result.value.byteLength;
-  if (nextLength > MAX_RESPONSE_BYTES) {
+  if (exceeded) {
     await reader.cancel();
     throw new RangeError("response limit exceeded");
   }
-  chunks.push(result.value);
-  return readChunks(reader, chunks, nextLength);
+  return totalLength;
 };
 
 /** A bounded provider JSON request. */

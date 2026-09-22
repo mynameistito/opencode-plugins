@@ -111,9 +111,16 @@ describe("provider manifest", () => {
     await expect(result).resolves.toMatchObject({ id: "codex" });
   });
 
-  test("rejects unknown provider ids", () => {
-    expect(() => fetchProvider("unknown", undefined, {}, 1000)).toThrow(
-      "unknown provider: unknown"
-    );
+  test("rejects unknown provider ids asynchronously", async () => {
+    const unknownEffect = fetchProviderEffect("unknown", undefined, {}, 1000);
+    expect(unknownEffect).toBeDefined();
+    await expect(
+      Effect.runPromise(
+        unknownEffect.pipe(Effect.provide(ProviderRuntimeLive))
+      )
+    ).rejects.toThrow("unknown provider: unknown");
+
+    const unknownPromise = fetchProvider("unknown", undefined, {}, 1000);
+    await expect(unknownPromise).rejects.toThrow("unknown provider: unknown");
   });
 });

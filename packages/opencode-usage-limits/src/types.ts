@@ -31,8 +31,8 @@ type Credential = Redacted.Redacted<string> | string;
 type OpenCodeAuthCredential = Credential | null;
 
 interface OpenCodeAuthEntry {
-  key?: OpenCodeAuthCredential;
-  apiKey?: OpenCodeAuthCredential;
+  readonly key?: OpenCodeAuthCredential;
+  readonly apiKey?: OpenCodeAuthCredential;
 }
 
 interface OpenCodeOpenAIAuthEntry {
@@ -194,8 +194,8 @@ export interface ResolvedUsageLimitsConfig {
  */
 export interface OpenCodeAuth {
   /** Direct credential fields accepted by legacy provider auth payloads. */
-  key?: OpenCodeAuthCredential;
-  apiKey?: OpenCodeAuthCredential;
+  readonly key?: OpenCodeAuthCredential;
+  readonly apiKey?: OpenCodeAuthCredential;
   /** OpenAI/Codex credentials stored by OpenCode. */
   openai?: OpenCodeOpenAIAuthEntry | null;
   /** ZAI Coding Plan credentials stored under OpenCode's provider ID. */

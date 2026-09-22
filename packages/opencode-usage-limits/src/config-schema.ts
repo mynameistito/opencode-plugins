@@ -216,41 +216,20 @@ export const parseOpenCodeAuth = (input: JsonValue): OpenCodeAuth => {
   const opencode = parseAuthEntry(input.opencode);
   const direct = parseAuthEntry(input);
 
-  const auth: OpenCodeAuth = {};
-  if (direct?.key) {
-    auth.key = direct.key;
-  }
-  if (direct?.apiKey) {
-    auth.apiKey = direct.apiKey;
-  }
-  if (minimax) {
-    auth.minimax = minimax;
-  }
-  if (minimaxCodingPlan) {
-    auth["minimax-coding-plan"] = minimaxCodingPlan;
-  }
-  if (minimaxTokenPlan) {
-    auth["minimax-token-plan"] = minimaxTokenPlan;
-  }
-  if (openai) {
-    auth.openai = openai;
-  }
-  if (synthetic) {
-    auth.synthetic = synthetic;
-  }
-  if (zai) {
-    auth.zai = zai;
-  }
-  if (zaiCodingPlan) {
-    auth["zai-coding-plan"] = zaiCodingPlan;
-  }
-  if (openCodeGo) {
-    auth["opencode-go"] = openCodeGo;
-  }
-  if (opencode) {
-    auth.opencode = opencode;
-  }
-  return auth;
+  return {
+    ...(direct ?? {}),
+    ...(minimax ? { minimax } : {}),
+    ...(minimaxCodingPlan
+      ? { "minimax-coding-plan": minimaxCodingPlan }
+      : {}),
+    ...(minimaxTokenPlan ? { "minimax-token-plan": minimaxTokenPlan } : {}),
+    ...(openai ? { openai } : {}),
+    ...(synthetic ? { synthetic } : {}),
+    ...(zai ? { zai } : {}),
+    ...(zaiCodingPlan ? { "zai-coding-plan": zaiCodingPlan } : {}),
+    ...(openCodeGo ? { "opencode-go": openCodeGo } : {}),
+    ...(opencode ? { opencode } : {}),
+  };
 };
 
 /** Reveals a credential only at an adapter boundary that needs the raw value. */
