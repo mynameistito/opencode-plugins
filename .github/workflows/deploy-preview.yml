@@ -104,9 +104,16 @@ jobs:
                 });
                 const matches = pullRequests.filter(matchesWorkflowRun);
 
-                if (matches.length !== 1) {
+                if (matches.length > 1) {
                   core.setFailed(
                     `Expected one pull request for ${headOwner}:${headBranch} at ${headSha}, found ${matches.length}.`,
+                  );
+                  return;
+                }
+
+                if (matches.length === 0) {
+                  core.info(
+                    `No pull request currently sits at head ${headSha} for ${headOwner}:${headBranch}; the branch moved on, so there is nothing to deploy for this run.`,
                   );
                   return;
                 }
@@ -122,7 +129,9 @@ jobs:
               context.eventName === "workflow_run" &&
               !matchesWorkflowRun(pullRequest)
             ) {
-              core.setFailed("The pull request no longer matches the workflow run head metadata.");
+              core.info(
+                `The pull request head moved past ${headSha} while resolving; there is nothing to deploy for this run.`,
+              );
               return;
             }
 
@@ -153,7 +162,7 @@ jobs:
     name: Announce preview approval
     needs: resolve
     if: >-
-      github.event_name == 'workflow_run' && needs.resolve.outputs.trusted != 'true'
+      github.event_name == 'workflow_run' && needs.resolve.outputs.pull_request_number != '' && needs.resolve.outputs.trusted != 'true'
     runs-on: ubuntu-latest
     permissions:
       issues: write
@@ -201,7 +210,7 @@ jobs:
   deploy:
     name: Deploy preview (review required)
     needs: resolve
-    if: needs.resolve.outputs.trusted != 'true'
+    if: needs.resolve.outputs.pull_request_number != '' && needs.resolve.outputs.trusted != 'true'
     runs-on: ubuntu-latest
     # Required reviewers protect the Cloudflare credentials when the PR author
     # does not have write access and the deployment executes pull-request code.
@@ -226,7 +235,7 @@ jobs:
   deploy-trusted:
     name: Deploy preview (trusted author)
     needs: resolve
-    if: needs.resolve.outputs.trusted == 'true'
+    if: needs.resolve.outputs.pull_request_number != '' && needs.resolve.outputs.trusted == 'true'
     runs-on: ubuntu-latest
     # A write-level PR author is trusted to run pull-request code with the
     # repository's Cloudflare credentials, so no reviewer gate is needed.
