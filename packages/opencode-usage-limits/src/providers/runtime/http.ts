@@ -68,7 +68,7 @@ const readChunks = async (
     totalLength = nextLength;
   }
   if (exceeded) {
-    await reader.cancel();
+    await cancelReader(reader);
     throw new RangeError("response limit exceeded");
   }
   return totalLength;

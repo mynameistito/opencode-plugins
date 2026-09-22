@@ -428,6 +428,7 @@ describe("provider runtime services", () => {
           new ReadableStream<Uint8Array>({
             cancel: () => {
               cancelled = true;
+              return Promise.reject(new Error("cancel failed"));
             },
             start: (controller) => {
               controller.enqueue(new Uint8Array(2 * 1024 * 1024 + 1));
