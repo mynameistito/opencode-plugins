@@ -1,5 +1,13 @@
 # @mynameistito/opencode-force-input
 
+## 1.1.3
+
+### Patch Changes
+
+- a75eb61: - Update workspace dependencies and fix the force-input test lint error
+  - @opencode/plugin@2.0.14
+- 42f2da3: Align force-input tests and TypeScript settings with the repository's Ultracite checks.
+
 ## 1.1.2
 
 ### Patch Changes
