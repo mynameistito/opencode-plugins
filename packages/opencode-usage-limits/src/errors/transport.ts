@@ -1,10 +1,13 @@
 import { Schema } from "effect";
 
-import { providerContext, safeCause } from "@/errors-shared.ts";
+import {
+  providerContext,
+  safeCause,
+  schemaTaggedError,
+} from "@/errors-shared.ts";
 
 /** Provider transport failure without unsafe response content. */
-// oxlint-disable-next-line unicorn/throw-new-error -- Effect's TaggedError factory creates the error class.
-export class ProviderTransportError extends Schema.TaggedError<ProviderTransportError>()(
+export class ProviderTransportError extends schemaTaggedError<ProviderTransportError>()(
   "ProviderTransportError",
   {
     ...providerContext,

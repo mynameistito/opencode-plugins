@@ -33,6 +33,10 @@ export const PROVIDER_ORDER: readonly ProviderID[] = Object.values(
 /** Provider lookup derived from the same ordered manifest. */
 export const PROVIDER_REGISTRY = PROVIDER_MANIFEST;
 
+/** Narrows a runtime provider ID before indexing the typed registry. */
+export const isProviderID = (value: string): value is ProviderID =>
+  PROVIDER_ORDER.some((id) => id === value);
+
 /** Provider definitions projected in explicit sidebar display order. */
 export const PROVIDERS = Object.values(PROVIDER_MANIFEST).toSorted(
   (left, right) => left.displayOrder - right.displayOrder

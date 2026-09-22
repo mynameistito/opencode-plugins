@@ -36,16 +36,12 @@ export const readProviderAuthFileCredential = (
   ProviderEnvironment | ProviderFileSystem
 > => {
   if (!authPath) {
-    // oxlint-disable-next-line unicorn/no-useless-undefined -- The helper's successful absence value is undefined, not void.
-    return Effect.succeed<undefined>(undefined);
+    return Effect.undefined;
   }
   return Effect.gen(function* loadProviderAuthFileCredential() {
     const files = yield* ProviderFileSystem;
     const environment = yield* ProviderEnvironment;
     const auth = yield* files.readJson({ path: authPath, providerID });
     return isRecord(auth) ? extractor(auth, environment.credential) : undefined;
-  }).pipe(
-    // oxlint-disable-next-line unicorn/no-useless-undefined -- The catch-all preserves the helper's undefined absence value.
-    Effect.catchCause(() => Effect.succeed<undefined>(undefined))
-  );
+  }).pipe(Effect.catchCause(() => Effect.undefined));
 };

@@ -358,6 +358,16 @@ describe("configuration loading", () => {
     expect(parseOpenCodeAuth({ openai: { access: 42 } })).toStrictEqual({});
   });
 
+  test("keeps direct legacy auth credentials", () => {
+    const auth = parseOpenCodeAuth({
+      apiKey: "direct-api-key",
+      key: "direct-key",
+    });
+
+    expect(credentialValue(auth.apiKey)).toBe("direct-api-key");
+    expect(credentialValue(auth.key)).toBe("direct-key");
+  });
+
   test("keeps valid auth entries when another recognized entry is malformed", () => {
     const auth = parseOpenCodeAuth({
       minimax: { key: "valid-minimax" },

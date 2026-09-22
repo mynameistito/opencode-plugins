@@ -1,9 +1,10 @@
 /* @jsxImportSource @opentui/solid */
-import type { Context } from "@opencode/plugin/tui/context";
+import type { JSX } from "@opentui/solid";
 import { Effect, Fiber } from "effect";
 import { createSignal } from "solid-js";
 
 import { BottomUsage, UsageLimitsPanel } from "@/components.tsx";
+import type { UsageTheme } from "@/components.tsx";
 import { loadConfig, loadOpenCodeAuth } from "@/config.ts";
 import type { CoordinatorSnapshot } from "@/coordinator.ts";
 import { usageCoordinator } from "@/coordinator.ts";
@@ -21,6 +22,10 @@ import type {
   ProviderConfigMap,
   ProviderUsage,
 } from "@/types.ts";
+import type { JsonValue } from "@/utils.ts";
+
+const SIDEBAR_SLOT = "sidebar.content" as const;
+const FOOTER_SLOT = "prompt.footer.status" as const;
 
 /** Runtime dependencies used by the usage-limits TUI lifecycle. */
 export interface UsageLimitsTuiDependencies {
@@ -39,6 +44,35 @@ export interface UsageLimitsTuiDependencies {
   now: () => Date;
   /** Suspends the coordinator until its next refresh. */
   sleep?: (milliseconds: number) => Effect.Effect<void>;
+}
+
+export interface UsageLimitsSlotContext {
+  readonly sessionID?: string;
+  readonly mode?: "normal" | "shell";
+}
+
+interface UsageLimitsSlotClaim {
+  readonly append: typeof SIDEBAR_SLOT | typeof FOOTER_SLOT;
+  readonly render: (slot: UsageLimitsSlotContext) => JSX.Element | null;
+}
+
+export interface UsageLimitsContext {
+  readonly data: {
+    readonly session: {
+      readonly get: (sessionID: string) =>
+        | {
+            readonly model?: { readonly providerID?: string };
+          }
+        | undefined;
+      readonly message: {
+        readonly list: (sessionID: string) => readonly JsonValue[];
+      };
+    };
+  };
+  readonly theme: UsageTheme;
+  readonly ui: {
+    readonly slot: (claim: UsageLimitsSlotClaim) => () => void;
+  };
 }
 
 const productionDependencies: UsageLimitsTuiDependencies = {
@@ -63,7 +97,7 @@ const productionDependencies: UsageLimitsTuiDependencies = {
  */
 export const createUsageLimitsPlugin =
   (dependencies: UsageLimitsTuiDependencies) =>
-  (context: Context): (() => void) => {
+  (context: UsageLimitsContext): (() => void) => {
     const [snapshot, setSnapshot] = createSignal<CoordinatorSnapshot>({
       diagnostics: [],
       lastRefreshAt: null,
@@ -72,7 +106,7 @@ export const createUsageLimitsPlugin =
       states: [],
     });
     const disposeSidebar = context.ui.slot({
-      append: "sidebar.content",
+      append: SIDEBAR_SLOT,
       render: () => (
         <UsageLimitsPanel
           diagnostics={snapshot().diagnostics}
@@ -85,7 +119,7 @@ export const createUsageLimitsPlugin =
       ),
     });
     const disposeFooter = context.ui.slot({
-      append: "prompt.footer.status",
+      append: FOOTER_SLOT,
       render: (slot) => {
         if (!slot.sessionID || slot.mode === "shell") {
           return null;

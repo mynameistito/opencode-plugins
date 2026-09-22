@@ -1,10 +1,11 @@
-import { Schema } from "effect";
-
-import { providerContext, safeCause } from "@/errors-shared.ts";
+import {
+  providerContext,
+  safeCause,
+  schemaTaggedError,
+} from "@/errors-shared.ts";
 
 /** Provider returned a payload that could not be decoded safely. */
-// oxlint-disable-next-line unicorn/throw-new-error -- Effect's TaggedError factory creates the error class.
-export class ProviderResponseDecodeError extends Schema.TaggedError<ProviderResponseDecodeError>()(
+export class ProviderResponseDecodeError extends schemaTaggedError<ProviderResponseDecodeError>()(
   "ProviderResponseDecodeError",
   {
     ...providerContext,

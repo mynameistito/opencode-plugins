@@ -214,8 +214,15 @@ export const parseOpenCodeAuth = (input: JsonValue): OpenCodeAuth => {
   const zaiCodingPlan = parseAuthEntry(input["zai-coding-plan"]);
   const openCodeGo = parseAuthEntry(input["opencode-go"]);
   const opencode = parseAuthEntry(input.opencode);
+  const direct = parseAuthEntry(input);
 
   const auth: OpenCodeAuth = {};
+  if (direct?.key) {
+    auth.key = direct.key;
+  }
+  if (direct?.apiKey) {
+    auth.apiKey = direct.apiKey;
+  }
   if (minimax) {
     auth.minimax = minimax;
   }

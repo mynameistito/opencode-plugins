@@ -12,14 +12,30 @@ try {
   process.exit(1);
 }
 
-// SAFETY: The package entrypoint is checked immediately below before use.
 interface PackagePlugin {
   readonly id?: string;
   readonly setup?: (...args: never[]) => void | Promise<void>;
 }
-// SAFETY: The package entrypoint is checked immediately below before use.
-const module = (await import(entrypoint.href)) as { default?: PackagePlugin };
-const plugin = module.default ?? null;
+
+const isObject = <T>(value: T): value is T & object =>
+  value !== null && typeof value === "object" && !Array.isArray(value);
+const isPackagePlugin = <T>(value: T): value is T & PackagePlugin => {
+  if (!isObject(value)) {
+    return false;
+  }
+  const hasValidID =
+    !("id" in value) || value.id === undefined || typeof value.id === "string";
+  const hasValidSetup =
+    !("setup" in value) ||
+    value.setup === undefined ||
+    typeof value.setup === "function";
+  return hasValidID && hasValidSetup;
+};
+
+const module = await import(entrypoint.href);
+const defaultExport =
+  isObject(module) && "default" in module ? module.default : undefined;
+const plugin = isPackagePlugin(defaultExport) ? defaultExport : null;
 
 const hasExpectedId = (value: PackagePlugin | null | undefined): boolean =>
   value !== null &&

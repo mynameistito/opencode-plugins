@@ -9,6 +9,12 @@ import type { OpenCodeAuth } from "@/types.ts";
 
 import { installFetchMock, resetFetchMock } from "./helpers.ts";
 
+const authCases = [
+  ["direct key", { key: "direct-key" }, "direct-key"],
+  ["direct apiKey", { apiKey: "direct-api-key" }, "direct-api-key"],
+  ["nested key", { synthetic: { key: "nested-key" } }, "nested-key"],
+] satisfies readonly (readonly [string, OpenCodeAuth, string])[];
+
 describe("Synthetic provider", () => {
   afterEach(resetFetchMock);
 
@@ -145,24 +151,20 @@ describe("Synthetic provider", () => {
     expect(usage.windows).toHaveLength(1);
   });
 
-  test.each([
-    ["direct key", { key: "direct-key" }, "direct-key"],
-    ["direct apiKey", { apiKey: "direct-api-key" }, "direct-api-key"],
-    ["nested key", { synthetic: { key: "nested-key" } }, "nested-key"],
-  ])("accepts %s OpenCode auth", async (_name, auth, expectedKey) => {
-    const rawAuth: unknown = structuredClone(auth);
-    // SAFETY: The fixture represents untyped JSON loaded from OpenCode auth.
-    const openCodeAuth = rawAuth as OpenCodeAuth;
-    const fetchMock = installFetchMock(
-      Response.json({ rollingFiveHourLimit: { max: 1, remaining: 1 } })
-    );
+  test.each(authCases)(
+    "accepts %s OpenCode auth",
+    async (_name, openCodeAuth, expectedKey) => {
+      const fetchMock = installFetchMock(
+        Response.json({ rollingFiveHourLimit: { max: 1, remaining: 1 } })
+      );
 
-    await fetchSyntheticUsage(undefined, openCodeAuth, 1000);
+      await fetchSyntheticUsage(undefined, openCodeAuth, 1000);
 
-    expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({
-      headers: { Authorization: `Bearer ${expectedKey}` },
-    });
-  });
+      expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({
+        headers: { Authorization: `Bearer ${expectedKey}` },
+      });
+    }
+  );
 
   test("falls back to the legacy subscription bucket when v3 fields are missing", async () => {
     const renewsAt = new Date(Date.now() + 45 * 60 * 1000).toISOString();
