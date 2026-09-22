@@ -70,13 +70,13 @@ const expectFailure = <ErrorTag extends string>(
   exit: Exit.Exit<unknown, { readonly _tag: ErrorTag }>,
   tag: ErrorTag
 ) => {
-  expect(Exit.isFailure(exit)).toBeTruthy();
-  if (Exit.isFailure(exit)) {
-    const serialized = JSON.stringify(exit.cause);
-    expect(serialized).toContain(`"_tag":"${tag}"`);
-    return serialized;
+  if (!Exit.isFailure(exit)) {
+    throw new Error("expected provider fetch failure");
   }
-  throw new Error("expected provider fetch failure");
+
+  const serialized = JSON.stringify(exit.cause);
+  expect(serialized).toContain(`"_tag":"${tag}"`);
+  return serialized;
 };
 
 describe("Qwen provider", () => {
