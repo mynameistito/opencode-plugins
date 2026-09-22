@@ -15,27 +15,28 @@ const plainNumberIsQuotaCount: IsAssignable<number, QuotaCount> = false;
 
 describe("usage domain invariants", () => {
   test("keeps refined numeric types nominal", () => {
-    expect(plainNumberIsPercentage).toBe(false);
-    expect(plainNumberIsQuotaCount).toBe(false);
+    expect(plainNumberIsPercentage).toBeFalsy();
+    expect(plainNumberIsQuotaCount).toBeFalsy();
   });
+
   test.each([0, 42.5, 100])("accepts finite percentage %s", (value) => {
-    expect(Result.isSuccess(parseUsagePercentage(value))).toBe(true);
+    expect(Result.isSuccess(parseUsagePercentage(value))).toBeTruthy();
   });
 
   test.each([-1, 101, Number.NaN, Number.POSITIVE_INFINITY])(
     "rejects invalid percentage %s",
     (value) => {
-      expect(Result.isFailure(parseUsagePercentage(value))).toBe(true);
+      expect(Result.isFailure(parseUsagePercentage(value))).toBeTruthy();
     }
   );
 
   test("accepts only finite non-negative counts", () => {
-    expect(Result.isSuccess(parseUsageCount(0))).toBe(true);
-    expect(Result.isSuccess(parseUsageCount(12.5))).toBe(true);
-    expect(Result.isFailure(parseUsageCount(-1))).toBe(true);
-    expect(Result.isFailure(parseUsageCount(Number.POSITIVE_INFINITY))).toBe(
-      true
-    );
+    expect(Result.isSuccess(parseUsageCount(0))).toBeTruthy();
+    expect(Result.isSuccess(parseUsageCount(12.5))).toBeTruthy();
+    expect(Result.isFailure(parseUsageCount(-1))).toBeTruthy();
+    expect(
+      Result.isFailure(parseUsageCount(Number.POSITIVE_INFINITY))
+    ).toBeTruthy();
   });
 
   test("rejects count quotas whose current value exceeds the total", () => {
@@ -53,10 +54,10 @@ describe("usage domain invariants", () => {
       Result.isSuccess(
         parseUsageResetInstant(new Date("2026-08-14T12:00:00.000Z"))
       )
-    ).toBe(true);
+    ).toBeTruthy();
     expect(
       Result.isFailure(parseUsageResetInstant(new Date("invalid date")))
-    ).toBe(true);
-    expect(Result.isFailure(parseUsageResetInstant("2026-08-14"))).toBe(true);
+    ).toBeTruthy();
+    expect(Result.isFailure(parseUsageResetInstant("2026-08-14"))).toBeTruthy();
   });
 });

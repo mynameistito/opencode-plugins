@@ -1,4 +1,4 @@
-import { afterEach, vi } from "vitest";
+import { vi } from "vitest";
 
 const originalFetch = globalThis.fetch;
 type FetchMock = (
@@ -15,10 +15,10 @@ export const installFetchMock = (response: Response) => {
   return fetchMock;
 };
 
-afterEach(() => {
+export const resetFetchMock = () => {
   globalThis.fetch = originalFetch;
   delete process.env.OC_USAGE_LIMITS_ZAI_KEY;
   delete process.env.OC_USAGE_LIMITS_SYNTHETIC_KEY;
   delete process.env.OC_USAGE_LIMITS_MINIMAX_KEY;
   vi.restoreAllMocks();
-});
+};

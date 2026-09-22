@@ -73,7 +73,7 @@ const renderPanelText = async (
   }
 };
 
-describe("UsageLimitsPanel", () => {
+describe(UsageLimitsPanel, () => {
   test("renders ready provider windows", async () => {
     const text = await renderPanelText(
       [

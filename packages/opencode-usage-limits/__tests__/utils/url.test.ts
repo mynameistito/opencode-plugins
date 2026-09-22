@@ -2,7 +2,7 @@ import { describe, expect, test } from "vitest";
 
 import { resolveHttpsBaseUrl } from "@/utils/url.ts";
 
-describe("resolveHttpsBaseUrl", () => {
+describe(resolveHttpsBaseUrl, () => {
   const fallback = "https://api.example.test/";
 
   test("resolves direct HTTPS URLs without a trailing slash", () => {

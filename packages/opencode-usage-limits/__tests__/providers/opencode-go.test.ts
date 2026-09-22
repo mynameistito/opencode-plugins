@@ -2,13 +2,15 @@ import { rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test } from "vitest";
 
 import { fetchOpenCodeGoUsage } from "@/providers/opencode-go.ts";
 
-import { installFetchMock } from "./helpers.ts";
+import { installFetchMock, resetFetchMock } from "./helpers.ts";
 
 describe("OpenCode GO provider", () => {
+  afterEach(resetFetchMock);
+
   test.each([
     [
       "valid",

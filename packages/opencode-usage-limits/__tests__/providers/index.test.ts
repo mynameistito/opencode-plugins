@@ -1,5 +1,5 @@
 import { Effect } from "effect";
-import { describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test } from "vitest";
 
 import {
   fetchProvider,
@@ -18,37 +18,54 @@ import {
 import { ProviderRuntimeLive } from "@/providers/runtime/index.ts";
 import type { ProviderUsage } from "@/types.ts";
 
-import { installFetchMock } from "./helpers.ts";
+import { installFetchMock, resetFetchMock } from "./helpers.ts";
 
 describe("provider manifest", () => {
+  afterEach(resetFetchMock);
+
   test("binds each fetch result to its definition ID", () => {
     const definition: ProviderDefinition<"codex"> = codexProvider;
     const fetch: typeof definition.fetch = definition.fetch;
 
     expect(fetch).toBe(codexProvider.fetch);
   });
+
   test("defines every provider in display order", () => {
-    expect(PROVIDERS.map((provider) => provider.id)).toEqual([
+    expect(PROVIDERS.map((provider) => provider.id)).toStrictEqual([
       ...PROVIDER_ORDER,
     ]);
 
     for (const id of PROVIDER_ORDER) {
       expect(PROVIDER_REGISTRY[id].id).toBe(id);
-      expect(defaultLabelFor(id)).toEqual(PROVIDER_REGISTRY[id].defaultLabel);
+      expect(defaultLabelFor(id)).toStrictEqual(
+        PROVIDER_REGISTRY[id].defaultLabel
+      );
     }
   });
 
   test("maps OpenCode session providers to plugin providers", () => {
-    expect(pluginProviderForOpenCode("openai")).toBe("codex");
-    expect(pluginProviderForOpenCode("zai-coding-plan")).toBe("zai");
-    expect(pluginProviderForOpenCode("minimax-coding-plan")).toBe("minimax");
-    expect(pluginProviderForOpenCode("minimax")).toBe("minimax");
-    expect(pluginProviderForOpenCode("bailian-token-plan-personal")).toBe(
-      "qwen"
-    );
-    expect(pluginProviderForOpenCode("qwen")).toBe("qwen");
-    expect(pluginProviderForOpenCode("opencode-go")).toBe("opencode-go");
-    expect(pluginProviderForOpenCode("anthropic")).toBeNull();
+    expect([
+      ["openai", pluginProviderForOpenCode("openai")],
+      ["zai-coding-plan", pluginProviderForOpenCode("zai-coding-plan")],
+      ["minimax-coding-plan", pluginProviderForOpenCode("minimax-coding-plan")],
+      ["minimax", pluginProviderForOpenCode("minimax")],
+      [
+        "bailian-token-plan-personal",
+        pluginProviderForOpenCode("bailian-token-plan-personal"),
+      ],
+      ["qwen", pluginProviderForOpenCode("qwen")],
+      ["opencode-go", pluginProviderForOpenCode("opencode-go")],
+      ["anthropic", pluginProviderForOpenCode("anthropic")],
+    ]).toStrictEqual([
+      ["openai", "codex"],
+      ["zai-coding-plan", "zai"],
+      ["minimax-coding-plan", "minimax"],
+      ["minimax", "minimax"],
+      ["bailian-token-plan-personal", "qwen"],
+      ["qwen", "qwen"],
+      ["opencode-go", "opencode-go"],
+      ["anthropic", null],
+    ]);
   });
 
   test("returns enabled providers in display order", () => {
@@ -66,7 +83,7 @@ describe("provider manifest", () => {
         requestTimeoutMs: 1000,
         showErrors: true,
       })
-    ).toEqual([
+    ).toStrictEqual([
       ["codex", { enabled: true, label: "Codex" }],
       ["synthetic", { enabled: true, label: "Synthetic" }],
       ["minimax", { enabled: true, label: "MiniMax" }],

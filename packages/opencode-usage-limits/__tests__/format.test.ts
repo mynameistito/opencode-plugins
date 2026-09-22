@@ -90,14 +90,16 @@ describe("format helpers", () => {
     expect(percentBar(100, 12)).toBe("[████████████]");
   });
 
-  test("formats token counts with K/M suffixes", () => {
-    expect(formatTokenCount(500)).toBe("500");
-    expect(formatTokenCount(1000)).toBe("1K");
-    expect(formatTokenCount(1500)).toBe("1.5K");
-    expect(formatTokenCount(15_000)).toBe("15K");
-    expect(formatTokenCount(1_000_000)).toBe("1M");
-    expect(formatTokenCount(1_500_000)).toBe("1.5M");
-    expect(formatTokenCount(15_000_000)).toBe("15M");
+  test.each([
+    [500, "500"],
+    [1000, "1K"],
+    [1500, "1.5K"],
+    [15_000, "15K"],
+    [1_000_000, "1M"],
+    [1_500_000, "1.5M"],
+    [15_000_000, "15M"],
+  ])("formats token count %s", (tokens, expected) => {
+    expect(formatTokenCount(tokens)).toBe(expected);
   });
 
   test("formats timestamp as HH:MM", () => {

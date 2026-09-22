@@ -29,7 +29,7 @@ describe("sidebar provider visibility", () => {
       status: "error",
     };
 
-    expect(shouldRenderProviderState(state, true)).toBe(false);
+    expect(shouldRenderProviderState(state, true)).toBeFalsy();
   });
 
   test("keeps non-credential errors visible when error display is enabled", () => {
@@ -40,8 +40,8 @@ describe("sidebar provider visibility", () => {
       status: "error",
     };
 
-    expect(shouldRenderProviderState(state, true)).toBe(true);
-    expect(shouldRenderProviderState(state, false)).toBe(false);
+    expect(shouldRenderProviderState(state, true)).toBeTruthy();
+    expect(shouldRenderProviderState(state, false)).toBeFalsy();
   });
 
   test("keeps cached usage visible when a refresh hits missing credentials", () => {
@@ -54,8 +54,8 @@ describe("sidebar provider visibility", () => {
       status: "error",
     };
 
-    expect(shouldRenderProviderState(state, true)).toBe(true);
-    expect(shouldRenderProviderState(state, false)).toBe(true);
+    expect(shouldRenderProviderState(state, true)).toBeTruthy();
+    expect(shouldRenderProviderState(state, false)).toBeTruthy();
   });
 
   test("hides disabled providers", () => {
@@ -65,6 +65,6 @@ describe("sidebar provider visibility", () => {
       status: "disabled",
     };
 
-    expect(shouldRenderProviderState(state, true)).toBe(false);
+    expect(shouldRenderProviderState(state, true)).toBeFalsy();
   });
 });

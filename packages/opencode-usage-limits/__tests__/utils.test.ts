@@ -12,21 +12,23 @@ import {
 } from "@/utils.ts";
 
 describe("utility helpers", () => {
-  test("clamps finite percentages and treats non-finite values as zero", () => {
-    expect(clampPercent(-1)).toBe(0);
-    expect(clampPercent(0)).toBe(0);
-    expect(clampPercent(42.5)).toBe(42.5);
-    expect(clampPercent(101)).toBe(100);
-    expect(clampPercent(Number.NaN)).toBe(0);
-    expect(clampPercent(Number.POSITIVE_INFINITY)).toBe(0);
+  test.each([
+    [-1, 0],
+    [0, 0],
+    [42.5, 42.5],
+    [101, 100],
+    [Number.NaN, 0],
+    [Number.POSITIVE_INFINITY, 0],
+  ])("clamps %s to %s", (input, expected) => {
+    expect(clampPercent(input)).toBe(expected);
   });
 
   test("detects plain records", () => {
-    expect(isRecord({})).toBe(true);
-    expect(isRecord({ nested: true })).toBe(true);
-    expect(isRecord([])).toBe(false);
-    expect(isRecord(null)).toBe(false);
-    expect(isRecord("object")).toBe(false);
+    expect(isRecord({})).toBeTruthy();
+    expect(isRecord({ nested: true })).toBeTruthy();
+    expect(isRecord([])).toBeFalsy();
+    expect(isRecord(null)).toBeFalsy();
+    expect(isRecord("object")).toBeFalsy();
   });
 
   test("rejects parsed non-finite numbers", () => {
@@ -61,7 +63,7 @@ describe("utility helpers", () => {
         "utf-8"
       );
 
-      await expect(readJsonFile(filePath)).resolves.toEqual({
+      await expect(readJsonFile(filePath)).resolves.toStrictEqual({
         items: [1, 2],
         literal: ",}",
         nested: { enabled: true },
@@ -84,7 +86,9 @@ describe("utility helpers", () => {
         "utf-8"
       );
 
-      await expect(readJsonFile(filePath)).resolves.toEqual({ enabled: true });
+      await expect(readJsonFile(filePath)).resolves.toStrictEqual({
+        enabled: true,
+      });
     } finally {
       await rm(directory, { force: true, recursive: true });
     }

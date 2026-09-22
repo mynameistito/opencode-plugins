@@ -2,14 +2,16 @@ import { rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test } from "vitest";
 
 import { fetchSyntheticUsage } from "@/providers/synthetic.ts";
 import type { OpenCodeAuth } from "@/types.ts";
 
-import { installFetchMock } from "./helpers.ts";
+import { installFetchMock, resetFetchMock } from "./helpers.ts";
 
 describe("Synthetic provider", () => {
+  afterEach(resetFetchMock);
+
   const nextTickAt = new Date(Date.now() + 90 * 60 * 1000).toISOString();
   const nextRegenAt = new Date(
     Date.now() + 3 * 24 * 60 * 60 * 1000
@@ -72,35 +74,57 @@ describe("Synthetic provider", () => {
       1000
     );
 
-    expect(fetchMock.mock.calls[0]?.[0]).toBe(
-      "https://api.synthetic.new/v2/quotas"
+    const [request] = fetchMock.mock.calls;
+    const resetTimes = usage.windows.map((window) =>
+      window.resetsAt?.getTime()
     );
-    expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({
-      headers: {
-        Accept: "application/json",
-        Authorization: "Bearer syn-test-key",
+    expect({
+      init: request?.[1],
+      url: request?.[0],
+      usage: {
+        id: usage.id,
+        label: usage.label,
+        windows: usage.windows.map((window) => ({
+          label: window.label,
+          quota: window.quota,
+          reset: window.resetsAt?.toISOString(),
+        })),
       },
-      method: "GET",
-    });
-    expect(usage).toMatchObject({ id: "synthetic", label: "Syn" });
-    expect(usage.windows).toHaveLength(2);
-    expect(usage.windows[0]).toMatchObject({
-      label: "5h",
-      quota: {
-        current: 60,
-        remainingPercent: 40,
-        total: 100,
-        usedPercent: 60,
+    }).toMatchObject({
+      init: {
+        headers: {
+          Accept: "application/json",
+          Authorization: "Bearer syn-test-key",
+        },
+        method: "GET",
+      },
+      url: "https://api.synthetic.new/v2/quotas",
+      usage: {
+        id: "synthetic",
+        label: "Syn",
+        windows: [
+          {
+            label: "5h",
+            quota: {
+              current: 60,
+              remainingPercent: 40,
+              total: 100,
+              usedPercent: 60,
+            },
+            reset: nextTickAt,
+          },
+          {
+            label: "weekly",
+            quota: { remainingPercent: 75, usedPercent: 25 },
+            reset: nextRegenAt,
+          },
+        ],
       },
     });
-    expect(usage.windows[1]).toMatchObject({
-      label: "weekly",
-      quota: { remainingPercent: 75, usedPercent: 25 },
-    });
-    expect(usage.windows[0]?.resetsAt?.getTime()).toBeGreaterThan(Date.now());
-    expect(usage.windows[1]?.resetsAt?.getTime()).toBeGreaterThan(Date.now());
-    expect(usage.windows[0]?.resetsAt?.toISOString()).toBe(nextTickAt);
-    expect(usage.windows[1]?.resetsAt?.toISOString()).toBe(nextRegenAt);
+    expect(resetTimes).toHaveLength(2);
+    expect(Math.min(...resetTimes.map((time) => time ?? 0))).toBeGreaterThan(
+      Date.now()
+    );
   });
 
   test("accepts apiKey under the synthetic block in OpenCode auth", async () => {

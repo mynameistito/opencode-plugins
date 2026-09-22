@@ -233,17 +233,17 @@ describe("usage-limits TUI lifecycle", () => {
     const harness = createHarness();
     const registered = await initialize(harness);
 
-    expect(harness.fetches).toEqual(["codex"]);
+    expect(harness.fetches).toStrictEqual(["codex"]);
     expect(harness.scheduled[0]?.delayMs).toBe(20_000);
-    expect(await renderSlot(registered, "sidebar.content")).toContain(
+    await expect(renderSlot(registered, "sidebar.content")).resolves.toContain(
       "Codex Work"
     );
-    expect(await renderSlot(registered, "sidebar.content")).toContain(
+    await expect(renderSlot(registered, "sidebar.content")).resolves.toContain(
       "Updated 12:34"
     );
-    expect(await renderSlot(registered, "prompt.footer.status")).toContain(
-      "42%"
-    );
+    await expect(
+      renderSlot(registered, "prompt.footer.status")
+    ).resolves.toContain("42%");
   });
 
   test("retains the previous successful state when a provider fails", async () => {
@@ -257,22 +257,22 @@ describe("usage-limits TUI lifecycle", () => {
     const sidebar = await renderSlot(registered, "sidebar.content");
     expect(sidebar).toContain("Codex Work cached");
     expect(sidebar).toContain("provider unavailable");
-    expect(await renderSlot(registered, "prompt.footer.status")).toContain(
-      "42%"
-    );
+    await expect(
+      renderSlot(registered, "prompt.footer.status")
+    ).resolves.toContain("42%");
   });
 
   test("keeps both slots empty when the plugin is disabled", async () => {
     const harness = createHarness(config({ enabled: false }));
     const registered = await initialize(harness);
 
-    expect(harness.fetches).toEqual([]);
-    expect(await renderSlot(registered, "sidebar.content")).not.toContain(
-      "Usage Limits"
-    );
-    expect(await renderSlot(registered, "prompt.footer.status")).not.toContain(
-      "%"
-    );
+    expect(harness.fetches).toStrictEqual([]);
+    await expect(
+      renderSlot(registered, "sidebar.content")
+    ).resolves.not.toContain("Usage Limits");
+    await expect(
+      renderSlot(registered, "prompt.footer.status")
+    ).resolves.not.toContain("%");
   });
 
   test("hides only both graphical bars without stopping provider refreshes", async () => {
@@ -289,20 +289,13 @@ describe("usage-limits TUI lifecycle", () => {
     );
     const registered = await initialize(harness);
 
-    expect(harness.fetches).toEqual(["codex"]);
-    expect(await renderSlot(registered, "sidebar.content")).toContain("Codex");
-    expect(await renderSlot(registered, "sidebar.content")).toContain(
-      "42% used"
-    );
-    expect(await renderSlot(registered, "sidebar.content")).not.toContain(
-      "[█████░░░░░░░]"
-    );
-    expect(await renderSlot(registered, "prompt.footer.status")).toContain(
-      "42%"
-    );
-    expect(await renderSlot(registered, "prompt.footer.status")).not.toContain(
-      "[████░░░░░░░░]"
-    );
+    expect(harness.fetches).toStrictEqual(["codex"]);
+    const sidebar = await renderSlot(registered, "sidebar.content");
+    const footer = await renderSlot(registered, "prompt.footer.status");
+    expect(sidebar).toMatch(/Codex[\s\S]*42% used/u);
+    expect(sidebar).not.toContain("[█████░░░░░░░]");
+    expect(footer).toContain("42%");
+    expect(footer).not.toContain("[████░░░░░░░░]");
   });
 
   test.each([
@@ -335,32 +328,32 @@ describe("usage-limits TUI lifecycle", () => {
     const harness = createHarness();
     const registered = await initialize(harness);
 
-    expect(await renderSlot(registered, "prompt.footer.status")).toContain(
-      "42%"
-    );
+    await expect(
+      renderSlot(registered, "prompt.footer.status")
+    ).resolves.toContain("42%");
 
     harness.setSessionModelProviderID("anthropic");
 
-    expect(await renderSlot(registered, "prompt.footer.status")).not.toContain(
-      "42%"
-    );
+    await expect(
+      renderSlot(registered, "prompt.footer.status")
+    ).resolves.not.toContain("42%");
   });
 
   test("does not render footer usage for shell mode or missing sessions", async () => {
     const harness = createHarness();
     const registered = await initialize(harness);
 
-    expect(
-      await renderSlot(registered, "prompt.footer.status", {
+    await expect(
+      renderSlot(registered, "prompt.footer.status", {
         mode: "shell",
         sessionID: "session-1",
       })
-    ).not.toContain("42%");
-    expect(
-      await renderSlot(registered, "prompt.footer.status", {
+    ).resolves.not.toContain("42%");
+    await expect(
+      renderSlot(registered, "prompt.footer.status", {
         mode: "normal",
       })
-    ).not.toContain("42%");
+    ).resolves.not.toContain("42%");
   });
 
   test("uses safe defaults when typed config parsing fails", async () => {
@@ -371,9 +364,9 @@ describe("usage-limits TUI lifecycle", () => {
     });
     const registered = await initialize(harness);
 
-    expect(harness.fetches).toEqual([]);
+    expect(harness.fetches).toStrictEqual([]);
     expect(harness.scheduled[0]?.delayMs).toBe(60_000);
-    expect(await renderSlot(registered, "sidebar.content")).toContain(
+    await expect(renderSlot(registered, "sidebar.content")).resolves.toContain(
       "Usage Limits"
     );
   });
@@ -386,7 +379,7 @@ describe("usage-limits TUI lifecycle", () => {
     await harness.scheduled[0]?.callback();
     await delay(0);
 
-    expect(harness.scheduled.map(({ delayMs }) => delayMs)).toEqual([
+    expect(harness.scheduled.map(({ delayMs }) => delayMs)).toStrictEqual([
       20_000, 45_000,
     ]);
   });
@@ -402,8 +395,8 @@ describe("usage-limits TUI lifecycle", () => {
     dispose();
     await delay(0);
 
-    expect(harness.scheduled[0]?.cancelled).toBe(true);
+    expect(harness.scheduled[0]?.cancelled).toBeTruthy();
     expect(harness.getSlotDisposals()).toBe(2);
-    expect(harness.fetches).toEqual(["codex"]);
+    expect(harness.fetches).toStrictEqual(["codex"]);
   });
 });

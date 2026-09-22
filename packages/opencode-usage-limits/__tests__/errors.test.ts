@@ -40,14 +40,14 @@ describe("provider boundary errors", () => {
       }),
     ];
 
-    expect(errors.map(errorTag)).toEqual([
+    expect(errors.map(errorTag)).toStrictEqual([
       "ProviderTransportError",
       "ProviderTimeoutError",
       "ProviderRateLimitError",
       "ProviderResponseDecodeError",
       "ProviderCommandError",
     ]);
-    expect(errors.map(({ providerID }) => providerID)).toEqual([
+    expect(errors.map(({ providerID }) => providerID)).toStrictEqual([
       "codex",
       "zai",
       "synthetic",
@@ -113,7 +113,7 @@ describe("provider boundary errors", () => {
       }),
     ];
 
-    expect(errors.map((error) => error.message)).toEqual([
+    expect(errors.map((error) => error.message)).toStrictEqual([
       "",
       "Unable to read usage-limits config at C:/config.json",
       "missing Codex auth",
