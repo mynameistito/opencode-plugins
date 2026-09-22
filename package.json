@@ -22,9 +22,6 @@
     "changeset": "changeset",
     "changeset-add": "bun run scripts/changeset-add.ts"
   },
-  "dependencies": {
-    "effect": "catalog:"
-  },
   "devDependencies": {
     "@changesets/cli": "^3.0.3",
     "@opentui/core": "catalog:",
