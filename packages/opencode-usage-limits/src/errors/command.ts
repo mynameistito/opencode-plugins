@@ -1,10 +1,13 @@
 import { Schema } from "effect";
 
-import { providerContext, safeCause } from "@/errors-shared.ts";
+import {
+  providerContext,
+  safeCause,
+  schemaTaggedError,
+} from "@/errors-shared.ts";
 
 /** Provider subprocess command failed without exposing stdout or stderr. */
-// oxlint-disable-next-line unicorn/throw-new-error -- Effect's TaggedError factory creates the error class.
-export class ProviderCommandError extends Schema.TaggedError<ProviderCommandError>()(
+export class ProviderCommandError extends schemaTaggedError<ProviderCommandError>()(
   "ProviderCommandError",
   {
     ...providerContext,

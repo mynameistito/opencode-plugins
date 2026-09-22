@@ -37,27 +37,41 @@ const cancelBody = async (response: Response) => {
   }
 };
 
+const chunksFromReader = (
+  reader: ReadableStreamDefaultReader<Uint8Array>
+): AsyncIterable<Uint8Array> => ({
+  [Symbol.asyncIterator]: () => ({
+    next: async () => {
+      const result = await reader.read();
+      if (result.done) {
+        return { done: true as const, value: null };
+      }
+      return { done: false as const, value: result.value };
+    },
+  }),
+});
+
 const readChunks = async (
   reader: ReadableStreamDefaultReader<Uint8Array>,
   chunks: Uint8Array[],
   length: number
 ): Promise<number> => {
   let totalLength = length;
-  while (true) {
-    // eslint-disable-next-line no-await-in-loop -- A stream reader must be consumed sequentially.
-    const result = await reader.read();
-    if (result.done) {
-      return totalLength;
-    }
-    const nextLength = totalLength + result.value.byteLength;
+  let exceeded = false;
+  for await (const chunk of chunksFromReader(reader)) {
+    const nextLength = totalLength + chunk.byteLength;
     if (nextLength > MAX_RESPONSE_BYTES) {
-      // eslint-disable-next-line no-await-in-loop -- Finish cancellation before reporting the bounded-read failure.
-      await reader.cancel();
-      throw new RangeError("response limit exceeded");
+      exceeded = true;
+      break;
     }
-    chunks.push(result.value);
+    chunks.push(chunk);
     totalLength = nextLength;
   }
+  if (exceeded) {
+    await cancelReader(reader);
+    throw new RangeError("response limit exceeded");
+  }
+  return totalLength;
 };
 
 /** A bounded provider JSON request. */

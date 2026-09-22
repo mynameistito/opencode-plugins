@@ -9,6 +9,11 @@ import type { OpenCodeAuth } from "@/types.ts";
 
 import { installFetchMock, resetFetchMock } from "./helpers.ts";
 
+const authCases = [
+  ["direct apiKey", { apiKey: "direct-key" }],
+  ["zai-coding-plan", { "zai-coding-plan": { key: "plan-key" } }],
+] satisfies readonly (readonly [string, OpenCodeAuth])[];
+
 describe("ZAI provider", () => {
   afterEach(resetFetchMock);
 
@@ -144,29 +149,27 @@ describe("ZAI provider", () => {
     });
   });
 
-  test.each([
-    ["direct apiKey", { apiKey: "direct-key" }],
-    ["zai-coding-plan", { "zai-coding-plan": { key: "plan-key" } }],
-  ])("accepts %s OpenCode auth", async (_name, auth) => {
-    const rawAuth: unknown = structuredClone(auth);
-    // SAFETY: The fixture represents untyped JSON loaded from OpenCode auth.
-    const openCodeAuth = rawAuth as OpenCodeAuth;
-    const fetchMock = installFetchMock(
-      Response.json({
-        data: {
-          limits: [{ percentage: 50, type: "TOKENS_LIMIT", usage: 50 }],
+  test.each(authCases)(
+    "accepts %s OpenCode auth",
+    async (_name, openCodeAuth) => {
+      const fetchMock = installFetchMock(
+        Response.json({
+          data: {
+            limits: [{ percentage: 50, type: "TOKENS_LIMIT", usage: 50 }],
+          },
+        })
+      );
+
+      await fetchZaiCodingPlanUsage(undefined, openCodeAuth, 1000);
+
+      expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({
+        headers: {
+          Authorization:
+            "zai-coding-plan" in openCodeAuth ? "plan-key" : "direct-key",
         },
-      })
-    );
-
-    await fetchZaiCodingPlanUsage(undefined, openCodeAuth, 1000);
-
-    expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({
-      headers: {
-        Authorization: "zai-coding-plan" in auth ? "plan-key" : "direct-key",
-      },
-    });
-  });
+      });
+    }
+  );
 
   describe("tier inference", () => {
     test.each([

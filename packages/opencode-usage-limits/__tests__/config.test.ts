@@ -358,6 +358,34 @@ describe("configuration loading", () => {
     expect(parseOpenCodeAuth({ openai: { access: 42 } })).toStrictEqual({});
   });
 
+  test.each(["key", "apiKey"] as const)(
+    "reports malformed direct auth field %s",
+    async (field) => {
+      readJsonFile.mockResolvedValueOnce({
+        [field]: { secret: "do-not-log" },
+      });
+
+      const result = await loadOpenCodeAuth(readJsonFile);
+
+      expect(result.auth).toStrictEqual({});
+      expect(result.diagnostic).toStrictEqual({
+        kind: "auth-decode",
+        message: "Some OpenCode auth fields could not be read",
+      });
+      expect(JSON.stringify(result.diagnostic)).not.toContain("do-not-log");
+    }
+  );
+
+  test("keeps direct legacy auth credentials", () => {
+    const auth = parseOpenCodeAuth({
+      apiKey: "direct-api-key",
+      key: "direct-key",
+    });
+
+    expect(credentialValue(auth.apiKey)).toBe("direct-api-key");
+    expect(credentialValue(auth.key)).toBe("direct-key");
+  });
+
   test("keeps valid auth entries when another recognized entry is malformed", () => {
     const auth = parseOpenCodeAuth({
       minimax: { key: "valid-minimax" },

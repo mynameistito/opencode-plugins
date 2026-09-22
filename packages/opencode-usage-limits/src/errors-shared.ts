@@ -1,5 +1,7 @@
 import { Schema } from "effect";
 
+export const schemaTaggedError = Schema.TaggedError;
+
 export const ProviderIDSchema = Schema.Literals([
   "codex",
   "zai",

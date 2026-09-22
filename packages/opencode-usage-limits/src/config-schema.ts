@@ -14,6 +14,9 @@ interface ParsedOpenAIEntry {
   access?: ParsedCredential;
   accountId?: ParsedCredential;
 }
+type OpenCodeAuthBuilder = {
+  -readonly [Key in keyof OpenCodeAuth]?: OpenCodeAuth[Key];
+};
 
 const defaultKey = <S extends Schema.Top>(schema: S, value: S["Encoded"]) =>
   schema.pipe(Schema.withDecodingDefaultKey(Effect.succeed(value)));
@@ -214,8 +217,9 @@ export const parseOpenCodeAuth = (input: JsonValue): OpenCodeAuth => {
   const zaiCodingPlan = parseAuthEntry(input["zai-coding-plan"]);
   const openCodeGo = parseAuthEntry(input["opencode-go"]);
   const opencode = parseAuthEntry(input.opencode);
+  const direct = parseAuthEntry(input);
 
-  const auth: OpenCodeAuth = {};
+  const auth: OpenCodeAuthBuilder = direct ?? {};
   if (minimax) {
     auth.minimax = minimax;
   }

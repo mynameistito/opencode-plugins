@@ -28,6 +28,17 @@ export type ProviderID =
 
 /** Sensitive string accepted by parsed config and legacy provider boundaries. */
 type Credential = Redacted.Redacted<string> | string;
+type OpenCodeAuthCredential = Credential | null;
+
+interface OpenCodeAuthEntry {
+  readonly key?: OpenCodeAuthCredential;
+  readonly apiKey?: OpenCodeAuthCredential;
+}
+
+interface OpenCodeOpenAIAuthEntry {
+  readonly access?: OpenCodeAuthCredential;
+  readonly accountId?: OpenCodeAuthCredential;
+}
 
 /**
  * Normalized usage information for one provider quota window.
@@ -182,63 +193,25 @@ export interface ResolvedUsageLimitsConfig {
  * auth files or explicit configuration values.
  */
 export interface OpenCodeAuth {
+  /** Direct credential fields accepted by legacy provider auth payloads. */
+  readonly key?: OpenCodeAuthCredential;
+  readonly apiKey?: OpenCodeAuthCredential;
   /** OpenAI/Codex credentials stored by OpenCode. */
-  openai?: {
-    /** Bearer access token for ChatGPT backend requests. */
-    readonly access?: Credential;
-    /** ChatGPT account identifier required by Codex usage requests. */
-    readonly accountId?: Credential;
-  };
+  openai?: OpenCodeOpenAIAuthEntry | null;
   /** ZAI Coding Plan credentials stored under OpenCode's provider ID. */
-  "zai-coding-plan"?: {
-    /** ZAI API key. */
-    readonly key?: Credential;
-  };
+  "zai-coding-plan"?: OpenCodeAuthEntry | null;
   /** ZAI credentials stored under the plugin's normalized provider ID. */
-  zai?: {
-    /** ZAI API key. */
-    readonly key?: Credential;
-  };
+  zai?: OpenCodeAuthEntry | null;
   /** Synthetic credentials stored under OpenCode's provider ID. */
-  synthetic?: {
-    /** Synthetic API key. */
-    readonly key?: Credential;
-    /** Synthetic API key (alternate field name). */
-    readonly apiKey?: Credential;
-  };
+  synthetic?: OpenCodeAuthEntry | null;
   /** MiniMax Token Plan credentials stored under the plugin's provider ID. */
-  minimax?: {
-    /** MiniMax Token Plan subscription key. */
-    readonly key?: Credential;
-    /** MiniMax Token Plan subscription key (alternate field name). */
-    readonly apiKey?: Credential;
-  };
+  minimax?: OpenCodeAuthEntry | null;
   /** MiniMax Token Plan credentials stored under the OpenCode convention ID. */
-  "minimax-coding-plan"?: {
-    /** MiniMax Token Plan subscription key. */
-    readonly key?: Credential;
-    /** MiniMax Token Plan subscription key (alternate field name). */
-    readonly apiKey?: Credential;
-  };
+  "minimax-coding-plan"?: OpenCodeAuthEntry | null;
   /** MiniMax Token Plan credentials stored under an alternate OpenCode ID. */
-  "minimax-token-plan"?: {
-    /** MiniMax Token Plan subscription key. */
-    readonly key?: Credential;
-    /** MiniMax Token Plan subscription key (alternate field name). */
-    readonly apiKey?: Credential;
-  };
+  "minimax-token-plan"?: OpenCodeAuthEntry | null;
   /** OpenCode GO credentials stored under the provider's catalog ID. */
-  "opencode-go"?: {
-    /** OpenCode GO API key. */
-    readonly key?: Credential;
-    /** OpenCode GO API key (alternate field name). */
-    readonly apiKey?: Credential;
-  };
+  "opencode-go"?: OpenCodeAuthEntry | null;
   /** OpenCode Zen credentials stored under the legacy provider ID. */
-  opencode?: {
-    /** OpenCode API key. */
-    readonly key?: Credential;
-    /** OpenCode API key (alternate field name). */
-    readonly apiKey?: Credential;
-  };
+  opencode?: OpenCodeAuthEntry | null;
 }

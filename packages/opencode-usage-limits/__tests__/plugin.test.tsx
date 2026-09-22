@@ -1,6 +1,5 @@
 import { setTimeout as delay } from "node:timers/promises";
 
-import type { Context } from "@opencode/plugin/tui/context";
 import { RGBA } from "@opentui/core";
 import { testRender } from "@opentui/solid";
 import type { JSX } from "@opentui/solid";
@@ -11,8 +10,13 @@ import { describe, expect, test } from "vitest";
 import type { UsageTheme } from "@/components.tsx";
 import { ConfigDecodeError } from "@/errors.ts";
 import type { ProviderError } from "@/errors.ts";
+import { ProviderTransportError } from "@/errors/transport.ts";
 import { createUsageLimitsPlugin } from "@/plugin.tsx";
-import type { UsageLimitsTuiDependencies } from "@/plugin.tsx";
+import type {
+  UsageLimitsContext,
+  UsageLimitsSlotContext,
+  UsageLimitsTuiDependencies,
+} from "@/plugin.tsx";
 import type {
   OpenCodeAuth,
   ProviderConfig,
@@ -24,23 +28,17 @@ import { parseUsagePercentage, percentageQuota } from "@/usage.ts";
 
 const NOW = new Date("2026-08-14T12:34:00.000Z");
 const color = RGBA.fromValues(1, 2, 3, 255);
-// SAFETY: The proxy supplies the RGBA value for every theme color while
-// retaining the one numeric theme property used by OpenTUI.
-const themeValue = new Proxy(
-  { thinkingOpacity: 0.6 },
-  {
-    get: (target, key) =>
-      key === "thinkingOpacity" ? target.thinkingOpacity : color,
-  }
-);
-// SAFETY: The host test only reads the proxy's numeric opacity and color values.
-const asUsageTheme = <T,>(value: T): UsageTheme => value as UsageTheme;
-const theme = asUsageTheme(themeValue);
-
-interface UsageLimitsSlotContext {
-  sessionID?: string;
-  mode?: "normal" | "shell";
-}
+const theme: UsageTheme = {
+  text: {
+    default: color,
+    feedback: {
+      error: { default: color },
+      success: { default: color },
+      warning: { default: color },
+    },
+    subdued: color,
+  },
+};
 
 type CharacterizedSlots = Record<
   "sidebar.content" | "prompt.footer.status",
@@ -50,7 +48,7 @@ type CharacterizedSlots = Record<
 interface HarnessState {
   config: ResolvedUsageLimitsConfig;
   configError: ConfigDecodeError | null;
-  fetchError: Error | null;
+  fetchError: ProviderError | null;
 }
 
 const DEFAULT_SLOT: UsageLimitsSlotContext = {
@@ -115,9 +113,7 @@ const createHarness = (
     ) => {
       fetches.push(id);
       if (state.fetchError) {
-        // SAFETY: The harness only assigns ordinary Error values here; the
-        // provider seam classifies them as ProviderError for this fixture.
-        return Effect.fail(state.fetchError as ProviderError);
+        return Effect.fail(state.fetchError);
       }
       return Effect.succeed(usage(id));
     },
@@ -149,7 +145,7 @@ const createHarness = (
       }),
   };
 
-  const partialApi = {
+  const partialApi: UsageLimitsContext = {
     data: {
       session: {
         get: () => ({ model: { providerID: currentSessionModelProviderID } }),
@@ -158,10 +154,7 @@ const createHarness = (
     },
     theme,
     ui: {
-      slot: (claim: {
-        append: "sidebar.content" | "prompt.footer.status";
-        render: CharacterizedSlots[typeof claim.append];
-      }) => {
+      slot: (claim) => {
         registered = { ...registered, [claim.append]: claim.render };
         return () => {
           slotDisposals += 1;
@@ -170,7 +163,6 @@ const createHarness = (
     },
   };
 
-  // SAFETY: The adapter implements the focused v2 host seam used by this test.
   return {
     context: partialApi,
     dependencies,
@@ -206,26 +198,38 @@ const renderSlot = async (
   }
 };
 
-// SAFETY: The focused fixture implements the host context seam used here.
-const asHostContext = <T,>(value: T): Context => value as Context;
+const slotCases = [
+  [
+    { providers: { codex: { enabled: true, showSidebarBar: false } } },
+    "sidebar.content",
+    "42% used",
+  ],
+  [
+    { providers: { codex: { enabled: true, showFooterBar: false } } },
+    "prompt.footer.status",
+    "42%",
+  ],
+] satisfies readonly (readonly [
+  Partial<ResolvedUsageLimitsConfig>,
+  keyof CharacterizedSlots,
+  string,
+])[];
 
 const initialize = async (harness: ReturnType<typeof createHarness>) => {
   harness.setDispose(
-    // SAFETY: partialApi implements the focused Context seam exercised here.
-    createUsageLimitsPlugin(harness.dependencies)(
-      asHostContext(harness.context)
-    )
+    createUsageLimitsPlugin(harness.dependencies)(harness.context)
   );
   await delay(0);
   const registered = harness.getRegistered();
   if (!registered) {
     throw new Error("plugin did not register slots");
   }
-  if (!registered["sidebar.content"] || !registered["prompt.footer.status"]) {
+  const sidebar = registered["sidebar.content"];
+  const footer = registered["prompt.footer.status"];
+  if (!sidebar || !footer) {
     throw new Error("plugin did not register both slots");
   }
-  // SAFETY: initialize verifies both required slots before this cast.
-  return registered as CharacterizedSlots;
+  return { "prompt.footer.status": footer, "sidebar.content": sidebar };
 };
 
 describe("usage-limits TUI lifecycle", () => {
@@ -249,14 +253,18 @@ describe("usage-limits TUI lifecycle", () => {
   test("retains the previous successful state when a provider fails", async () => {
     const harness = createHarness();
     const registered = await initialize(harness);
-    harness.state.fetchError = new Error("provider unavailable");
+    harness.state.fetchError = new ProviderTransportError({
+      cause: "network",
+      operation: "fetch-usage",
+      providerID: "codex",
+    });
 
     await harness.scheduled[0]?.callback();
     await delay(0);
 
     const sidebar = await renderSlot(registered, "sidebar.content");
     expect(sidebar).toContain("Codex Work cached");
-    expect(sidebar).toContain("provider unavailable");
+    expect(sidebar).toContain("provider request failed");
     await expect(
       renderSlot(registered, "prompt.footer.status")
     ).resolves.toContain("42%");
@@ -298,31 +306,19 @@ describe("usage-limits TUI lifecycle", () => {
     expect(footer).not.toContain("[████░░░░░░░░]");
   });
 
-  test.each([
-    [
-      { providers: { codex: { enabled: true, showSidebarBar: false } } },
-      "sidebar.content",
-      "42% used",
-    ],
-    [
-      { providers: { codex: { enabled: true, showFooterBar: false } } },
-      "prompt.footer.status",
-      "42%",
-    ],
-  ])("hides only the configured %s bar", async (overrides, slot, text) => {
-    const harness = createHarness(config(overrides));
-    const registered = await initialize(harness);
+  test.each(slotCases)(
+    "hides only the configured %s bar",
+    async (overrides, slot, text) => {
+      const harness = createHarness(config(overrides));
+      const registered = await initialize(harness);
 
-    // SAFETY: The table contains only the two registered slot names.
-    const rendered = await renderSlot(
-      registered,
-      slot as keyof CharacterizedSlots
-    );
-    expect(rendered).toContain(text);
-    expect(rendered).not.toContain(
-      slot === "sidebar.content" ? "[█████░░░░░░░]" : "[████░░░░░░░░]"
-    );
-  });
+      const rendered = await renderSlot(registered, slot);
+      expect(rendered).toContain(text);
+      expect(rendered).not.toContain(
+        slot === "sidebar.content" ? "[█████░░░░░░░]" : "[████░░░░░░░░]"
+      );
+    }
+  );
 
   test("does not keep historical provider usage after switching models", async () => {
     const harness = createHarness();

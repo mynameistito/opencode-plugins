@@ -8,7 +8,6 @@ type FetchMock = (
 
 export const installFetchMock = (response: Response) => {
   const fetchMock = vi.fn<FetchMock>(() => Promise.resolve(response));
-  // SAFETY: Bun's mock function has the same call signature as global fetch.
   globalThis.fetch = Object.assign(fetchMock, {
     preconnect: originalFetch.preconnect,
   });

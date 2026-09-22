@@ -9,6 +9,12 @@ import type { OpenCodeAuth } from "@/types.ts";
 
 import { installFetchMock, resetFetchMock } from "./helpers.ts";
 
+const missingAuthCases = [
+  ["minimax", { minimax: null }],
+  ["minimax-coding-plan", { "minimax-coding-plan": null }],
+  ["minimax-token-plan", { "minimax-token-plan": null }],
+] satisfies readonly (readonly [string, OpenCodeAuth])[];
+
 const successEnvelope = <T>(modelRemains: T) => ({
   base_resp: { status_code: 0, status_msg: "success" },
   model_remains: modelRemains,
@@ -201,8 +207,7 @@ describe("MiniMax provider", () => {
 
     const usage = await fetchMiniMaxTokenPlanUsage(
       {},
-      // SAFETY: This fixture matches the parsed OpenCode auth shape.
-      { "minimax-coding-plan": { key: "auth-mm-key" } } as OpenCodeAuth,
+      { "minimax-coding-plan": { key: "auth-mm-key" } },
       1000
     );
 
@@ -215,19 +220,14 @@ describe("MiniMax provider", () => {
     expect(usage).toMatchObject({ id: "minimax" });
   });
 
-  test.each([
-    ["minimax", { minimax: null }],
-    ["minimax-coding-plan", { "minimax-coding-plan": null }],
-    ["minimax-token-plan", { "minimax-token-plan": null }],
-  ])("rejects missing %s auth layouts", async (_name, auth) => {
-    const rawAuth: unknown = structuredClone(auth);
-    // SAFETY: The fixture simulates malformed JSON loaded from OpenCode auth.
-    const openCodeAuth = rawAuth as OpenCodeAuth;
-
-    await expect(
-      fetchMiniMaxTokenPlanUsage(undefined, openCodeAuth, 1000)
-    ).rejects.toThrow("missing MiniMax key");
-  });
+  test.each(missingAuthCases)(
+    "rejects missing %s auth layouts",
+    async (_name, openCodeAuth) => {
+      await expect(
+        fetchMiniMaxTokenPlanUsage(undefined, openCodeAuth, 1000)
+      ).rejects.toThrow("missing MiniMax key");
+    }
+  );
 
   test("prefers openCodeAuth over the configured apiKey", async () => {
     const fetchMock = installFetchMock(

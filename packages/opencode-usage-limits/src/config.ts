@@ -79,6 +79,7 @@ const authEntryNames = new Set([
   "zai-coding-plan",
 ]);
 const authFields = new Set(["access", "accountId", "apiKey", "key"]);
+const directAuthFieldNames = new Set(["apiKey", "key"]);
 
 const hasMalformedAuthField = (input: JsonValue): boolean => {
   if (!isRecord(input)) {
@@ -133,7 +134,9 @@ export const loadOpenCodeAuth = async (
     }
     const auth = parseOpenCodeAuth(input);
     const malformed = Object.entries(input).some(([key, value]) =>
-      authEntryNames.has(key) ? hasMalformedAuthField(value) : false
+      authEntryNames.has(key)
+        ? hasMalformedAuthField(value)
+        : directAuthFieldNames.has(key) && !isString(value)
     );
     return malformed
       ? {

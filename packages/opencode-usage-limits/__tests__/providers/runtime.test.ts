@@ -246,6 +246,37 @@ describe("provider runtime services", () => {
     expect(result).toStrictEqual({ plan: "pro" });
   });
 
+  test("reads a response with many small chunks", async () => {
+    const whitespace = new Uint8Array([32]);
+    const body = new ReadableStream<Uint8Array>({
+      start: (controller) => {
+        for (let index = 0; index < 20_000; index += 1) {
+          controller.enqueue(whitespace);
+        }
+        controller.enqueue(new TextEncoder().encode("null"));
+        controller.close();
+      },
+    });
+    const layer = makeProviderHttpClient(() =>
+      Promise.resolve(new Response(body, { status: 200 }))
+    );
+
+    const result = await Effect.runPromise(
+      Effect.gen(function* result() {
+        const http = yield* ProviderHttpClient;
+        return yield* http.requestJson({
+          headers: {},
+          method: "GET",
+          providerID: "codex",
+          timeoutMs: 5000,
+          url: "https://example.test/usage",
+        });
+      }).pipe(Effect.provide(layer))
+    );
+
+    expect(result).toBeNull();
+  });
+
   test("classifies commands that cannot be spawned", async () => {
     const result = await Effect.runPromiseExit(
       Effect.gen(function* execute() {
@@ -397,6 +428,7 @@ describe("provider runtime services", () => {
           new ReadableStream<Uint8Array>({
             cancel: () => {
               cancelled = true;
+              return Promise.reject(new Error("cancel failed"));
             },
             start: (controller) => {
               controller.enqueue(new Uint8Array(2 * 1024 * 1024 + 1));

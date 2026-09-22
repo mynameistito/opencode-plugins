@@ -1,10 +1,13 @@
 import { Schema } from "effect";
 
-import { NonNegativeFiniteSchema, providerContext } from "@/errors-shared.ts";
+import {
+  NonNegativeFiniteSchema,
+  providerContext,
+  schemaTaggedError,
+} from "@/errors-shared.ts";
 
 /** Provider rejected a request because its rate limit was reached. */
-// oxlint-disable-next-line unicorn/throw-new-error -- Effect's TaggedError factory creates the error class.
-export class ProviderRateLimitError extends Schema.TaggedError<ProviderRateLimitError>()(
+export class ProviderRateLimitError extends schemaTaggedError<ProviderRateLimitError>()(
   "ProviderRateLimitError",
   {
     ...providerContext,
