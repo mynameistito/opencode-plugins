@@ -1,5 +1,14 @@
 # @mynameistito/opencode-usage-limits
 
+## 1.1.3
+
+### Patch Changes
+
+- 25d34f4: Remove lint suppressions and harden typed boundaries
+- a75eb61: - Update workspace dependencies and fix the force-input test lint error
+  - @opencode/plugin@2.0.14
+- 42f2da3: Align usage-limits tests and TypeScript settings with the repository's Ultracite checks.
+
 ## 1.1.2
 
 ### Patch Changes
