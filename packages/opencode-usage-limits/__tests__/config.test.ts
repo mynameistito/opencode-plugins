@@ -415,4 +415,48 @@ describe("configuration loading", () => {
     expect(credentialValue(auth.openai?.access)).toBe("valid-access");
     expect(auth.openai?.accountId).toBeUndefined();
   });
+
+  test("parses every recognized auth entry and ignores non-object input", () => {
+    const auth = parseOpenCodeAuth({
+      minimax: { key: "minimax" },
+      "minimax-coding-plan": { apiKey: "coding" },
+      "minimax-token-plan": { key: "token-plan" },
+      openai: { accountId: "account" },
+      opencode: { key: "opencode" },
+      "opencode-go": { key: "go" },
+      synthetic: { apiKey: "synthetic" },
+      zai: { key: "zai" },
+      "zai-coding-plan": { key: "zai-plan" },
+    });
+
+    expect([
+      credentialValue(auth.minimax?.key),
+      credentialValue(auth["minimax-coding-plan"]?.apiKey),
+      credentialValue(auth["minimax-token-plan"]?.key),
+      credentialValue(auth.openai?.accountId),
+      credentialValue(auth.opencode?.key),
+      credentialValue(auth["opencode-go"]?.key),
+      credentialValue(auth.synthetic?.apiKey),
+      credentialValue(auth.zai?.key),
+      credentialValue(auth["zai-coding-plan"]?.key),
+    ]).toStrictEqual([
+      "minimax",
+      "coding",
+      "token-plan",
+      "account",
+      "opencode",
+      "go",
+      "synthetic",
+      "zai",
+      "zai-plan",
+    ]);
+    expect(parseOpenCodeAuth(null)).toStrictEqual({});
+  });
+
+  test("rejects invalid and blank credentials at the adapter boundary", () => {
+    expect(credentialValue(null)).toBeUndefined();
+    expect(credentialValue(42)).toBeUndefined();
+    expect(credentialValue("  \t ")).toBeUndefined();
+    expect(credentialValue(Redacted.make("  secret  "))).toBe("secret");
+  });
 });

@@ -1,6 +1,16 @@
 import { describe, expect, test } from "vitest";
 
 import type { ProviderError } from "@/errors.ts";
+import {
+  ConfigDecodeError as ExportedConfigDecodeError,
+  ConfigReadError as ExportedConfigReadError,
+  MissingProviderCredentialsError as ExportedMissingProviderCredentialsError,
+  ProviderCommandError as ExportedProviderCommandError,
+  ProviderRateLimitError as ExportedProviderRateLimitError,
+  ProviderResponseDecodeError as ExportedProviderResponseDecodeError,
+  ProviderTimeoutError as ExportedProviderTimeoutError,
+  ProviderTransportError as ExportedProviderTransportError,
+} from "@/errors.ts";
 import { ProviderCommandError } from "@/errors/command.ts";
 import { ConfigDecodeError } from "@/errors/config-decode.ts";
 import { ConfigReadError } from "@/errors/config-read.ts";
@@ -13,6 +23,39 @@ import { ProviderTransportError } from "@/errors/transport.ts";
 const errorTag = (error: ProviderError): string => error._tag;
 
 describe("provider boundary errors", () => {
+  test("constructs config decode errors with their tagged operations", () => {
+    const error = new ConfigDecodeError({
+      cause: "schema",
+      operation: "parse-config",
+    });
+
+    expect(error._tag).toBe("ConfigDecodeError");
+    expect(error.operation).toBe("parse-config");
+    expect(error.cause).toBe("schema");
+  });
+
+  test("exports the public error classes", () => {
+    expect([
+      ExportedConfigDecodeError,
+      ExportedConfigReadError,
+      ExportedMissingProviderCredentialsError,
+      ExportedProviderCommandError,
+      ExportedProviderRateLimitError,
+      ExportedProviderResponseDecodeError,
+      ExportedProviderTimeoutError,
+      ExportedProviderTransportError,
+    ]).toStrictEqual([
+      ConfigDecodeError,
+      ConfigReadError,
+      MissingProviderCredentialsError,
+      ProviderCommandError,
+      ProviderRateLimitError,
+      ProviderResponseDecodeError,
+      ProviderTimeoutError,
+      ProviderTransportError,
+    ]);
+  });
+
   test("carry stable provider and operation context", () => {
     const errors: readonly ProviderError[] = [
       new ProviderTransportError({
