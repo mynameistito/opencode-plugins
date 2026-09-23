@@ -1,5 +1,12 @@
 # @mynameistito/opencode-usage-limits
 
+## 1.1.4
+
+### Patch Changes
+
+- ac54f1d: Improve usage-limits config and error coverage
+- 423550a: Improve usage-limits provider, coordinator, and plugin coverage while hardening edge-case handling.
+
 ## 1.1.3
 
 ### Patch Changes
