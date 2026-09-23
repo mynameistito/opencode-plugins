@@ -550,15 +550,15 @@ describe("MiniMax provider", () => {
   );
 
   test.each([
-    ["current_interval_status", "1", ["5h", "weekly"]],
-    ["current_weekly_remaining_percent", "70", ["5h"]],
-    ["current_weekly_status", "1", ["5h", "weekly"]],
-    ["model_name", 42, ["5h", "weekly"]],
-    ["remains_time", "1000", ["5h", "weekly"]],
-    ["weekly_remains_time", "2000", ["5h", "weekly"]],
+    ["current_interval_status", "1", ["5h", "weekly"], []],
+    ["current_weekly_remaining_percent", "70", ["5h"], []],
+    ["current_weekly_status", "1", ["5h", "weekly"], []],
+    ["model_name", 42, ["5h", "weekly"], []],
+    ["remains_time", "1000", ["5h", "weekly"], ["5h"]],
+    ["weekly_remains_time", "2000", ["5h", "weekly"], ["weekly"]],
   ] as const)(
     "ignores invalid optional model field: %s",
-    async (field, value, labels) => {
+    async (field, value, labels, nullResetLabels) => {
       installFetchMock(
         Response.json(
           successEnvelope([
@@ -582,6 +582,11 @@ describe("MiniMax provider", () => {
         1000
       );
       expect(usage.windows.map(({ label }) => label)).toStrictEqual(labels);
+      expect(
+        usage.windows
+          .filter(({ resetsAt }) => resetsAt === null)
+          .map(({ label }) => label)
+      ).toStrictEqual(nullResetLabels);
     }
   );
 

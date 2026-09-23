@@ -104,7 +104,7 @@ describe("utility helpers", () => {
     "expands the home prefix in %s paths",
     async (filePath) => {
       await expect(readJsonFile(filePath)).rejects.toMatchObject({
-        path: path.resolve(homedir(), filePath.slice(2)),
+        path: path.join(homedir(), filePath.slice(2)),
       });
     }
   );
