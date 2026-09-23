@@ -139,10 +139,6 @@ const keyFromZaiAuth = (
     value: JsonValue | undefined
   ) => Redacted.Redacted<string> | undefined
 ): Redacted.Redacted<string> | undefined => {
-  if (!isRecord(value)) {
-    return undefined;
-  }
-
   const directKey = credential(value.key);
   if (directKey) {
     return directKey;

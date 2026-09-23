@@ -10,6 +10,7 @@ import type { OpenCodeAuth } from "@/types.ts";
 import { installFetchMock, resetFetchMock } from "./helpers.ts";
 
 const authCases = [
+  ["direct key", { key: "direct-key" }],
   ["direct apiKey", { apiKey: "direct-key" }],
   ["zai-coding-plan", { "zai-coding-plan": { key: "plan-key" } }],
 ] satisfies readonly (readonly [string, OpenCodeAuth])[];
@@ -147,6 +148,24 @@ describe("ZAI provider", () => {
     expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({
       headers: { Authorization: "env-key" },
     });
+  });
+
+  test("ignores malformed optional fields while retaining valid token limits", async () => {
+    installFetchMock(
+      Response.json({
+        data: {
+          limits: [
+            { percentage: 50, type: 42, usage: 10 },
+            { percentage: 50, type: "TOKENS_LIMIT", usage: "invalid" },
+          ],
+        },
+      })
+    );
+
+    const usage = await fetchZaiCodingPlanUsage({ apiKey: "key" }, {}, 1000);
+
+    expect(usage.windows[0]?.quota).toMatchObject({ usedPercent: 50 });
+    expect(usage.tierName).toBeUndefined();
   });
 
   test.each(authCases)(

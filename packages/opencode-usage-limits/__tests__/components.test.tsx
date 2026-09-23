@@ -4,7 +4,7 @@ import { Result } from "effect";
 /* @jsxImportSource @opentui/solid */
 import { describe, expect, test } from "vitest";
 
-import { UsageLimitsPanel } from "@/components.tsx";
+import { BottomUsage, UsageLimitsPanel } from "@/components.tsx";
 import type {
   ProviderDisplayConfig,
   ProviderState,
@@ -74,6 +74,102 @@ const renderPanelText = async (
 };
 
 describe(UsageLimitsPanel, () => {
+  test("renders diagnostics without providers and returns null when fully empty", async () => {
+    const diagnosticSetup = await testRender(
+      () => (
+        <UsageLimitsPanel
+          diagnostics={[{ kind: "config-read", message: "config unavailable" }]}
+          showErrors
+          states={[]}
+          theme={theme}
+          lastRefreshAt={null}
+          providerDisplays={{}}
+        />
+      ),
+      { height: 8, width: 80 }
+    );
+    try {
+      await diagnosticSetup.flush();
+      expect(diagnosticSetup.captureCharFrame()).toContain(
+        "config unavailable"
+      );
+    } finally {
+      diagnosticSetup.renderer.destroy();
+    }
+
+    const emptySetup = await testRender(
+      () => (
+        <UsageLimitsPanel
+          showErrors
+          states={[]}
+          theme={theme}
+          lastRefreshAt={null}
+          providerDisplays={{}}
+        />
+      ),
+      { height: 8, width: 80 }
+    );
+    try {
+      await emptySetup.flush();
+      expect(emptySetup.captureCharFrame()).not.toContain("Usage Limits");
+    } finally {
+      emptySetup.renderer.destroy();
+    }
+  });
+
+  test("renders loading providers and filters cached data with no matching windows", async () => {
+    const text = await renderPanelText(
+      [
+        { id: "codex", label: "Loading", status: "loading" },
+        {
+          id: "zai",
+          label: "Cached",
+          message: "unavailable",
+          previous: usage({ windows: [] }),
+          status: "error",
+        },
+      ],
+      true
+    );
+
+    expect(text).toContain("Loading");
+    expect(text).toContain("loading...");
+    expect(text).not.toContain("Cached");
+  });
+
+  test("chooses warning and error colors at their quota thresholds", async () => {
+    const text = await renderPanelText(
+      [
+        {
+          data: usage({
+            windows: [
+              usageWindow({
+                quota: percentageQuota(
+                  Result.getOrThrow(parseUsagePercentage(70))
+                ),
+              }),
+              usageWindow({
+                label: "critical",
+                quota: percentageQuota(
+                  Result.getOrThrow(parseUsagePercentage(90))
+                ),
+              }),
+            ],
+          }),
+          id: "codex",
+          label: "Codex",
+          stale: false,
+          status: "ready",
+        },
+      ],
+      true
+    );
+
+    expect(text).toContain("critical");
+    expect(text).toContain("70% used");
+    expect(text).toContain("90% used");
+  });
+
   test("renders ready provider windows", async () => {
     const text = await renderPanelText(
       [
@@ -300,5 +396,32 @@ describe(UsageLimitsPanel, () => {
     );
 
     expect(text).toContain("Updated 14:32");
+  });
+
+  test("renders footer usage with legacy theme and an unknown quota", async () => {
+    const legacyTheme = {
+      error: color,
+      success: color,
+      text: color,
+      textMuted: color,
+      warning: color,
+    };
+    const setup = await testRender(
+      () => (
+        <BottomUsage
+          showBar
+          theme={legacyTheme}
+          window={usageWindow({ quota: { _tag: "Unknown" } })}
+        />
+      ),
+      { height: 4, width: 80 }
+    );
+    try {
+      await setup.flush();
+      expect(setup.captureCharFrame()).toContain("5h ?");
+      expect(setup.captureCharFrame()).toContain("[░░░░░░░░]");
+    } finally {
+      setup.renderer.destroy();
+    }
   });
 });

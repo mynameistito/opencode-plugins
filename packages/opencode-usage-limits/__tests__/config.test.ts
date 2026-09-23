@@ -23,8 +23,12 @@ const originalXdgConfigHome = process.env.XDG_CONFIG_HOME;
 const originalXdgDataHome = process.env.XDG_DATA_HOME;
 process.env.XDG_CONFIG_HOME = testXdgConfigHome;
 process.env.XDG_DATA_HOME = testXdgDataHome;
-const { loadConfig, loadOpenCodeAuth, resolveXdgPath } =
-  await import("@/config.ts");
+const {
+  defaultOpenCodeAuthPath,
+  loadConfig,
+  loadOpenCodeAuth,
+  resolveXdgPath,
+} = await import("@/config.ts");
 if (originalXdgConfigHome === undefined) {
   delete process.env.XDG_CONFIG_HOME;
 } else {
@@ -246,6 +250,23 @@ describe("configuration loading", () => {
     );
   });
 
+  test("resolves platform-specific default OpenCode auth locations", () => {
+    const home = path.join(path.sep, "users", "test");
+
+    expect(
+      defaultOpenCodeAuthPath("win32", undefined, "D:/AppData", home)
+    ).toBe(path.join("D:/AppData", "opencode", "auth.json"));
+    expect(defaultOpenCodeAuthPath("win32", undefined, undefined, home)).toBe(
+      path.join(home, "AppData", "Local", "opencode", "auth.json")
+    );
+    expect(defaultOpenCodeAuthPath("linux", undefined, undefined, home)).toBe(
+      path.join(home, ".local", "share", "opencode", "auth.json")
+    );
+    expect(defaultOpenCodeAuthPath("linux", "/xdg/data", undefined, home)).toBe(
+      path.join("/xdg/data", "opencode", "auth.json")
+    );
+  });
+
   test("returns defaults when no user config exists", async () => {
     readJsonFile.mockRejectedValueOnce(
       Object.assign(new Error("missing"), { code: "ENOENT" })
@@ -278,6 +299,15 @@ describe("configuration loading", () => {
     expect(decodeFailure).toBeInstanceOf(ConfigDecodeError);
   });
 
+  test("classifies non-Error loader failures as read errors", async () => {
+    readJsonFile.mockRejectedValueOnce("unexpected config failure");
+    const result = await loadConfig(readJsonFile);
+    expect(Result.isFailure(result)).toBeTruthy();
+    expect(
+      Result.isFailure(result) ? result.failure : undefined
+    ).toBeInstanceOf(ConfigReadError);
+  });
+
   test("loads recognized auth fields as redacted values", async () => {
     readJsonFile.mockResolvedValueOnce({
       ignored: { value: true },
@@ -304,6 +334,8 @@ describe("configuration loading", () => {
   test.each([
     [null, "OpenCode auth has an unsupported format"],
     [[], "OpenCode auth has an unsupported format"],
+    [{ minimax: null }, "Some OpenCode auth fields could not be read"],
+    [{ minimax: [] }, "Some OpenCode auth fields could not be read"],
   ])(
     "reports malformed auth format %p without credentials",
     async (input, message) => {
@@ -327,6 +359,15 @@ describe("configuration loading", () => {
     });
 
     readJsonFile.mockRejectedValueOnce(new Error("permission denied"));
+    await expect(loadOpenCodeAuth(readJsonFile)).resolves.toMatchObject({
+      auth: {},
+      diagnostic: {
+        kind: "auth-read",
+        message: "OpenCode auth could not be read",
+      },
+    });
+
+    readJsonFile.mockRejectedValueOnce("unexpected auth failure");
     await expect(loadOpenCodeAuth(readJsonFile)).resolves.toMatchObject({
       auth: {},
       diagnostic: {

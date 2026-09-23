@@ -98,16 +98,10 @@ const selectUsageForProvider = (
     const displayConfig = providerDisplays[id];
     const requestedWindow: FooterWindow = displayConfig?.footerWindow ?? "auto";
     const footerWindowKind = PROVIDER_REGISTRY[id]?.footerWindowKind;
-    const findForKind = (kind: UsageWindowKind | undefined) => {
-      if (!kind) {
-        return;
-      }
-      return (
-        (kind === "rolling"
-          ? data.windows.find((window) => window.label === "5h")
-          : undefined) ?? data.windows.find((window) => window.kind === kind)
-      );
-    };
+    const findForKind = (kind: UsageWindowKind) =>
+      (kind === "rolling"
+        ? data.windows.find((window) => window.label === "5h")
+        : undefined) ?? data.windows.find((window) => window.kind === kind);
     const requestedKind =
       requestedWindow === "auto" ? footerWindowKind : requestedWindow;
     const requested = findForKind(requestedKind);

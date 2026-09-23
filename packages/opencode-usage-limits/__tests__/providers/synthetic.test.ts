@@ -13,6 +13,11 @@ const authCases = [
   ["direct key", { key: "direct-key" }, "direct-key"],
   ["direct apiKey", { apiKey: "direct-api-key" }, "direct-api-key"],
   ["nested key", { synthetic: { key: "nested-key" } }, "nested-key"],
+  [
+    "nested apiKey",
+    { synthetic: { apiKey: "nested-api-key" } },
+    "nested-api-key",
+  ],
 ] satisfies readonly (readonly [string, OpenCodeAuth, string])[];
 
 describe("Synthetic provider", () => {
@@ -310,6 +315,47 @@ describe("Synthetic provider", () => {
     await expect(
       fetchSyntheticUsage({ apiKey: "syn-key" }, {}, 1000)
     ).rejects.toThrow("invalid Synthetic usage");
+  });
+
+  test("ignores non-object quota buckets and malformed optional fields", async () => {
+    installFetchMock(
+      Response.json({
+        rollingFiveHourLimit: [],
+        subscription: [],
+        weeklyTokenLimit: [],
+      })
+    );
+    await expect(
+      fetchSyntheticUsage({ apiKey: "syn-key" }, {}, 1000)
+    ).rejects.toThrow("invalid Synthetic usage");
+
+    installFetchMock(
+      Response.json({
+        rollingFiveHourLimit: {
+          max: "invalid",
+          nextTickAt: 42,
+          remaining: "invalid",
+        },
+        subscription: { limit: "invalid", renewsAt: 42, requests: "invalid" },
+        weeklyTokenLimit: { nextRegenAt: 42, percentRemaining: "invalid" },
+      })
+    );
+    await expect(
+      fetchSyntheticUsage({ apiKey: "syn-key" }, {}, 1000)
+    ).rejects.toThrow("invalid Synthetic usage");
+  });
+
+  test("uses percentage quotas for fractional rolling counts", async () => {
+    installFetchMock(
+      Response.json({ rollingFiveHourLimit: { max: 2, remaining: 0.5 } })
+    );
+
+    const usage = await fetchSyntheticUsage({ apiKey: "syn-key" }, {}, 1000);
+
+    expect(usage.windows[0]?.quota).toMatchObject({
+      _tag: "Percentage",
+      usedPercent: 75,
+    });
   });
 
   test.each([

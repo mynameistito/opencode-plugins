@@ -75,15 +75,22 @@ export interface UsageLimitsContext {
   };
 }
 
-const productionDependencies: UsageLimitsTuiDependencies = {
-  fetchProvider: (id, config, auth, timeoutMs) =>
-    fetchProviderEffect(id, config, auth, timeoutMs).pipe(
-      Effect.provide(ProviderRuntimeLive)
-    ),
-  loadConfig,
-  loadOpenCodeAuth,
-  now: () => new Date(),
+export const makeProductionDependencies = (
+  loaders?: Pick<UsageLimitsTuiDependencies, "loadConfig" | "loadOpenCodeAuth">
+): UsageLimitsTuiDependencies => {
+  const selectedLoaders = loaders ?? { loadConfig, loadOpenCodeAuth };
+  return {
+    fetchProvider: (id, config, auth, timeoutMs) =>
+      fetchProviderEffect(id, config, auth, timeoutMs).pipe(
+        Effect.provide(ProviderRuntimeLive)
+      ),
+    loadConfig: selectedLoaders.loadConfig,
+    loadOpenCodeAuth: selectedLoaders.loadOpenCodeAuth,
+    now: () => new Date(),
+  };
 };
+
+const productionDependencies = makeProductionDependencies();
 
 /**
  * Creates the OpenCode TUI plugin with explicit runtime dependencies.

@@ -54,6 +54,7 @@ describe("utility helpers", () => {
           "url": "https://example.com//kept",
           "literal": ",}",
           "quoted": "value // kept",
+          "escaped": "quote \" and slash \\ // kept",
           "nested": {
             "enabled": true,
           },
@@ -64,6 +65,7 @@ describe("utility helpers", () => {
       );
 
       await expect(readJsonFile(filePath)).resolves.toStrictEqual({
+        escaped: 'quote " and slash \\ // kept',
         items: [1, 2],
         literal: ",}",
         nested: { enabled: true },
@@ -92,6 +94,14 @@ describe("utility helpers", () => {
     } finally {
       await rm(directory, { force: true, recursive: true });
     }
+  });
+
+  test.each([
+    "~",
+    "~/no-usage-limits-file.json",
+    "~\\no-usage-limits-file.json",
+  ])("expands the home prefix in %s paths", async (filePath) => {
+    await expect(readJsonFile(filePath)).rejects.toBeDefined();
   });
 
   test.each([

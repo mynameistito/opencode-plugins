@@ -25,6 +25,7 @@ export default defineConfig({
   },
   test: {
     coverage: {
+      exclude: ["src/errors.ts", "src/errors/config-decode.ts"],
       provider: "v8",
       reporter: ["text", "lcov"],
       reportsDirectory: "./coverage",

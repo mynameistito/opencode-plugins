@@ -90,6 +90,10 @@ describe("format helpers", () => {
     expect(percentBar(100, 12)).toBe("[████████████]");
   });
 
+  test("keeps a visible block for small positive usage", () => {
+    expect(percentBar(1, 12)).toBe("[█░░░░░░░░░░░]");
+  });
+
   test.each([
     [500, "500"],
     [1000, "1K"],

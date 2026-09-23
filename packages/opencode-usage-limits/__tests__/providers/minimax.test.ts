@@ -28,6 +28,9 @@ describe("MiniMax provider", () => {
 
   test.each([
     ["valid", JSON.stringify({ minimax: { key: "file-key" } }), "file-key"],
+    ["root key", JSON.stringify({ key: "file-key" }), "file-key"],
+    ["root apiKey", JSON.stringify({ apiKey: "file-key" }), "file-key"],
+    ["non-object", "null", "auth-key"],
     ["missing", undefined, "auth-key"],
     ["malformed", "{", "auth-key"],
   ])(
@@ -220,6 +223,36 @@ describe("MiniMax provider", () => {
     expect(usage).toMatchObject({ id: "minimax" });
   });
 
+  test.each([
+    ["direct key", { key: "direct-key" }, "direct-key"],
+    ["direct apiKey", { apiKey: "direct-api-key" }, "direct-api-key"],
+    ["minimax", { minimax: { apiKey: "nested-api-key" } }, "nested-api-key"],
+    [
+      "minimax-coding-plan",
+      { "minimax-coding-plan": { apiKey: "nested-api-key" } },
+      "nested-api-key",
+    ],
+    [
+      "minimax-token-plan",
+      { "minimax-token-plan": { apiKey: "nested-api-key" } },
+      "nested-api-key",
+    ],
+  ] as const)("accepts %s OpenCode auth", async (_name, auth, expectedKey) => {
+    const fetchMock = installFetchMock(
+      Response.json(
+        successEnvelope([
+          { current_interval_remaining_percent: 80, model_name: "general" },
+        ])
+      )
+    );
+
+    await fetchMiniMaxTokenPlanUsage(undefined, auth, 1000);
+
+    expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({
+      headers: { Authorization: `Bearer ${expectedKey}` },
+    });
+  });
+
   test.each(missingAuthCases)(
     "rejects missing %s auth layouts",
     async (_name, openCodeAuth) => {
@@ -228,6 +261,28 @@ describe("MiniMax provider", () => {
       ).rejects.toThrow("missing MiniMax key");
     }
   );
+
+  test("handles present MiniMax auth namespaces without credentials", async () => {
+    await Promise.all([
+      expect(
+        fetchMiniMaxTokenPlanUsage(undefined, { minimax: {} }, 1000)
+      ).rejects.toThrow("missing MiniMax key"),
+      expect(
+        fetchMiniMaxTokenPlanUsage(
+          undefined,
+          { "minimax-coding-plan": {} },
+          1000
+        )
+      ).rejects.toThrow("missing MiniMax key"),
+      expect(
+        fetchMiniMaxTokenPlanUsage(
+          undefined,
+          { "minimax-token-plan": {} },
+          1000
+        )
+      ).rejects.toThrow("missing MiniMax key"),
+    ]);
+  });
 
   test("prefers openCodeAuth over the configured apiKey", async () => {
     const fetchMock = installFetchMock(
@@ -448,6 +503,105 @@ describe("MiniMax provider", () => {
     await expect(
       fetchMiniMaxTokenPlanUsage({ apiKey: "mm-key" }, {}, 1000)
     ).rejects.toThrow("invalid MiniMax usage");
+  });
+
+  test.each([null, undefined])(
+    "accepts successful base_resp with status code %s",
+    async (statusCode) => {
+      installFetchMock(
+        Response.json({
+          base_resp: { status_code: statusCode, status_msg: "success" },
+          model_remains: [
+            { current_interval_remaining_percent: 80, model_name: "general" },
+          ],
+        })
+      );
+
+      await expect(
+        fetchMiniMaxTokenPlanUsage({ apiKey: "mm-key" }, {}, 1000)
+      ).resolves.toMatchObject({ id: "minimax" });
+    }
+  );
+
+  test("rejects model fields whose response types are invalid", async () => {
+    installFetchMock(
+      Response.json(
+        successEnvelope([
+          {
+            current_interval_remaining_percent: "80",
+            current_interval_status: "1",
+            current_weekly_remaining_percent: "70",
+            current_weekly_status: "1",
+            model_name: 42,
+            remains_time: "1000",
+            weekly_remains_time: "2000",
+          },
+        ])
+      )
+    );
+
+    await expect(
+      fetchMiniMaxTokenPlanUsage({ apiKey: "mm-key" }, {}, 1000)
+    ).rejects.toThrow("invalid MiniMax usage");
+  });
+
+  test("rejects a successful envelope without selectable model entries", async () => {
+    installFetchMock(Response.json(successEnvelope([])));
+
+    await expect(
+      fetchMiniMaxTokenPlanUsage({ apiKey: "mm-key" }, {}, 1000)
+    ).rejects.toThrow("invalid MiniMax usage");
+  });
+
+  test("rejects a malformed base response status message", async () => {
+    installFetchMock(
+      Response.json({
+        base_resp: { status_code: 0, status_msg: 42 },
+        model_remains: [
+          { current_interval_remaining_percent: 80, model_name: "general" },
+        ],
+      })
+    );
+
+    await expect(
+      fetchMiniMaxTokenPlanUsage({ apiKey: "mm-key" }, {}, 1000)
+    ).rejects.toThrow("invalid MiniMax usage");
+  });
+
+  test("rejects a response without a base response envelope", async () => {
+    installFetchMock(
+      Response.json({
+        model_remains: [
+          { current_interval_remaining_percent: 80, model_name: "general" },
+        ],
+      })
+    );
+
+    await expect(
+      fetchMiniMaxTokenPlanUsage({ apiKey: "mm-key" }, {}, 1000)
+    ).rejects.toThrow("invalid MiniMax usage");
+  });
+
+  test("accepts a weekly quota without a reported reset countdown", async () => {
+    installFetchMock(
+      Response.json(
+        successEnvelope([
+          {
+            current_interval_remaining_percent: 80,
+            current_weekly_remaining_percent: 60,
+            model_name: "general",
+          },
+        ])
+      )
+    );
+
+    const usage = await fetchMiniMaxTokenPlanUsage(
+      { apiKey: "mm-key" },
+      {},
+      1000
+    );
+
+    expect(usage.windows[1]?.resetsAt).toBeNull();
   });
 
   test("hides the weekly window when the model is not in the weekly plan", async () => {

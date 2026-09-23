@@ -3,13 +3,17 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 
-import { Effect, Exit } from "effect";
+import { Effect, Exit, Redacted } from "effect";
 import { afterEach, describe, expect, test } from "vitest";
 
 import {
   ProviderCommandExecutor,
   ProviderCommandExecutorLive,
 } from "@/providers/runtime/command.ts";
+import {
+  ProviderEnvironment,
+  ProviderEnvironmentLive,
+} from "@/providers/runtime/environment.ts";
 import {
   ProviderFileSystem,
   ProviderFileSystemLive,
@@ -58,6 +62,40 @@ describe("provider runtime services", () => {
     );
   });
 
+  test("normalizes redacted, blank, and environment-backed credentials", async () => {
+    const variable = "OC_USAGE_LIMITS_RUNTIME_TEST_KEY";
+    const original = process.env[variable];
+    process.env[variable] = "  environment secret  ";
+    try {
+      const credentials = await Effect.runPromise(
+        Effect.gen(function* readCredentials() {
+          const environment = yield* ProviderEnvironment;
+          return {
+            blank: environment.credential(" \t "),
+            environment: environment.resolveCredential(`{env:${variable}}`),
+            invalid: environment.credential(42),
+            redacted: environment.credential(Redacted.make("  secret  ")),
+          };
+        }).pipe(Effect.provide(ProviderEnvironmentLive))
+      );
+
+      expect(credentials.blank).toBeUndefined();
+      expect(
+        credentials.environment && Redacted.value(credentials.environment)
+      ).toBe("environment secret");
+      expect(credentials.invalid).toBeUndefined();
+      expect(credentials.redacted && Redacted.value(credentials.redacted)).toBe(
+        "secret"
+      );
+    } finally {
+      if (original === undefined) {
+        Reflect.deleteProperty(process.env, variable);
+      } else {
+        process.env[variable] = original;
+      }
+    }
+  });
+
   test("rejects oversized provider auth files before reading their contents", async () => {
     const file = path.join(
       tmpdir(),
@@ -104,6 +142,25 @@ describe("provider runtime services", () => {
     expect(result).toBe(content);
   });
 
+  test("stops reading at the maximum auth-file buffer size", async () => {
+    const file = path.join(
+      tmpdir(),
+      `oc-usage-limits-${crypto.randomUUID()}.json`
+    );
+    temporaryFiles.push(file);
+    const content = `{${" ".repeat(1024 * 1024 - 2)}}`;
+    await writeFile(file, content);
+
+    const result = await Effect.runPromise(
+      Effect.gen(function* result() {
+        const files = yield* ProviderFileSystem;
+        return yield* files.readText({ path: file, providerID: "codex" });
+      }).pipe(Effect.provide(ProviderFileSystemLive))
+    );
+
+    expect(result).toHaveLength(1024 * 1024);
+  });
+
   test("decodes bounded HTTP JSON and classifies malformed bodies", async () => {
     const layer = makeProviderHttpClient(() =>
       Promise.resolve(new Response("not-json", { status: 200 }))
@@ -125,6 +182,26 @@ describe("provider runtime services", () => {
     const cause = Exit.isFailure(result) ? result.cause : undefined;
     expect(Exit.isFailure(result)).toBeTruthy();
     expect(cause).toBeDefined();
+  });
+
+  test("handles a successful response without a body", async () => {
+    const layer = makeProviderHttpClient(() =>
+      Promise.resolve(new Response(null, { status: 200 }))
+    );
+    const result = await Effect.runPromise(
+      Effect.gen(function* request() {
+        const http = yield* ProviderHttpClient;
+        return yield* http.requestJson({
+          headers: {},
+          method: "GET",
+          providerID: "codex",
+          timeoutMs: 1000,
+          url: "https://example.test/usage",
+        });
+      }).pipe(Effect.provide(layer), Effect.exit)
+    );
+
+    expect(Exit.isFailure(result)).toBeTruthy();
   });
 
   test("cancels a response rejected by its declared size", async () => {
@@ -186,6 +263,65 @@ describe("provider runtime services", () => {
 
     expect(Exit.isFailure(result)).toBeTruthy();
     expect(cancelled).toBeTruthy();
+  });
+
+  test("ignores malformed Retry-After values on rate-limited responses", async () => {
+    const layer = makeProviderHttpClient(() =>
+      Promise.resolve(
+        new Response(new ReadableStream<Uint8Array>(), {
+          headers: { "retry-after": "later" },
+          status: 429,
+        })
+      )
+    );
+
+    const result = await Effect.runPromise(
+      Effect.gen(function* request() {
+        const http = yield* ProviderHttpClient;
+        return yield* http.requestJson({
+          headers: {},
+          method: "GET",
+          providerID: "codex",
+          timeoutMs: 1000,
+          url: "https://example.test/usage",
+        });
+      }).pipe(Effect.provide(layer), Effect.exit)
+    );
+
+    const cause = JSON.stringify(
+      Exit.isFailure(result) ? result.cause : undefined
+    );
+    expect(cause).toContain('"_tag":"ProviderRateLimitError"');
+    expect(cause).not.toContain("retryAfterMs");
+  });
+
+  test("converts valid Retry-After seconds to milliseconds", async () => {
+    const layer = makeProviderHttpClient(() =>
+      Promise.resolve(
+        new Response("", {
+          headers: { "retry-after": "2.5" },
+          status: 429,
+        })
+      )
+    );
+
+    const result = await Effect.runPromise(
+      Effect.gen(function* request() {
+        const http = yield* ProviderHttpClient;
+        return yield* http.requestJson({
+          headers: {},
+          method: "GET",
+          providerID: "codex",
+          timeoutMs: 1000,
+          url: "https://example.test/usage",
+        });
+      }).pipe(Effect.provide(layer), Effect.exit)
+    );
+
+    const cause = JSON.stringify(
+      Exit.isFailure(result) ? result.cause : undefined
+    );
+    expect(cause).toContain('"retryAfterMs":2500');
   });
 
   test("cancels a non-success response body", async () => {
@@ -390,6 +526,38 @@ describe("provider runtime services", () => {
     const cause = Exit.isFailure(result) ? result.cause : undefined;
     expect(Exit.isFailure(result)).toBeTruthy();
     expect(cause).toBeDefined();
+  });
+
+  test("cancels an in-flight response reader when its request times out", async () => {
+    let cancelled = false;
+    const layer = makeProviderHttpClient(() =>
+      Promise.resolve(
+        new Response(
+          new ReadableStream<Uint8Array>({
+            cancel: () => {
+              cancelled = true;
+            },
+          }),
+          { status: 200 }
+        )
+      )
+    );
+
+    const result = await Effect.runPromise(
+      Effect.gen(function* request() {
+        const http = yield* ProviderHttpClient;
+        return yield* http.requestJson({
+          headers: {},
+          method: "GET",
+          providerID: "codex",
+          timeoutMs: 1,
+          url: "https://example.test/usage",
+        });
+      }).pipe(Effect.provide(layer), Effect.exit)
+    );
+
+    expect(Exit.isFailure(result)).toBeTruthy();
+    expect(cancelled).toBeTruthy();
   });
 
   test.each([

@@ -135,6 +135,28 @@ describe("OpenCode GO provider", () => {
     });
   });
 
+  test("parses only well-typed optional usage window fields", async () => {
+    installFetchMock(
+      Response.json({
+        usage: {
+          monthly: null,
+          rolling: { percent: "invalid", resetsAt: 42 },
+          weekly: { percent: 5, resetsAt: "not-a-date" },
+        },
+      })
+    );
+
+    const usage = await fetchOpenCodeGoUsage(
+      { apiKey: "configured-key", baseUrl: "https://custom.example" },
+      {},
+      1000
+    );
+
+    expect(usage.windows).toMatchObject([
+      { kind: "weekly", quota: { usedPercent: 5 }, resetsAt: null },
+    ]);
+  });
+
   test("rejects missing credentials", async () => {
     await expect(fetchOpenCodeGoUsage(undefined, {}, 1000)).rejects.toThrow(
       "missing OpenCode GO key"

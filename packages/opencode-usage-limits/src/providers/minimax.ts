@@ -66,10 +66,6 @@ const keyFromMiniMaxAuth = (
     value: JsonValue | undefined
   ) => Redacted.Redacted<string> | undefined
 ): Redacted.Redacted<string> | undefined => {
-  if (!isRecord(value)) {
-    return undefined;
-  }
-
   const directKey = credential(value.key);
   if (directKey) {
     return directKey;
@@ -171,9 +167,6 @@ const minimaxFiveHourWindow = (
   }
 
   const parsedUsed = parseUsagePercentage(100 - parsedRemaining.success);
-  if (Result.isFailure(parsedUsed)) {
-    return null;
-  }
   const remainsMs = entry.remains_time;
   const resetsAt = resetInstantOrNull(
     remainsMs === undefined ? null : new Date(now.getTime() + remainsMs)
@@ -181,7 +174,7 @@ const minimaxFiveHourWindow = (
   return {
     kind: "rolling",
     label: "5h",
-    quota: percentageQuota(parsedUsed.success),
+    quota: percentageQuota(Result.getOrThrow(parsedUsed)),
     resetsAt,
   };
 };
@@ -211,9 +204,6 @@ const minimaxWeeklyWindow = (
   }
 
   const parsedUsed = parseUsagePercentage(100 - parsedRemaining.success);
-  if (Result.isFailure(parsedUsed)) {
-    return null;
-  }
   const remainsMs = entry.weekly_remains_time;
   const resetsAt = resetInstantOrNull(
     remainsMs === undefined ? null : new Date(now.getTime() + remainsMs)
@@ -221,7 +211,7 @@ const minimaxWeeklyWindow = (
   return {
     kind: "weekly",
     label: "weekly",
-    quota: percentageQuota(parsedUsed.success),
+    quota: percentageQuota(Result.getOrThrow(parsedUsed)),
     resetsAt,
   };
 };

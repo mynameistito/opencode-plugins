@@ -5,6 +5,11 @@ import { describe, expect, test } from "vitest";
 
 import { usageCoordinator } from "@/coordinator.ts";
 import type { CoordinatorSnapshot } from "@/coordinator.ts";
+import {
+  ConfigDecodeError,
+  ConfigReadError,
+  MissingProviderCredentialsError,
+} from "@/errors.ts";
 import type { ProviderError } from "@/errors.ts";
 import type {
   ProviderID,
@@ -32,6 +37,10 @@ const usage = <ID extends ProviderID>(id: ID): ProviderUsage<ID> => ({
   windows: [],
 });
 
+const successfulConfig = (
+  value: ResolvedUsageLimitsConfig
+): Result.Result<ResolvedUsageLimitsConfig, unknown> => Result.succeed(value);
+
 const dependencies = (
   fetchProvider: <ID extends ProviderID>(
     id: ID
@@ -56,7 +65,7 @@ const dependencies = (
             fetches.push(id);
           })
         ),
-      loadConfig: Effect.succeed(Result.succeed(initialConfig)),
+      loadConfig: Effect.succeed(successfulConfig(initialConfig)),
       loadOpenCodeAuth: Effect.succeed({ auth: {} }),
       now: Effect.succeed(new Date("2026-08-14T12:01:00.000Z")),
       publish: (snapshot: CoordinatorSnapshot) =>
@@ -79,6 +88,93 @@ const dependencies = (
 const yieldToEventLoop = () => delay(0);
 
 describe("usage coordinator", () => {
+  test("propagates interruption while loading config", async () => {
+    const harness = dependencies((id) => Effect.succeed(usage(id)));
+    harness.dependencies.loadConfig = Effect.interrupt;
+    const fiber = Effect.runFork(
+      Effect.scoped(usageCoordinator(harness.dependencies))
+    );
+
+    await Effect.runPromise(Fiber.await(fiber));
+
+    expect(harness.snapshots).toStrictEqual([]);
+  });
+
+  test("propagates interruption while loading auth", async () => {
+    const harness = dependencies((id) => Effect.succeed(usage(id)));
+    harness.dependencies.loadOpenCodeAuth = Effect.interrupt;
+    const fiber = Effect.runFork(
+      Effect.scoped(usageCoordinator(harness.dependencies))
+    );
+
+    await Effect.runPromise(Fiber.await(fiber));
+
+    expect(harness.snapshots).toStrictEqual([["loading", "loading"]]);
+  });
+
+  test.each([
+    [
+      "decode",
+      new ConfigDecodeError({ cause: "schema", operation: "parse-config" }),
+      "config-decode",
+    ],
+    [
+      "read",
+      new ConfigReadError({
+        cause: "filesystem",
+        operation: "read-config",
+        path: "usage-limits.jsonc",
+      }),
+      "config-read",
+    ],
+  ] as const)(
+    "publishes a %s config diagnostic",
+    async (_label, error, kind) => {
+      const harness = dependencies((id) => Effect.succeed(usage(id)));
+      harness.dependencies.loadConfig = Effect.succeed(Result.fail(error));
+      const snapshots: CoordinatorSnapshot[] = [];
+      harness.dependencies.publish = (snapshot) =>
+        Effect.sync(() => {
+          snapshots.push(snapshot);
+        });
+      const fiber = Effect.runFork(
+        Effect.scoped(usageCoordinator(harness.dependencies))
+      );
+
+      await yieldToEventLoop();
+
+      expect(snapshots[0]?.diagnostics[0]?.kind).toBe(kind);
+      await Effect.runPromise(Fiber.interrupt(fiber));
+    }
+  );
+
+  test("labels missing provider credentials in the published state", async () => {
+    const harness = dependencies(() =>
+      Effect.fail(
+        new MissingProviderCredentialsError({
+          operation: "fetch-usage",
+          providerID: "codex",
+        })
+      )
+    );
+    const snapshots: CoordinatorSnapshot[] = [];
+    harness.dependencies.publish = (snapshot) =>
+      Effect.sync(() => {
+        snapshots.push(snapshot);
+      });
+    const fiber = Effect.runFork(
+      Effect.scoped(usageCoordinator(harness.dependencies))
+    );
+
+    await yieldToEventLoop();
+
+    expect(snapshots.at(-1)?.states).toMatchObject([
+      { errorKind: "missing_credentials", status: "error" },
+      { errorKind: "missing_credentials", status: "error" },
+    ]);
+    await Effect.runPromise(Fiber.interrupt(fiber));
+  });
+
   test("publishes loading before concurrent providers reach terminal state", async () => {
     const gates = new Map<ProviderID, Deferred.Deferred<boolean>>();
     const harness = dependencies((id) =>
