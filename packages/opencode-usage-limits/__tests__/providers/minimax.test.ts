@@ -523,27 +523,67 @@ describe("MiniMax provider", () => {
     }
   );
 
-  test("rejects model fields whose response types are invalid", async () => {
-    installFetchMock(
-      Response.json(
-        successEnvelope([
-          {
-            current_interval_remaining_percent: "80",
-            current_interval_status: "1",
-            current_weekly_remaining_percent: "70",
-            current_weekly_status: "1",
-            model_name: 42,
-            remains_time: "1000",
-            weekly_remains_time: "2000",
-          },
-        ])
-      )
-    );
+  test.each([["current_interval_remaining_percent", "80"]])(
+    "rejects invalid required model field: %s",
+    async (field, value) => {
+      installFetchMock(
+        Response.json(
+          successEnvelope([
+            {
+              current_interval_remaining_percent: 80,
+              current_interval_status: 1,
+              current_weekly_remaining_percent: 70,
+              current_weekly_status: 1,
+              model_name: "general",
+              remains_time: 1000,
+              weekly_remains_time: 2000,
+              [field]: value,
+            },
+          ])
+        )
+      );
 
-    await expect(
-      fetchMiniMaxTokenPlanUsage({ apiKey: "mm-key" }, {}, 1000)
-    ).rejects.toThrow("invalid MiniMax usage");
-  });
+      await expect(
+        fetchMiniMaxTokenPlanUsage({ apiKey: "mm-key" }, {}, 1000)
+      ).rejects.toThrow("invalid MiniMax usage");
+    }
+  );
+
+  test.each([
+    ["current_interval_status", "1", ["5h", "weekly"]],
+    ["current_weekly_remaining_percent", "70", ["5h"]],
+    ["current_weekly_status", "1", ["5h", "weekly"]],
+    ["model_name", 42, ["5h", "weekly"]],
+    ["remains_time", "1000", ["5h", "weekly"]],
+    ["weekly_remains_time", "2000", ["5h", "weekly"]],
+  ] as const)(
+    "ignores invalid optional model field: %s",
+    async (field, value, labels) => {
+      installFetchMock(
+        Response.json(
+          successEnvelope([
+            {
+              current_interval_remaining_percent: 80,
+              current_interval_status: 1,
+              current_weekly_remaining_percent: 70,
+              current_weekly_status: 1,
+              model_name: "general",
+              remains_time: 1000,
+              weekly_remains_time: 2000,
+              [field]: value,
+            },
+          ])
+        )
+      );
+
+      const usage = await fetchMiniMaxTokenPlanUsage(
+        { apiKey: "mm-key" },
+        {},
+        1000
+      );
+      expect(usage.windows.map(({ label }) => label)).toStrictEqual(labels);
+    }
+  );
 
   test("rejects a successful envelope without selectable model entries", async () => {
     installFetchMock(Response.json(successEnvelope([])));

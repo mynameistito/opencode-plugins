@@ -178,20 +178,21 @@ describe("Qwen provider", () => {
   });
 
   test.each([
-    ["unwrapped payload", "[]"],
-    ["missing token plan", "{}"],
+    ["unwrapped payload", "[]", "decode"],
+    ["missing token plan", "{}", "schema"],
     [
       "invalid usage percentage",
       JSON.stringify({ token_plan: { subscribed: true, usedPct: "75" } }),
+      "schema",
     ],
-  ])("rejects a %s", async (_label, output) => {
+  ])("rejects a %s", async (_label, output, cause) => {
     const { runtime } = createRuntime(authenticated, output);
 
     const exit = await fetchUsageExit(runtime);
 
-    expect(expectFailure(exit, "ProviderResponseDecodeError")).toContain(
-      '"operation":"decode-response"'
-    );
+    const serialized = expectFailure(exit, "ProviderResponseDecodeError");
+    expect(serialized).toContain('"operation":"decode-response"');
+    expect(serialized).toContain(`"cause":"${cause}"`);
   });
 
   test("omits an invalid reset timestamp", async () => {
@@ -220,7 +221,7 @@ describe("Qwen provider", () => {
     const usage = await fetchUsage(runtime);
 
     expect(usage.windows[0]?.quota).toMatchObject({ usedPercent: 15 });
-    expect(usage.tierName).toBeUndefined();
+    expect(usage.label).toBe("Qwen Token Plan");
   });
 
   test.each([

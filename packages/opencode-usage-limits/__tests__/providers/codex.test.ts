@@ -140,22 +140,35 @@ describe("Codex provider", () => {
   });
 
   test("uses the default Codex auth path when no fallback credential is configured", async () => {
+    const paths: string[] = [];
     const files = Layer.succeed(ProviderFileSystem, {
       readJson: (input) =>
-        Effect.fail(
-          new ProviderTransportError({
-            cause: "filesystem",
-            operation: "read-auth",
-            providerID: input.providerID,
-          })
+        Effect.sync(() => {
+          paths.push(input.path);
+        }).pipe(
+          Effect.flatMap(() =>
+            Effect.fail(
+              new ProviderTransportError({
+                cause: "filesystem",
+                operation: "read-auth",
+                providerID: input.providerID,
+              })
+            )
+          )
         ),
       readText: (input) =>
-        Effect.fail(
-          new ProviderTransportError({
-            cause: "filesystem",
-            operation: "read-auth",
-            providerID: input.providerID,
-          })
+        Effect.sync(() => {
+          paths.push(input.path);
+        }).pipe(
+          Effect.flatMap(() =>
+            Effect.fail(
+              new ProviderTransportError({
+                cause: "filesystem",
+                operation: "read-auth",
+                providerID: input.providerID,
+              })
+            )
+          )
         ),
     });
     const exit = await Effect.runPromiseExit(
@@ -174,6 +187,7 @@ describe("Codex provider", () => {
     );
 
     expect(Exit.isFailure(exit)).toBeTruthy();
+    expect(paths).toContain("~/.codex/auth.json");
   });
 
   test("rejects auth files without a token object or complete credentials", async () => {

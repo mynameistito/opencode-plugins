@@ -227,7 +227,7 @@ describe("session helpers", () => {
           capturedAt: new Date(),
           id: "codex",
           label: "Codex",
-          windows: [window("daily")],
+          windows: [window("weekly")],
         },
         id: "codex",
         label: "Codex",
@@ -245,7 +245,7 @@ describe("session helpers", () => {
           sidebarWindow: "all",
         },
       })?.label
-    ).toBe("daily");
+    ).toBe("weekly");
     expect(usageProviderFor(states, "openai")).toBe("codex");
   });
 

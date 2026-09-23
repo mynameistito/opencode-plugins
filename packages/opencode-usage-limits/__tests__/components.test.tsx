@@ -137,7 +137,7 @@ describe(UsageLimitsPanel, () => {
     expect(text).not.toContain("Cached");
   });
 
-  test("chooses warning and error colors at their quota thresholds", async () => {
+  test("renders windows at warning and error quota percentages", async () => {
     const text = await renderPanelText(
       [
         {

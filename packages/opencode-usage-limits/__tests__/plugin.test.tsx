@@ -352,7 +352,7 @@ describe("usage-limits TUI lifecycle", () => {
     ).resolves.not.toContain("42%");
   });
 
-  test("uses the footer's default bar setting when no provider is selected", async () => {
+  test("hides footer usage when the session has no provider selected", async () => {
     const harness = createHarness();
     const registered = await initialize(harness);
     harness.setSessionModelProviderID("");

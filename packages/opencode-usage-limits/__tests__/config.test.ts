@@ -262,8 +262,9 @@ describe("configuration loading", () => {
     expect(defaultOpenCodeAuthPath("linux", undefined, undefined, home)).toBe(
       path.join(home, ".local", "share", "opencode", "auth.json")
     );
-    expect(defaultOpenCodeAuthPath("linux", "/xdg/data", undefined, home)).toBe(
-      path.join("/xdg/data", "opencode", "auth.json")
+    const xdgData = path.resolve(path.sep, "xdg", "data");
+    expect(defaultOpenCodeAuthPath("linux", xdgData, undefined, home)).toBe(
+      path.join(xdgData, "opencode", "auth.json")
     );
   });
 
