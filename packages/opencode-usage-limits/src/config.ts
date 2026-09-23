@@ -30,15 +30,28 @@ const CONFIG_PATH = path.join(
   "usage-limits.jsonc"
 );
 /** Default OpenCode auth path shared by installed providers. */
-const OPENCODE_AUTH_PATH = path.join(
-  resolveXdgPath(
-    process.env.XDG_DATA_HOME,
-    process.platform === "win32"
-      ? (process.env.LOCALAPPDATA ?? path.join(homedir(), "AppData", "Local"))
-      : path.join(homedir(), ".local", "share")
-  ),
-  "opencode",
-  "auth.json"
+/** Resolves the default OpenCode auth-file path for a runtime platform. */
+export const defaultOpenCodeAuthPath = (
+  platform: string,
+  dataHome: string | undefined,
+  localAppData: string | undefined,
+  home: string
+): string =>
+  path.join(
+    resolveXdgPath(
+      dataHome,
+      platform === "win32"
+        ? (localAppData ?? path.join(home, "AppData", "Local"))
+        : path.join(home, ".local", "share")
+    ),
+    "opencode",
+    "auth.json"
+  );
+const OPENCODE_AUTH_PATH = defaultOpenCodeAuthPath(
+  process.platform,
+  process.env.XDG_DATA_HOME,
+  process.env.LOCALAPPDATA,
+  homedir()
 );
 
 /** Fully resolved defaults used when no plugin config exists. */

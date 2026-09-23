@@ -1,7 +1,11 @@
 import { Result } from "effect";
 import { describe, expect, test } from "vitest";
 
-import { currentProviderID, usageForProvider } from "@/session.ts";
+import {
+  currentProviderID,
+  usageForProvider,
+  usageProviderFor,
+} from "@/session.ts";
 import type { ProviderState, UsageWindow } from "@/types.ts";
 import {
   parseUsagePercentage,
@@ -65,6 +69,16 @@ describe("session helpers", () => {
     expect(
       currentProviderID([null, [], { model: null }, { providerID: 1 }])
     ).toBeUndefined();
+  });
+
+  test("finds provider ids in fallback message fields", () => {
+    expect(currentProviderID([{ info: {}, providerID: "openai" }])).toBe(
+      "openai"
+    );
+    expect(
+      currentProviderID([{ info: {}, model: { providerID: "zai" } }])
+    ).toBe("zai");
+    expect(currentProviderID([])).toBeUndefined();
   });
 
   test("selects Codex usage for OpenAI sessions and prefers the 5h window", () => {
@@ -203,6 +217,83 @@ describe("session helpers", () => {
         "openai"
       )
     ).toBeNull();
+    expect(usageProviderFor([], "unknown-provider")).toBeNull();
+  });
+
+  test("falls back to the first window when a requested window is unavailable", () => {
+    const states: ProviderState[] = [
+      {
+        data: {
+          capturedAt: new Date(),
+          id: "codex",
+          label: "Codex",
+          windows: [window("weekly")],
+        },
+        id: "codex",
+        label: "Codex",
+        stale: false,
+        status: "ready",
+      },
+    ];
+
+    expect(
+      usageForProvider(states, "openai", {
+        codex: {
+          footerWindow: "monthly",
+          showFooterBar: true,
+          showSidebarBar: true,
+          sidebarWindow: "all",
+        },
+      })?.label
+    ).toBe("weekly");
+    expect(usageProviderFor(states, "openai")).toBe("codex");
+  });
+
+  test("falls back to the provider's preferred kind before the first window", () => {
+    const states: ProviderState[] = [
+      {
+        data: {
+          capturedAt: new Date(),
+          id: "codex",
+          label: "Codex",
+          windows: [window("weekly"), window("rolling")],
+        },
+        id: "codex",
+        label: "Codex",
+        stale: false,
+        status: "ready",
+      },
+    ];
+
+    expect(
+      usageForProvider(states, "openai", {
+        codex: {
+          footerWindow: "monthly",
+          showFooterBar: true,
+          showSidebarBar: true,
+          sidebarWindow: "all",
+        },
+      })?.label
+    ).toBe("rolling");
+  });
+
+  test("returns no selected window when the active provider has no windows", () => {
+    const states: ProviderState[] = [
+      {
+        data: {
+          capturedAt: new Date(),
+          id: "codex",
+          label: "Codex",
+          windows: [],
+        },
+        id: "codex",
+        label: "Codex",
+        stale: false,
+        status: "ready",
+      },
+    ];
+
+    expect(usageProviderFor(states, "openai")).toBeNull();
   });
 
   test("does not use another provider when the session provider is unavailable", () => {

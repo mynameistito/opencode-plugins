@@ -178,6 +178,53 @@ describe("Qwen provider", () => {
   });
 
   test.each([
+    ["unwrapped payload", "[]", "decode"],
+    ["missing token plan", "{}", "schema"],
+    [
+      "invalid usage percentage",
+      JSON.stringify({ token_plan: { subscribed: true, usedPct: "75" } }),
+      "schema",
+    ],
+  ])("rejects a %s", async (_label, output, cause) => {
+    const { runtime } = createRuntime(authenticated, output);
+
+    const exit = await fetchUsageExit(runtime);
+
+    const serialized = expectFailure(exit, "ProviderResponseDecodeError");
+    expect(serialized).toContain('"operation":"decode-response"');
+    expect(serialized).toContain(`"cause":"${cause}"`);
+  });
+
+  test("omits an invalid reset timestamp", async () => {
+    const { runtime } = createRuntime(
+      authenticated,
+      JSON.stringify({
+        token_plan: {
+          resetDate: "not-a-date",
+          subscribed: true,
+          usedPct: 20,
+        },
+      })
+    );
+
+    const usage = await fetchUsage(runtime);
+
+    expect(usage.windows[0]?.resetsAt).toBeNull();
+  });
+
+  test("accepts a token plan without optional string or count fields", async () => {
+    const { runtime } = createRuntime(
+      authenticated,
+      JSON.stringify({ token_plan: { subscribed: true, usedPct: 15 } })
+    );
+
+    const usage = await fetchUsage(runtime);
+
+    expect(usage.windows[0]?.quota).toMatchObject({ usedPercent: 15 });
+    expect(usage.label).toBe("Qwen Token Plan");
+  });
+
+  test.each([
     [
       "command failure",
       new ProviderCommandError({

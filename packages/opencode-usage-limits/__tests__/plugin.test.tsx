@@ -352,6 +352,16 @@ describe("usage-limits TUI lifecycle", () => {
     ).resolves.not.toContain("42%");
   });
 
+  test("hides footer usage when the session has no provider selected", async () => {
+    const harness = createHarness();
+    const registered = await initialize(harness);
+    harness.setSessionModelProviderID("");
+
+    await expect(
+      renderSlot(registered, "prompt.footer.status")
+    ).resolves.not.toContain("42%");
+  });
+
   test("uses safe defaults when typed config parsing fails", async () => {
     const harness = createHarness();
     harness.state.configError = new ConfigDecodeError({

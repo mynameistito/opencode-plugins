@@ -2,9 +2,15 @@ import { rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
+import { Effect, Exit, Layer } from "effect";
 import { afterEach, describe, expect, test } from "vitest";
 
-import { fetchCodexUsage } from "@/providers/codex.ts";
+import { ProviderTransportError } from "@/errors.ts";
+import { codexProvider, fetchCodexUsage } from "@/providers/codex.ts";
+import { ProviderCommandExecutorLive } from "@/providers/runtime/command.ts";
+import { ProviderEnvironmentLive } from "@/providers/runtime/environment.ts";
+import { ProviderFileSystem } from "@/providers/runtime/filesystem.ts";
+import { ProviderHttpClientLive } from "@/providers/runtime/http.ts";
 
 import { installFetchMock, resetFetchMock } from "./helpers.ts";
 
@@ -131,6 +137,201 @@ describe("Codex provider", () => {
     await expect(fetchCodexUsage({ authPath }, {}, 1000)).rejects.toThrow(
       "provider request failed"
     );
+  });
+
+  test("uses the default Codex auth path when no fallback credential is configured", async () => {
+    const paths: string[] = [];
+    const files = Layer.succeed(ProviderFileSystem, {
+      readJson: (input) =>
+        Effect.sync(() => {
+          paths.push(input.path);
+        }).pipe(
+          Effect.flatMap(() =>
+            Effect.fail(
+              new ProviderTransportError({
+                cause: "filesystem",
+                operation: "read-auth",
+                providerID: input.providerID,
+              })
+            )
+          )
+        ),
+      readText: (input) =>
+        Effect.sync(() => {
+          paths.push(input.path);
+        }).pipe(
+          Effect.flatMap(() =>
+            Effect.fail(
+              new ProviderTransportError({
+                cause: "filesystem",
+                operation: "read-auth",
+                providerID: input.providerID,
+              })
+            )
+          )
+        ),
+    });
+    const exit = await Effect.runPromiseExit(
+      codexProvider
+        .fetch(undefined, {}, 1000)
+        .pipe(
+          Effect.provide(
+            Layer.mergeAll(
+              files,
+              ProviderCommandExecutorLive,
+              ProviderEnvironmentLive,
+              ProviderHttpClientLive
+            )
+          )
+        )
+    );
+
+    expect(Exit.isFailure(exit)).toBeTruthy();
+    expect(paths).toContain("~/.codex/auth.json");
+  });
+
+  test("rejects auth files without a token object or complete credentials", async () => {
+    const authPath = path.join(
+      tmpdir(),
+      `oc-usage-limits-${crypto.randomUUID()}.json`
+    );
+    await writeFile(
+      authPath,
+      JSON.stringify({ tokens: { access_token: "token" } })
+    );
+    try {
+      await expect(fetchCodexUsage({ authPath }, {}, 1000)).rejects.toThrow(
+        "missing Codex auth"
+      );
+    } finally {
+      await rm(authPath, { force: true });
+    }
+  });
+
+  test.each(["null", JSON.stringify({}), JSON.stringify({ tokens: "bad" })])(
+    "rejects malformed auth file payload %s",
+    async (contents) => {
+      const authPath = path.join(
+        tmpdir(),
+        `oc-usage-limits-${crypto.randomUUID()}.json`
+      );
+      await writeFile(authPath, contents);
+      try {
+        await expect(fetchCodexUsage({ authPath }, {}, 1000)).rejects.toThrow(
+          "missing Codex auth"
+        );
+      } finally {
+        await rm(authPath, { force: true });
+      }
+    }
+  );
+
+  test("does not retry unauthorized requests for a custom host", async () => {
+    const fetchMock = installFetchMock(new Response(null, { status: 401 }));
+
+    await expect(
+      fetchCodexUsage(
+        { apiKey: "configured-token", baseUrl: "https://codex.example" },
+        { openai: { access: "expired-access", accountId: "account" } },
+        1000
+      )
+    ).rejects.toThrow("provider credentials were rejected");
+    expect(fetchMock).toHaveBeenCalledOnce();
+  });
+
+  test("ignores optional response fields with invalid types", async () => {
+    installFetchMock(
+      Response.json({
+        plan_type: 42,
+        rate_limit: {
+          primary_window: {
+            limit_window_seconds: "wrong",
+            reset_at: "wrong",
+            used_percent: 0,
+          },
+          secondary_window: null,
+        },
+        rate_limit_reset_credits: { available_count: "wrong" },
+      })
+    );
+
+    const usage = await fetchCodexUsage(
+      { apiKey: "configured-token", baseUrl: "https://codex.example" },
+      {},
+      1000
+    );
+
+    expect(usage).toMatchObject({ metadata: { resetCredits: null } });
+    expect(usage.tierName).toBeUndefined();
+  });
+
+  test("accepts a window with no optional fields and omits invalid nested windows", async () => {
+    installFetchMock(
+      Response.json({
+        rate_limit: {
+          primary_window: {},
+          secondary_window: { used_percent: "invalid" },
+        },
+      })
+    );
+
+    const usage = await fetchCodexUsage(
+      { apiKey: "configured-token", baseUrl: "https://codex.example" },
+      {},
+      1000
+    );
+
+    expect(usage.windows).toMatchObject([
+      { label: "usage", quota: { _tag: "Unknown" } },
+    ]);
+  });
+
+  test("treats non-object optional Codex windows as absent", async () => {
+    installFetchMock(
+      Response.json({
+        plan_type: 42,
+        rate_limit: { primary_window: null, secondary_window: null },
+      })
+    );
+
+    await expect(
+      fetchCodexUsage(
+        { apiKey: "configured-token", baseUrl: "https://codex.example" },
+        {},
+        1000
+      )
+    ).rejects.toThrow("invalid Codex usage");
+  });
+
+  test("rejects invalid primary window percentages", async () => {
+    installFetchMock(
+      Response.json({ rate_limit: { primary_window: { used_percent: 101 } } })
+    );
+
+    await expect(
+      fetchCodexUsage(
+        { apiKey: "configured-token", baseUrl: "https://codex.example" },
+        {},
+        1000
+      )
+    ).rejects.toThrow("invalid Codex usage");
+  });
+
+  test("keeps the original unauthorized error when fallback credentials are unavailable", async () => {
+    const authPath = path.join(
+      tmpdir(),
+      `oc-usage-limits-${crypto.randomUUID()}.json`
+    );
+    const fetchMock = installFetchMock(new Response(null, { status: 401 }));
+
+    await expect(
+      fetchCodexUsage(
+        { authPath },
+        { openai: { access: "expired-access", accountId: "account" } },
+        1000
+      )
+    ).rejects.toThrow("provider credentials were rejected");
+    expect(fetchMock).toHaveBeenCalledOnce();
   });
 
   test("builds authenticated requests and parses usage windows", async () => {

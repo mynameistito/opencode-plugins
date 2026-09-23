@@ -1,5 +1,5 @@
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { homedir, tmpdir } from "node:os";
 import path from "node:path";
 
 import { describe, expect, test } from "vitest";
@@ -54,6 +54,7 @@ describe("utility helpers", () => {
           "url": "https://example.com//kept",
           "literal": ",}",
           "quoted": "value // kept",
+          "escaped": "quote \" and slash \\ // kept",
           "nested": {
             "enabled": true,
           },
@@ -64,6 +65,7 @@ describe("utility helpers", () => {
       );
 
       await expect(readJsonFile(filePath)).resolves.toStrictEqual({
+        escaped: 'quote " and slash \\ // kept',
         items: [1, 2],
         literal: ",}",
         nested: { enabled: true },
@@ -93,6 +95,19 @@ describe("utility helpers", () => {
       await rm(directory, { force: true, recursive: true });
     }
   });
+
+  test("expands the bare home prefix to the home directory", async () => {
+    await expect(readJsonFile("~")).rejects.toMatchObject({ code: "EISDIR" });
+  });
+
+  test.each(["~/no-usage-limits-file.json", "~\\no-usage-limits-file.json"])(
+    "expands the home prefix in %s paths",
+    async (filePath) => {
+      await expect(readJsonFile(filePath)).rejects.toMatchObject({
+        path: path.join(homedir(), filePath.slice(2)),
+      });
+    }
+  );
 
   test.each([
     ['{"value":"unterminated}', "unterminated string"],

@@ -73,9 +73,6 @@ const keyFromAuth = (
     value: JsonValue | undefined
   ) => Redacted.Redacted<string> | undefined
 ): Redacted.Redacted<string> | undefined => {
-  if (!isRecord(value)) {
-    return undefined;
-  }
   for (const entry of [value["opencode-go"], value.opencode]) {
     if (!isRecord(entry)) {
       continue;

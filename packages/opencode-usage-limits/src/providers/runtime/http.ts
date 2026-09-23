@@ -172,10 +172,17 @@ export const makeProviderHttpClient = (fetchImplementation: ProviderFetch) =>
           });
           if (response.status === 429) {
             await cancelBody(response);
+            const retryAfterMs = retryAfterMilliseconds(response);
+            if (retryAfterMs === undefined) {
+              throw new ProviderRateLimitError({
+                operation: FETCH_OPERATION,
+                providerID: request.providerID,
+              });
+            }
             throw new ProviderRateLimitError({
               operation: FETCH_OPERATION,
               providerID: request.providerID,
-              retryAfterMs: retryAfterMilliseconds(response),
+              retryAfterMs,
             });
           }
           if (!response.ok) {

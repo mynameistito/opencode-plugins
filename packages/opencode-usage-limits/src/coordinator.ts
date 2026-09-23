@@ -225,10 +225,7 @@ export const usageCoordinator = (
         const now = yield* dependencies.now;
         const staleAfterMs = intervalMs * 2;
         yield* safePublish(dependencies, {
-          diagnostics: [
-            ...(configDiagnostic ? [configDiagnostic] : []),
-            ...(authLoad.diagnostic ? [authLoad.diagnostic] : []),
-          ],
+          diagnostics: authLoad.diagnostic ? [authLoad.diagnostic] : [],
           lastRefreshAt: now,
           providerDisplays: providerDisplaysFor(providers),
           showErrors: config.showErrors,

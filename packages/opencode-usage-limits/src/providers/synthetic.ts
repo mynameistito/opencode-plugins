@@ -124,10 +124,6 @@ const keyFromSyntheticAuth = (
     value: JsonValue | undefined
   ) => Redacted.Redacted<string> | undefined
 ): Redacted.Redacted<string> | undefined => {
-  if (!isRecord(value)) {
-    return undefined;
-  }
-
   const directKey = credential(value.key);
   if (directKey) {
     return directKey;
@@ -193,23 +189,17 @@ const syntheticFiveHourWindow = (
       const parsedUsed = parseUsagePercentage(
         (1 - parsedRemaining.success / parsedMax.success) * 100
       );
-      if (Result.isFailure(parsedUsed)) {
-        return null;
-      }
       const parsedCurrent = parseUsageCount(
         parsedMax.success - parsedRemaining.success
       );
-      if (Result.isFailure(parsedCurrent)) {
-        return null;
-      }
       const resetsAt = parseIsoDate(rolling.nextTickAt);
       return {
         kind: "rolling",
         label: "5h",
         quota: countQuotaWhenIntegral(
-          parsedCurrent.success,
+          Result.getOrThrow(parsedCurrent),
           parsedMax.success,
-          parsedUsed.success
+          Result.getOrThrow(parsedUsed)
         ),
         resetsAt,
       };
@@ -231,9 +221,6 @@ const syntheticFiveHourWindow = (
       const parsedUsed = parseUsagePercentage(
         (parsedRequests.success / parsedLimit.success) * 100
       );
-      if (Result.isFailure(parsedUsed)) {
-        return null;
-      }
       const resetsAt = parseIsoDate(subscription.renewsAt);
       return {
         kind: "rolling",
@@ -241,7 +228,7 @@ const syntheticFiveHourWindow = (
         quota: countQuotaWhenIntegral(
           parsedRequests.success,
           parsedLimit.success,
-          parsedUsed.success
+          Result.getOrThrow(parsedUsed)
         ),
         resetsAt,
       };
@@ -275,14 +262,11 @@ const syntheticWeeklyWindow = (
   }
 
   const parsedUsed = parseUsagePercentage(100 - parsedRemaining.success);
-  if (Result.isFailure(parsedUsed)) {
-    return null;
-  }
   const resetsAt = parseIsoDate(weekly.nextRegenAt);
   return {
     kind: "weekly",
     label: "weekly",
-    quota: percentageQuota(parsedUsed.success),
+    quota: percentageQuota(Result.getOrThrow(parsedUsed)),
     resetsAt,
   };
 };

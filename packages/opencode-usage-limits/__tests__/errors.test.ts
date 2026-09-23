@@ -130,6 +130,11 @@ describe("provider boundary errors", () => {
         operation: "fetch-usage",
         providerID: "zai",
       }),
+      new ProviderRateLimitError({
+        operation: "fetch-usage",
+        providerID: "zai",
+        retryAfterMs: 500,
+      }),
       new ProviderResponseDecodeError({
         operation: "decode-response",
         providerID: "opencode-go",
@@ -162,6 +167,7 @@ describe("provider boundary errors", () => {
       "missing Codex auth",
       "provider command failed",
       "provider rate limit reached",
+      "provider rate limit reached; retry after 500ms",
       "invalid OpenCode GO usage",
       "provider operation timed out after 1000ms",
       "provider credentials were rejected",

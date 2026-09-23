@@ -23,9 +23,6 @@ const readFileContents = async (
   buffer: Buffer,
   offset = 0
 ): Promise<number> => {
-  if (offset >= buffer.byteLength) {
-    return offset;
-  }
   const result = await file.read(
     buffer,
     offset,
