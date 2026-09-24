@@ -1,5 +1,11 @@
 # @mynameistito/opencode-usage-limits
 
+## 1.1.5
+
+### Patch Changes
+
+- e85beb5: chore: Migrate to @opencode/plugin@2.0.16
+
 ## 1.1.4
 
 ### Patch Changes
