@@ -1,5 +1,11 @@
 # @mynameistito/opencode-force-input
 
+## 1.1.4
+
+### Patch Changes
+
+- e85beb5: chore: Migrate to @opencode/plugin@2.0.16
+
 ## 1.1.3
 
 ### Patch Changes
