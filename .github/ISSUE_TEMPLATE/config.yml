@@ -1,4 +1,4 @@
-blank_issues_enabled: false
+blank_issues_enabled: true
 contact_links:
   - name: OpenCode V2 documentation
     url: https://opencode.ai/v2/docs/
