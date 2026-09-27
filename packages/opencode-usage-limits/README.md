@@ -55,7 +55,7 @@ Restart OpenCode after changing TUI plugin config.
 
 If the plugin is stale, broken, or needs a clean reinstall, quit OpenCode and remove the cache for the lane you installed. OpenCode caches immutable package versions, so clearing the cache is required when a `cli.json` entry still resolves to an older version.
 
-For standard OpenCode (`@latest`):
+For standard OpenCode (`@latest`), clear the cached package using the command for your shell:
 
 PowerShell:
 

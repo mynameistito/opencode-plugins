@@ -31,8 +31,16 @@ opencode2 plugin remove "@mynameistito/opencode-force-input@latest" -g
 
 To clear a cached package before reinstalling:
 
+PowerShell:
+
 ```powershell
 Remove-Item -LiteralPath "$HOME\.cache\opencode\packages\@mynameistito\opencode-force-input@latest" -Recurse -Force -ErrorAction SilentlyContinue
+```
+
+macOS/Linux:
+
+```bash
+rm -rf ~/.cache/opencode/packages/@mynameistito/opencode-force-input@latest
 ```
 
 The v2 package can also be configured manually in `~/.config/opencode/cli.json`:
