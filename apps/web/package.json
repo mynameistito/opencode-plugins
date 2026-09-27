@@ -17,7 +17,7 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/mynameistito/opencode-plugins.git",
-    "directory": "apps/docs"
+    "directory": "apps/web"
   },
   "type": "module",
   "scripts": {
