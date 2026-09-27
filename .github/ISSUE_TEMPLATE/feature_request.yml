@@ -1,0 +1,42 @@
+name: Feature request
+description: Suggest an improvement to OpenCode V2 support or one of these plugins.
+title: "feature: "
+labels:
+  - enhancement
+body:
+  - type: dropdown
+    id: plugin
+    attributes:
+      label: Related plugin or area
+      options:
+        - "@mynameistito/opencode-force-input"
+        - "@mynameistito/opencode-usage-limits"
+        - Both plugins
+        - OpenCode V2 integration / documentation
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem to solve
+      description: What are you trying to do, and what gets in the way?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Describe the behavior or documentation you would like.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Other approaches or workarounds you have tried.
+  - type: input
+    id: versions
+    attributes:
+      label: OpenCode / plugin versions (if relevant)
+      description: Run `opencode2 --version` and `opencode2 plugin list`; include the relevant output or exact package install spec.
