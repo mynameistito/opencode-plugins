@@ -1,5 +1,11 @@
 # @mynameistito/opencode-usage-limits
 
+## 1.1.6
+
+### Patch Changes
+
+- 169339d: Align solid-js with @opentui/solid's peer dependency to fix npm installs for both plugins.
+
 ## 1.1.5
 
 ### Patch Changes
