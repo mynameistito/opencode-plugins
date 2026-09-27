@@ -1,15 +1,32 @@
 {
+  "$schema": "https://www.schemastore.org/package.json",
   "name": "@mynameistito/opencode-plugins-docs",
   "version": "0.0.4",
   "private": true,
+  "description": "Documentation site for mynameistito's OpenCode plugins.",
+  "homepage": "https://github.com/mynameistito/opencode-plugins#readme",
+  "bugs": {
+    "url": "https://github.com/mynameistito/opencode-plugins/issues"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "Tito",
+    "email": "github@mynameistito.com",
+    "url": "https://github.com/mynameistito"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mynameistito/opencode-plugins.git",
+    "directory": "apps/docs"
+  },
   "type": "module",
   "scripts": {
     "build": "blume build",
+    "deploy": "alchemy deploy",
+    "destroy": "alchemy destroy",
     "dev": "blume dev",
     "preview": "blume preview",
     "test": "blume check --isolated",
-    "deploy": "alchemy deploy",
-    "destroy": "alchemy destroy",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -18,11 +35,12 @@
     "effect": "catalog:"
   },
   "devDependencies": {
-    "@types/node": "26.5.1",
+    "@types/node": "catalog:",
     "@typescript/native": "catalog:",
     "alchemy": "2.0.0-beta.79",
     "blume": "1.7.0",
     "react-grab": "^0.2.0",
     "typescript": "catalog:"
-  }
+  },
+  "packageManager": "bun@1.4.2"
 }

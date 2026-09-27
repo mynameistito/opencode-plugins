@@ -4,14 +4,26 @@
   "version": "1.1.5",
   "description": "OpenCode TUI plugin that interrupts the active run and submits the prompt with Ctrl+Enter.",
   "keywords": [
+    "ai",
+    "ai-coding",
     "ctrl-enter",
     "ctrl-return",
+    "developer-tools",
+    "force-input",
     "force-submit",
+    "hotkey",
     "interrupt",
+    "keybind",
+    "keybinding",
+    "keyboard",
     "keyboard-shortcuts",
     "opencode",
     "opencode-plugin",
+    "opencode-tui",
     "prompt",
+    "prompt-input",
+    "shortcut",
+    "terminal",
     "tui"
   ],
   "homepage": "https://github.com/mynameistito/opencode-plugins/tree/main/packages/opencode-force-input#readme",
@@ -19,7 +31,11 @@
     "url": "https://github.com/mynameistito/opencode-plugins/issues"
   },
   "license": "MIT",
-  "author": "mynameistito",
+  "author": {
+    "name": "Tito",
+    "email": "github@mynameistito.com",
+    "url": "https://github.com/mynameistito"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/mynameistito/opencode-plugins.git",
@@ -38,17 +54,18 @@
     }
   },
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "provenance": true
   },
   "scripts": {
     "build": "tsdown",
     "check": "ultracite check",
-    "knip": "knip",
     "fix": "ultracite fix",
-    "typecheck": "tsc --noEmit",
+    "knip": "knip",
     "prepack": "bun run build",
     "test": "bun ../../node_modules/vitest/vitest.mjs run --coverage && bun ../../scripts/check-coverage.ts coverage/lcov.info 1",
-    "test:package": "bun run build && bun ./scripts/test-package.ts"
+    "test:package": "bun run build && bun ./scripts/test-package.ts",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@opencode/plugin": "catalog:"
@@ -63,5 +80,6 @@
     "@opentui/core": "catalog:",
     "@opentui/solid": "catalog:",
     "solid-js": "catalog:"
-  }
+  },
+  "packageManager": "bun@1.4.2"
 }
