@@ -6,6 +6,8 @@ sidebar:
   order: 3
 ---
 
+import Tabs from "blume/components/content/Tabs.astro";
+
 ## `@mynameistito/opencode-usage-limits`
 
 Usage Limits reads provider quota APIs and authenticated local CLIs, normalizes their different response shapes, and renders the result in OpenCode's TUI. It refreshes every 60 seconds by default, with an effective minimum of 15 seconds.
@@ -208,6 +210,14 @@ Most installations need only `enabled: true`. Explicit `apiKey` and `authPath` o
 4. For Qwen and Alibaba, confirm the CLI is authenticated and available on the `PATH` inherited by OpenCode.
 5. If the package is stale, clear its OpenCode cache and restart OpenCode.
 
-```powershell
+<Tabs hash={false} sync={false}>
+
+```powershell title="PowerShell"
 Remove-Item -LiteralPath "$HOME\.cache\opencode\packages\@mynameistito\opencode-usage-limits@latest" -Recurse -Force -ErrorAction SilentlyContinue
 ```
+
+```bash title="macOS/Linux"
+rm -rf ~/.cache/opencode/packages/@mynameistito/opencode-usage-limits@latest
+```
+
+</Tabs>
