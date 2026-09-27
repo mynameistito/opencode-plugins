@@ -4,20 +4,30 @@
   "version": "1.1.6",
   "description": "OpenCode TUI plugin that shows Codex, OpenCode GO, ZAI, Synthetic, MiniMax Token Plan, and Qwen usage limits in the sidebar and prompt footer.",
   "keywords": [
+    "ai",
+    "ai-coding",
     "codex",
+    "developer-tools",
     "minimax",
     "minimax-token-plan",
     "openai",
+    "openai-codex",
     "opencode",
     "opencode-go",
     "opencode-plugin",
+    "opencode-tui",
     "prompt-footer",
     "quota",
     "qwen",
+    "rate-limit",
+    "rate-limits",
+    "sidebar",
     "synthetic",
+    "terminal",
     "tui",
     "usage",
     "usage-limits",
+    "usage-quota",
     "zai"
   ],
   "homepage": "https://github.com/mynameistito/opencode-plugins/tree/main/packages/opencode-usage-limits#readme",
@@ -25,7 +35,11 @@
     "url": "https://github.com/mynameistito/opencode-plugins/issues"
   },
   "license": "MIT",
-  "author": "mynameistito",
+  "author": {
+    "name": "Tito",
+    "email": "github@mynameistito.com",
+    "url": "https://github.com/mynameistito"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/mynameistito/opencode-plugins.git",
@@ -47,17 +61,18 @@
     "./schema": "./usage-limits.schema.json"
   },
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "provenance": true
   },
   "scripts": {
     "build": "tsdown",
     "check": "ultracite check",
+    "fix": "ultracite fix",
     "knip": "knip",
     "prepack": "bun run build",
     "test": "bun ../../node_modules/vitest/vitest.mjs run --coverage && bun ../../scripts/check-coverage.ts coverage/lcov.info 0.95",
     "test:package": "bun run build && bun ./scripts/test-package.ts",
-    "typecheck": "tsc --noEmit",
-    "fix": "ultracite fix"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@opencode/plugin": "catalog:",
@@ -74,5 +89,6 @@
     "@opentui/core": "catalog:",
     "@opentui/solid": "catalog:",
     "solid-js": "catalog:"
-  }
+  },
+  "packageManager": "bun@1.4.2"
 }
