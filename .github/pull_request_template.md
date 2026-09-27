@@ -20,8 +20,6 @@
 
 <!-- List the commands run and any manual checks, including OpenCode/plugin versions when relevant. -->
 
--
-
 - [ ] `bun install --frozen-lockfile` (when dependencies changed)
 - [ ] `bun run typecheck` (when TypeScript changed)
 - [ ] `bun run check`
