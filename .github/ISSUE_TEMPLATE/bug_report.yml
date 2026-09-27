@@ -1,0 +1,92 @@
+name: Bug report
+description: Report a reproducible problem with OpenCode V2 or one of these plugins.
+title: "bug: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: >-
+        Before submitting, check existing issues and include the exact versions and installation details below. Please remove tokens, account IDs, and other private information from logs or configuration snippets.
+  - type: dropdown
+    id: plugin
+    attributes:
+      label: Affected plugin
+      description: Choose the plugin involved, or OpenCode itself if the issue occurs without either plugin.
+      options:
+        - "@mynameistito/opencode-force-input"
+        - "@mynameistito/opencode-usage-limits"
+        - Both plugins
+        - OpenCode V2 (no plugin-specific issue)
+        - Other / not sure
+    validations:
+      required: true
+  - type: input
+    id: opencode-version
+    attributes:
+      label: OpenCode V2 CLI version
+      description: Run `opencode2 --version` in the same terminal/profile where the problem occurs and paste the full output.
+      placeholder: "opencode2 --version output"
+    validations:
+      required: true
+  - type: textarea
+    id: plugin-versions
+    attributes:
+      label: Plugin package and version(s)
+      description: >-
+        Run `opencode2 plugin list` and paste the relevant entries. If the output does not show versions, give the exact package install spec you used (for example `@mynameistito/opencode-usage-limits@<version>`) and say whether it was installed globally (`-g`) or for a project. Do not substitute the current `@latest` version for the version actually installed.
+      render: text
+    validations:
+      required: true
+  - type: dropdown
+    id: install-method
+    attributes:
+      label: Installation method
+      options:
+        - "`opencode2 plugin add ... -g` (global)"
+        - "`opencode2 plugin add ...` (project)"
+        - Local plugin path / development checkout
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: install-details
+    attributes:
+      label: Install command and dependency output
+      description: >-
+        Paste the exact install command and complete relevant error output. For dependency or peer conflicts, include the package versions named in the error and, if available, the output of `npm view <package>@<version> peerDependencies` for each conflicting package. Replace the placeholders with the exact package name and version from your error; this command queries registry metadata and does not report your installed version.
+      render: text
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include OS/version, terminal, package manager (npm/Bun and version), and whether this is a clean or existing OpenCode config.
+      placeholder: "Windows 11; Windows Terminal; npm 11; existing global OpenCode config"
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: List the smallest set of steps that reproduces the problem.
+      placeholder: "1. Install ...\n2. Run ...\n3. Observe ..."
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or screenshots
+      description: Paste relevant output or attach a screenshot. Redact secrets, tokens, personal data, and unrelated prompt content.
+      render: text

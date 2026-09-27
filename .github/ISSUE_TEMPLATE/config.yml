@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: OpenCode V2 documentation
+    url: https://opencode.ai/v2/docs/
+    about: Check the V2 documentation for OpenCode CLI and plugin setup guidance.
