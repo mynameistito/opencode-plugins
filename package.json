@@ -27,7 +27,7 @@
     "@opentui/core": "catalog:",
     "@opentui/solid": "catalog:",
     "@types/bun": "1.4.2",
-    "@types/node": "26.6.2",
+    "@types/node": "catalog:",
     "@typescript/native": "catalog:",
     "@vitest/coverage-v8": "5.0.1",
     "eslint-plugin-github": "6.1.2",
@@ -67,6 +67,7 @@
   },
   "packageManager": "bun@1.4.2",
   "catalog": {
+    "@types/node": "26.6.2",
     "@effect/platform-bun": "4.0.0-rc.115",
     "@effect/platform-node": "4.0.0-rc.115",
     "@opencode/plugin": "2.0.16",
