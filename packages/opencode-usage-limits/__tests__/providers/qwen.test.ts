@@ -150,7 +150,6 @@ describe("Qwen provider", () => {
     ["auth", "{", "decode"],
     ["usage", authenticated, "decode"],
     ["auth", "[]", "decode"],
-    ["usage", authenticated, "decode"],
   ])(
     "classifies malformed %s JSON as a safe decode error",
     async (kind, auth, cause) => {
