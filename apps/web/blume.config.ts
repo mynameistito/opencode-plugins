@@ -14,7 +14,7 @@ const reactGrab = {
 } satisfies NonNullable<BlumeConfig["integrations"]>[number];
 
 export default defineConfig({
-  ai: {
+  agents: {
     llmsTxt: {
       details: [
         "## When to use these plugins",
@@ -26,7 +26,6 @@ export default defineConfig({
   },
   content: { root: "docs" },
   deployment: {
-    output: "static",
     site: "https://opencode-plugins.mynameistito.com",
   },
   description:
@@ -37,7 +36,7 @@ export default defineConfig({
     repo: "opencode-plugins",
   },
   integrations: [reactGrab],
-  lastModified: true,
+  lastModified: "git",
   logo: { href: "/", text: "mynameistito / plugins" },
   seo: {
     og: {
