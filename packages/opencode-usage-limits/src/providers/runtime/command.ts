@@ -11,10 +11,15 @@ const MAX_COMMAND_OUTPUT_BYTES = 2 * 1024 * 1024;
 
 /** A bounded provider subprocess request. */
 export interface ProviderCommandInput {
+  /** Additional non-zero exit codes accepted as successful completion. */
   readonly acceptedExitCodes?: ReadonlySet<number>;
+  /** Arguments passed directly to the process, without shell expansion. */
   readonly args: readonly string[];
+  /** Executable name or path to start. */
   readonly command: string;
+  /** Provider used to classify any execution failure. */
   readonly providerID: ProviderID;
+  /** Maximum subprocess duration, in milliseconds. */
   readonly timeoutMs: number;
 }
 
@@ -125,7 +130,7 @@ const execute = (
   );
 };
 
-/** Live bounded subprocess layer. */
+/** Live layer providing bounded, interruptible subprocess execution. */
 export const ProviderCommandExecutorLive = Layer.succeed(
   ProviderCommandExecutor,
   { execute }

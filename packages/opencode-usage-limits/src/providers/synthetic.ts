@@ -364,6 +364,14 @@ const fetchSyntheticUsageEffect = (
   });
 
 /** Stable Promise export for direct consumers of the provider adapter. */
+/**
+ * Fetches Synthetic rolling and weekly quota data.
+ *
+ * @param config - Optional Synthetic endpoint and credential settings.
+ * @param openCodeAuth - Credentials available from OpenCode's shared auth file.
+ * @param timeoutMs - Maximum duration of the provider request.
+ * @returns Normalized Synthetic usage.
+ */
 export const fetchSyntheticUsage = (
   config: SyntheticProviderConfig | undefined,
   openCodeAuth: OpenCodeAuth,
@@ -376,6 +384,7 @@ export const fetchSyntheticUsage = (
   );
 
 /** Plugin registration for the Synthetic provider adapter. */
+/** Synthetic provider adapter and OpenCode provider-ID mapping. */
 export const syntheticProvider = {
   defaultLabel: "Synthetic",
   displayOrder: 2,

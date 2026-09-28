@@ -399,6 +399,14 @@ const fetchCodexUsageEffect = (
   });
 
 /** Stable Promise export for direct consumers of the provider adapter. */
+/**
+ * Fetches Codex quota windows using credentials from the configured auth sources.
+ *
+ * @param config - Optional Codex provider settings and credential overrides.
+ * @param openCodeAuth - Credentials available from OpenCode's shared auth file.
+ * @param timeoutMs - Maximum duration of the provider request.
+ * @returns Normalized Codex usage.
+ */
 export const fetchCodexUsage = (
   config: CodexProviderConfig | undefined,
   openCodeAuth: OpenCodeAuth,
@@ -411,6 +419,7 @@ export const fetchCodexUsage = (
   );
 
 /** Plugin registration for the Codex provider adapter. */
+/** Codex provider adapter and OpenCode provider-ID mapping. */
 export const codexProvider = {
   defaultLabel: "Codex",
   displayOrder: 0,

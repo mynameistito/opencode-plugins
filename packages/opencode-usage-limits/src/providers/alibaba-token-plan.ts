@@ -98,6 +98,7 @@ const hasMinimumCliVersion = (actual: readonly number[]): boolean => {
 };
 
 /** Reads Personal/Solo quota through Bailian's console API client, without scraping a browser. */
+/** Provider adapter that reads Alibaba Token Plan usage through Bailian CLI. */
 export const alibabaTokenPlanProvider = {
   defaultLabel: "Alibaba Token Plan",
   displayOrder: 6,

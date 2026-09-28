@@ -331,6 +331,14 @@ const fetchZaiCodingPlanUsageEffect = (
   });
 
 /** Stable Promise export for direct consumers of the provider adapter. */
+/**
+ * Fetches ZAI Coding Plan quota windows from the usage API.
+ *
+ * @param config - Optional ZAI credential and authorization settings.
+ * @param openCodeAuth - Credentials available from OpenCode's shared auth file.
+ * @param timeoutMs - Maximum duration of the provider request.
+ * @returns Normalized ZAI usage.
+ */
 export const fetchZaiCodingPlanUsage = (
   config: ZaiProviderConfig | undefined,
   openCodeAuth: OpenCodeAuth,
@@ -343,6 +351,7 @@ export const fetchZaiCodingPlanUsage = (
   );
 
 /** Plugin registration for the ZAI Coding Plan provider adapter. */
+/** ZAI Coding Plan adapter and OpenCode provider-ID mapping. */
 export const zaiProvider = {
   defaultLabel: "ZAI",
   displayOrder: 1,

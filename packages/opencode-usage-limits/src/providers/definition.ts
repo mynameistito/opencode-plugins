@@ -20,11 +20,11 @@ type ProviderFetch<ID extends ProviderID> = (
 export interface ProviderDefinition<ID extends ProviderID = ProviderID> {
   /** Plugin provider identifier and config key. */
   id: ID;
-  /** Default sidebar label when config.label is omitted. */
+  /** Default display label when config.label is omitted. */
   defaultLabel: string;
-  /** Stable sidebar display order. */
+  /** Stable sidebar display order; lower values appear first. */
   displayOrder: number;
-  /** Provider-specific usage fetch adapter. */
+  /** Fetches normalized usage using the provider's required runtime services. */
   fetch: ProviderFetch<ID>;
   /**
    * OpenCode session provider IDs that map to this plugin provider for the

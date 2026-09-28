@@ -183,6 +183,14 @@ const fetchOpenCodeGoUsageEffect = (
   });
 
 /** Stable Promise export for direct consumers of the provider adapter. */
+/**
+ * Fetches OpenCode GO usage from its configured or default usage endpoint.
+ *
+ * @param config - Optional OpenCode GO endpoint and credential settings.
+ * @param openCodeAuth - Credentials available from OpenCode's shared auth file.
+ * @param timeoutMs - Maximum duration of the provider request.
+ * @returns Normalized OpenCode GO usage.
+ */
 export const fetchOpenCodeGoUsage = (
   config: OpenCodeGoProviderConfig | undefined,
   openCodeAuth: OpenCodeAuth,
@@ -195,6 +203,7 @@ export const fetchOpenCodeGoUsage = (
   );
 
 /** Plugin registration for the OpenCode GO provider adapter. */
+/** OpenCode GO provider adapter and session provider-ID mapping. */
 export const openCodeGoProvider = {
   defaultLabel: "OpenCode GO",
   displayOrder: 5,

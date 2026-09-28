@@ -76,10 +76,15 @@ const readChunks = async (
 
 /** A bounded provider JSON request. */
 export interface ProviderHttpRequest {
+  /** Request headers, including provider authorization when required. */
   readonly headers: Readonly<Record<string, string>>;
+  /** Supported request method. */
   readonly method: "GET";
+  /** Provider used to classify request and response failures. */
   readonly providerID: ProviderID;
+  /** Maximum request duration, in milliseconds. */
   readonly timeoutMs: number;
+  /** Absolute URL to request. */
   readonly url: string;
 }
 
@@ -139,7 +144,15 @@ const readBoundedBody = async (
   return body;
 };
 
-/** Constructs a bounded HTTP layer over a fetch implementation. */
+/**
+ * Constructs the provider HTTP service over an injectable Fetch implementation.
+ *
+ * Responses are size-limited, requests are interruptible and timed, and failures
+ * are converted to provider-safe typed errors.
+ *
+ * @param fetchImplementation - Fetch-compatible request function.
+ * @returns Effect layer providing the configured HTTP client.
+ */
 export const makeProviderHttpClient = (fetchImplementation: ProviderFetch) =>
   Layer.succeed(ProviderHttpClient, {
     requestJson: (request) => {
@@ -230,7 +243,7 @@ export const makeProviderHttpClient = (fetchImplementation: ProviderFetch) =>
     },
   });
 
-/** Live bounded JSON HTTP layer. */
+/** Live layer providing bounded JSON requests through `globalThis.fetch`. */
 export const ProviderHttpClientLive = makeProviderHttpClient((input, init) =>
   globalThis.fetch(input, init)
 );
