@@ -40,7 +40,16 @@ export default defineConfig({
   lastModified: true,
   logo: { href: "/", text: "mynameistito / plugins" },
   seo: {
-    og: { enabled: true },
+    og: {
+      enabled: true,
+      palette: {
+        accent: "#ff5410",
+        background: "#1d1d1d",
+        border: "#323232",
+        foreground: "#fff6f2",
+        muted: "#a6a19f",
+      },
+    },
     robots: true,
     sitemap: true,
     structuredData: true,
