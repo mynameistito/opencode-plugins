@@ -11,20 +11,53 @@
 
 .provider-logo-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(6rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
   gap: 0.75rem;
   margin: 1.5rem 0 2.5rem;
 }
 
 .provider-logo-grid a {
-  display: grid;
-  min-height: 5rem;
-  place-items: center;
-  border: 1px solid color-mix(in srgb, currentColor 15%, transparent);
-  border-radius: 0.35rem;
+  display: flex;
+  flex-direction: column;
+  min-height: 5.5rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 0.8rem 0.5rem;
+  border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+  border-radius: var(--blume-radius);
+  text-decoration: none;
   transition:
     border-color 150ms ease,
     transform 150ms ease;
+}
+
+.provider-logo-grid a[href="#alibaba-token-plan"] {
+  order: 1;
+}
+
+.provider-logo-grid a[href="#minimax"] {
+  order: 2;
+}
+
+.provider-logo-grid a[href="#openai"] {
+  order: 3;
+}
+
+.provider-logo-grid a[href="#opencode-go"] {
+  order: 4;
+}
+
+.provider-logo-grid a[href="#qwen"] {
+  order: 5;
+}
+
+.provider-logo-grid a[href="#synthetic"] {
+  order: 6;
+}
+
+.provider-logo-grid a[href="#zai"] {
+  order: 7;
 }
 
 .provider-logo-grid a:hover,
@@ -33,14 +66,20 @@
   transform: translateY(-2px);
 }
 
-.provider-logo-grid img {
+.provider-logo-grid img,
+.provider-logo-grid svg {
+  display: block;
+  flex: 0 0 2rem;
+  margin: 0;
   width: 2rem;
   height: 2rem;
+  object-fit: contain;
 }
 
-.provider-logo-grid svg {
-  width: 2rem;
-  height: 2rem;
+.provider-logo-name {
+  font-size: 0.8rem;
+  line-height: 1.2;
+  text-align: center;
 }
 
 .provider-logo-opencode-light {
