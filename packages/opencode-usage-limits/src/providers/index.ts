@@ -23,30 +23,45 @@ const PROVIDER_MANIFEST: ProviderRegistry = {
   zai: zaiProvider,
 };
 
-/** Sidebar display order derived from the provider manifest. */
+/** Supported providers in sidebar display order. */
 export const PROVIDER_ORDER: readonly ProviderID[] = Object.values(
   PROVIDER_MANIFEST
 )
   .toSorted((left, right) => left.displayOrder - right.displayOrder)
   .map((provider) => provider.id);
 
-/** Provider lookup derived from the same ordered manifest. */
+/** Registry mapping each supported ID to its provider definition. */
 export const PROVIDER_REGISTRY = PROVIDER_MANIFEST;
 
-/** Narrows a runtime provider ID before indexing the typed registry. */
+/**
+ * Checks whether a runtime string names a registered provider.
+ *
+ * @param value - Candidate provider identifier.
+ * @returns `true` and narrows `value` when a provider is registered.
+ */
 export const isProviderID = (value: string): value is ProviderID =>
   PROVIDER_ORDER.some((id) => id === value);
 
-/** Provider definitions projected in explicit sidebar display order. */
+/** Provider definitions projected in sidebar display order. */
 export const PROVIDERS = Object.values(PROVIDER_MANIFEST).toSorted(
   (left, right) => left.displayOrder - right.displayOrder
 );
 
-/** Returns the default display label for a provider ID. */
+/**
+ * Gets the provider's default display label.
+ *
+ * @param id - Registered plugin provider identifier.
+ * @returns Human-readable provider label.
+ */
 export const defaultLabelFor = (id: ProviderID): string =>
   PROVIDER_REGISTRY[id].defaultLabel;
 
-/** Maps an OpenCode session provider ID to a plugin provider ID. */
+/**
+ * Maps an OpenCode provider identifier to its usage-limits adapter.
+ *
+ * @param openCodeID - Provider ID read from an OpenCode session.
+ * @returns Matching plugin provider ID, or `null` when unsupported.
+ */
 export const pluginProviderForOpenCode = (
   openCodeID: string
 ): ProviderID | null => {

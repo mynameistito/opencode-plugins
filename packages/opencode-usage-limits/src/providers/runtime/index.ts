@@ -16,7 +16,12 @@ export type ProviderRuntime =
   | ProviderFileSystem
   | ProviderHttpClient;
 
-/** Production provider runtime layer. */
+/**
+ * Production provider runtime layer composed from the live platform services.
+ *
+ * Provides subprocess, environment, filesystem, and HTTP capabilities required
+ * by provider adapters.
+ */
 export const ProviderRuntimeLive = Layer.mergeAll(
   ProviderCommandExecutorLive,
   ProviderEnvironmentLive,

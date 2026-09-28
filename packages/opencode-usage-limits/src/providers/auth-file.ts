@@ -7,7 +7,13 @@ import type { ProviderID } from "@/types.ts";
 import { isRecord } from "@/utils.ts";
 import type { JsonObject, JsonValue } from "@/utils.ts";
 
-/** Extracts a credential from a parsed provider auth-file object. */
+/**
+ * Extracts one redacted credential from a parsed provider auth-file object.
+ *
+ * @param value - Object decoded from the provider auth file.
+ * @param credential - Credential validator supplied by the runtime environment.
+ * @returns A usable redacted credential, or `undefined` when absent/invalid.
+ */
 export type AuthFileCredentialExtractor = (
   value: JsonObject,
   credential: (

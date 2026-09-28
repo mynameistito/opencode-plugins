@@ -184,7 +184,12 @@ const parseOpenAIEntry = (
   return entry;
 };
 
-/** Parses unknown plugin config into a fully resolved immutable value. */
+/**
+ * Validates user configuration and applies the plugin's defaults.
+ *
+ * @param input - Parsed JSON-compatible configuration value.
+ * @returns The resolved configuration, or a typed decoding failure.
+ */
 export const parseUsageLimitsConfig = (
   input: JsonValue
 ): Result.Result<ResolvedUsageLimitsConfig, ConfigDecodeError> => {
@@ -202,7 +207,15 @@ export const parseUsageLimitsConfig = (
   return Result.succeed(config);
 };
 
-/** Best-effort parser for recognized OpenCode auth fields. */
+/**
+ * Extracts supported credentials from an OpenCode auth-file value.
+ *
+ * Unsupported or malformed fields are ignored; credential values remain
+ * redacted until a provider adapter explicitly needs their raw form.
+ *
+ * @param input - Parsed JSON-compatible auth-file value.
+ * @returns Recognized credentials, or an empty object when none are usable.
+ */
 export const parseOpenCodeAuth = (input: JsonValue): OpenCodeAuth => {
   if (!isRecord(input)) {
     return {};
@@ -250,7 +263,12 @@ export const parseOpenCodeAuth = (input: JsonValue): OpenCodeAuth => {
   return auth;
 };
 
-/** Reveals a credential only at an adapter boundary that needs the raw value. */
+/**
+ * Validates and reveals a credential for a provider adapter boundary.
+ *
+ * @param credential - Raw or redacted credential value to validate.
+ * @returns A trimmed non-empty credential, or `undefined` when invalid/empty.
+ */
 export const credentialValue = (
   credential: JsonValue | Redacted.Redacted<string> | undefined
 ): string | undefined => {

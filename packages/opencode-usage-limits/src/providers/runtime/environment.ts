@@ -47,7 +47,7 @@ const makeProviderEnvironment = (
   },
 });
 
-/** Live credential environment layer. */
+/** Live layer resolving literal and `{env:NAME}` credentials from process env. */
 export const ProviderEnvironmentLive = Layer.succeed(
   ProviderEnvironment,
   makeProviderEnvironment(process.env)

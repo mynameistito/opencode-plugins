@@ -10,9 +10,13 @@ export type FooterWindow = "auto" | UsageWindowKind;
 
 /** Resolved display settings for one provider. */
 export interface ProviderDisplayConfig {
+  /** Whether quota bars are shown beside this provider in the sidebar. */
   readonly showSidebarBar: boolean;
+  /** Whether a quota bar is shown beside this provider in the prompt footer. */
   readonly showFooterBar: boolean;
+  /** Sidebar quota window to display, or all provider windows. */
   readonly sidebarWindow: SidebarWindow;
+  /** Prompt-footer quota window, or the provider's automatic choice. */
   readonly footerWindow: FooterWindow;
 }
 
@@ -86,21 +90,34 @@ type ProviderErrorKind = "missing_credentials";
  * showing stale usage while surfacing the fetch error.
  */
 export type ProviderState =
+  /** Provider is omitted from refresh and display. */
   | { id: ProviderID; label: string; status: "disabled" }
+  /** Provider usage request is in progress. */
   | { id: ProviderID; label: string; status: "loading" }
   | {
+      /** Provider adapter identifier. */
       id: ProviderID;
+      /** Resolved display label. */
       label: string;
+      /** A successful fetch has produced usage data. */
       status: "ready";
+      /** Most recent normalized provider usage. */
       data: ProviderUsage;
+      /** Whether the data is older than two refresh intervals. */
       stale: boolean;
     }
   | {
+      /** Provider adapter identifier. */
       id: ProviderID;
+      /** Resolved display label. */
       label: string;
+      /** Most recent fetch failed. */
       status: "error";
+      /** Machine-readable category when the error has one. */
       errorKind?: ProviderErrorKind;
+      /** Safe message suitable for display in the TUI. */
       message: string;
+      /** Last successful data retained for stale-data display. */
       previous?: ProviderUsage;
     };
 
@@ -110,8 +127,11 @@ interface CommonProviderConfig {
   readonly enabled?: boolean;
   /** Optional provider display label override. */
   readonly label?: string;
+  /** Whether to show the provider's sidebar quota bar. Defaults to `true`. */
   readonly showSidebarBar?: boolean;
+  /** Whether to show the provider's footer quota bar. Defaults to `true`. */
   readonly showFooterBar?: boolean;
+  /** Which quota window to display in the sidebar. Defaults to `all`. */
   readonly sidebarWindow?: SidebarWindow;
   /** Preferred usage window for this provider's prompt footer. */
   readonly footerWindow?: FooterWindow;
@@ -123,54 +143,76 @@ export interface CodexProviderConfig extends CommonProviderConfig {
   readonly authPath?: string;
   /** Optional API base URL override for explicitly configured auth files. */
   readonly baseUrl?: string;
+  /** Codex API credential override. */
   readonly apiKey?: Credential;
+  /** Authorization scheme used for the configured API key. */
   readonly authorizationScheme?: "raw" | "bearer";
 }
 
 /** ZAI provider configuration. */
 export interface ZaiProviderConfig extends CommonProviderConfig {
+  /** ZAI API credential override. */
   readonly apiKey?: Credential;
+  /** Optional path to an auth file; supports a leading `~`. */
   readonly authPath?: string;
+  /** Authorization header scheme used with the API key. */
   readonly authorizationScheme?: "raw" | "bearer";
 }
 
 /** Synthetic provider configuration. */
 export interface SyntheticProviderConfig extends CommonProviderConfig {
+  /** Synthetic API credential override. */
   readonly apiKey?: Credential;
+  /** Optional path to an auth file; supports a leading `~`. */
   readonly authPath?: string;
+  /** HTTPS API base URL override. */
   readonly baseUrl?: string;
 }
 
 /** MiniMax provider configuration. */
 export interface MiniMaxProviderConfig extends CommonProviderConfig {
+  /** MiniMax Token Plan API credential override. */
   readonly apiKey?: Credential;
+  /** Optional path to an auth file; supports a leading `~`. */
   readonly authPath?: string;
+  /** HTTPS API base URL override. */
   readonly baseUrl?: string;
 }
 
-/** Qwen provider configuration. */
+/** Qwen settings; provider credentials are obtained from the Qwen CLI. */
 export type QwenProviderConfig = CommonProviderConfig;
 
 /** Alibaba Personal/Solo Token Plan, read through the authenticated Bailian CLI. */
 export interface AlibabaTokenPlanProviderConfig extends CommonProviderConfig {
+  /** Bailian service region used by the CLI. */
   readonly region?: "international" | "china";
 }
 
 /** OpenCode GO provider configuration. */
 export interface OpenCodeGoProviderConfig extends CommonProviderConfig {
+  /** OpenCode GO API credential override. */
   readonly apiKey?: Credential;
+  /** Optional path to an auth file; supports a leading `~`. */
   readonly authPath?: string;
+  /** HTTPS API base URL override. */
   readonly baseUrl?: string;
 }
 
 /** Provider configuration indexed by literal provider ID. */
 export interface ProviderConfigMap {
+  /** Alibaba Personal/Solo Token Plan settings. */
   readonly "alibaba-token-plan": AlibabaTokenPlanProviderConfig;
+  /** Codex settings. */
   readonly codex: CodexProviderConfig;
+  /** MiniMax Token Plan settings. */
   readonly minimax: MiniMaxProviderConfig;
+  /** Qwen CLI settings. */
   readonly qwen: QwenProviderConfig;
+  /** Synthetic settings. */
   readonly synthetic: SyntheticProviderConfig;
+  /** ZAI Coding Plan settings. */
   readonly zai: ZaiProviderConfig;
+  /** OpenCode GO settings. */
   readonly "opencode-go": OpenCodeGoProviderConfig;
 }
 
@@ -179,10 +221,15 @@ export type ProviderConfig = ProviderConfigMap[ProviderID];
 
 /** Fully resolved plugin configuration returned by the config parser. */
 export interface ResolvedUsageLimitsConfig {
+  /** Whether the plugin fetches and displays provider usage. */
   readonly enabled: boolean;
+  /** Per-provider settings after defaults have been applied. */
   readonly providers: Readonly<Partial<ProviderConfigMap>>;
+  /** Minimum delay between refresh cycles, in seconds. */
   readonly refreshIntervalSeconds: number;
+  /** Maximum duration of one provider request, in milliseconds. */
   readonly requestTimeoutMs: number;
+  /** Whether provider and configuration errors appear in the sidebar. */
   readonly showErrors: boolean;
 }
 

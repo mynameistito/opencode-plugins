@@ -30,6 +30,15 @@ const fetchProviderEffectInternal = (
     return PROVIDER_REGISTRY[id].fetch(config, openCodeAuth, timeoutMs);
   });
 
+/**
+ * Fetches one provider's usage as an Effect requiring provider runtime services.
+ *
+ * @param id - Provider adapter identifier.
+ * @param config - Optional provider-specific configuration.
+ * @param openCodeAuth - Credentials loaded from OpenCode's shared auth file.
+ * @param timeoutMs - Maximum duration of the provider request.
+ * @returns Provider usage, or a typed provider failure.
+ */
 export function fetchProviderEffect<ID extends ProviderID>(
   id: ID,
   config: ProviderConfigMap[ID] | undefined,
@@ -51,7 +60,16 @@ export function fetchProviderEffect(
   return fetchProviderEffectInternal(id, config, openCodeAuth, timeoutMs);
 }
 
-/** Stable Promise export for direct consumers of the provider dispatcher. */
+/**
+ * Fetches one provider's usage using the production runtime and returns a Promise.
+ *
+ * @param id - Provider adapter identifier.
+ * @param config - Optional provider-specific configuration.
+ * @param openCodeAuth - Credentials loaded from OpenCode's shared auth file.
+ * @param timeoutMs - Maximum duration of the provider request.
+ * @returns A Promise for normalized provider usage.
+ * @throws {ProviderError} When fetching or decoding usage fails.
+ */
 export function fetchProvider<ID extends ProviderID>(
   id: ID,
   config: ProviderConfigMap[ID] | undefined,
@@ -77,6 +95,12 @@ export function fetchProvider(
   );
 }
 
+/**
+ * Lists configured and explicitly enabled providers in display order.
+ *
+ * @param config - Fully resolved plugin configuration.
+ * @returns Provider IDs paired with their provider-specific configuration.
+ */
 export const getProviderConfigs = (
   config: ResolvedUsageLimitsConfig
 ): [ProviderID, ProviderConfigMap[ProviderID]][] =>

@@ -36,7 +36,9 @@ const readFileContents = async (
 
 /** Context supplied when reading provider-owned credential files. */
 export interface ProviderFileInput {
+  /** Auth-file path; a leading `~` is expanded to the user's home directory. */
   readonly path: string;
+  /** Provider used to classify read and decode failures. */
   readonly providerID: ProviderID;
 }
 
@@ -97,7 +99,7 @@ const readText = (
     )
   );
 
-/** Live bounded provider filesystem layer. */
+/** Live layer providing bounded provider credential-file reads. */
 export const ProviderFileSystemLive = Layer.succeed(ProviderFileSystem, {
   readJson: (input) =>
     readText(input).pipe(

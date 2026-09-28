@@ -22,7 +22,14 @@ const FORCE_SUBMIT_COMMANDS = [
   { bind: "ctrl+enter", id: `${FORCE_SUBMIT_COMMAND}.enter` },
 ] as const;
 
-/** Dispatches OpenCode's guarded interrupt flow before submitting the prompt. */
+/**
+ * Interrupts the active run and submits the current prompt.
+ *
+ * Dispatches OpenCode's guarded interrupt flow three times before sending
+ * `prompt.submit`.
+ *
+ * @param dispatch - Keymap dispatcher used to send host commands.
+ */
 export const forceSubmit = (dispatch: (command: string) => void): void => {
   dispatch(INTERRUPT_COMMAND);
   dispatch(INTERRUPT_COMMAND);
@@ -32,14 +39,23 @@ export const forceSubmit = (dispatch: (command: string) => void): void => {
 
 type ForceSubmitKeymap = Pick<Context["keymap"], "dispatch" | "layer">;
 export interface ForceSubmitContext {
+  /** Session data used to update the hint as execution state changes. */
   readonly data: ForceHintData;
+  /** Keymap surface used to register and dispatch force-submit bindings. */
   readonly keymap: ForceSubmitKeymap;
+  /** Plugin options controlling the hint's visibility. */
   readonly options: ForceHintOptions;
+  /** Theme colors used by the composer hint. */
   readonly theme: ForceHintTheme;
+  /** UI slot registration surface provided by OpenCode. */
   readonly ui: Pick<Context["ui"], "slot">;
 }
 
-/** Registers the force-submit commands on a v2 keymap. */
+/**
+ * Registers Ctrl+Enter and Ctrl+Return force-submit bindings on the keymap.
+ *
+ * @param keymap - OpenCode keymap surface on which to add the global layer.
+ */
 export const registerForceSubmitLayer = (keymap: ForceSubmitKeymap): void => {
   keymap.layer(() => ({
     bindings: FORCE_SUBMIT_COMMANDS.map(({ id }) => id),
@@ -81,7 +97,12 @@ const promptFooterContribution = (
   });
 };
 
-/** Initializes the OpenCode v2 TUI plugin. */
+/**
+ * Initializes the OpenCode v2 TUI plugin and registers the composer hint.
+ *
+ * @param context - Plugin context surfaces required by the setup lifecycle.
+ * @returns A disposer that unregisters the UI slot when the plugin is stopped.
+ */
 export const setup = (context: ForceSubmitContext): (() => void) =>
   context.ui.slot({
     append: "prompt.footer.status",
@@ -89,7 +110,7 @@ export const setup = (context: ForceSubmitContext): (() => void) =>
       createComponent(promptFooterContribution, { context, slot }),
   });
 
-/** OpenCode v2 TUI plugin module entrypoint. */
+/** OpenCode v2 plugin entrypoint registering the force-input feature. */
 export default Plugin.define({
   id: PLUGIN_ID,
   setup,

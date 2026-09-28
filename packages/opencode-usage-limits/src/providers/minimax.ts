@@ -400,6 +400,14 @@ const fetchMiniMaxTokenPlanUsageEffect = (
   });
 
 /** Stable Promise export for direct consumers of the provider adapter. */
+/**
+ * Fetches MiniMax Token Plan quota windows.
+ *
+ * @param config - Optional MiniMax endpoint and credential settings.
+ * @param openCodeAuth - Credentials available from OpenCode's shared auth file.
+ * @param timeoutMs - Maximum duration of the provider request.
+ * @returns Normalized MiniMax usage.
+ */
 export const fetchMiniMaxTokenPlanUsage = (
   config: MiniMaxProviderConfig | undefined,
   openCodeAuth: OpenCodeAuth,
@@ -412,6 +420,7 @@ export const fetchMiniMaxTokenPlanUsage = (
   );
 
 /** Plugin registration for the MiniMax Token Plan provider adapter. */
+/** MiniMax Token Plan provider adapter and OpenCode provider-ID mapping. */
 export const minimaxProvider = {
   defaultLabel: "MiniMax",
   displayOrder: 3,

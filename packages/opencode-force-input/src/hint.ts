@@ -1,7 +1,7 @@
 import type { Context } from "@opencode/plugin/tui/context";
 import type { RGBA } from "@opentui/core";
 
-/** Execution lifecycle events that can change the session's idle/running state. */
+/** Session execution events that can change the composer hint state. */
 export const SESSION_EXECUTION_EVENTS = [
   "session.execution.started",
   "session.execution.succeeded",
@@ -22,7 +22,9 @@ export type SessionStatus = ReturnType<Context["data"]["session"]["status"]>;
 
 /** Minimal data surface the hint needs; keeps the context fakeable in tests. */
 export interface ForceHintData {
+  /** Subscribes to an execution event and returns its unsubscriber. */
   readonly on: (type: SessionExecutionEvent, handler: () => void) => () => void;
+  /** Provides the normalized status for a session. */
   readonly session: {
     readonly status: (sessionID: string) => SessionStatus;
   };
@@ -49,8 +51,11 @@ interface LegacyTheme {
 export type ForceHintTheme = V2Theme | LegacyTheme;
 
 export interface HintColors {
+  /** Accent color for the force-submit action. */
   readonly force: RGBA;
+  /** Color for key glyphs. */
   readonly key: RGBA;
+  /** Subdued color for explanatory labels. */
   readonly label: RGBA;
 }
 
@@ -58,7 +63,12 @@ export interface HintColors {
 const isV2Theme = (theme: ForceHintTheme): theme is V2Theme =>
   "default" in theme.text;
 
-/** Resolves the hint palette from either theme shape. */
+/**
+ * Resolves semantic hint colors from either supported OpenCode theme shape.
+ *
+ * @param theme - Structured v2 theme or legacy flat theme.
+ * @returns Colors for the force action, key label, and explanatory copy.
+ */
 export const resolveHintColors = (theme: ForceHintTheme): HintColors => {
   if (isV2Theme(theme)) {
     return {
@@ -87,6 +97,11 @@ export interface ForceHintOptions {
   readonly hint?: boolean;
 }
 
-/** Reads the plugin option that can disable the hint. */
+/**
+ * Determines whether the hint should be rendered for the supplied options.
+ *
+ * @param options - Plugin options; only an explicit `false` hides the hint.
+ * @returns `true` unless `hint` is set to `false`.
+ */
 export const hintEnabled = (options: ForceHintOptions): boolean =>
   options.hint !== false;

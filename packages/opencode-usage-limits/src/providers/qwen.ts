@@ -256,6 +256,7 @@ const fetchQwenTokenPlanUsage = (
   });
 
 /** Plugin registration for the Qwen Token Plan provider adapter. */
+/** Qwen provider adapter that reads usage from the authenticated Qwen CLI. */
 export const qwenProvider = {
   defaultLabel: "Qwen",
   displayOrder: 4,

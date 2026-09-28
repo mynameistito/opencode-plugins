@@ -1,7 +1,9 @@
 import { Schema } from "effect";
 
+/** Factory for schema-validated tagged error classes used at plugin boundaries. */
 export const schemaTaggedError = Schema.TaggedError;
 
+/** Schema for the provider identifiers accepted in structured errors. */
 export const ProviderIDSchema = Schema.Literals([
   "codex",
   "zai",
@@ -12,6 +14,7 @@ export const ProviderIDSchema = Schema.Literals([
   "opencode-go",
 ]);
 
+/** Safe, user-facing missing-credential message for each provider. */
 export const credentialMessages = {
   "alibaba-token-plan": "missing Bailian console login",
   codex: "missing Codex auth",
@@ -22,6 +25,7 @@ export const credentialMessages = {
   zai: "missing ZAI key",
 } as const;
 
+/** Schema for operations that can fail at provider boundaries. */
 export const ProviderOperationSchema = Schema.Literals([
   "decode-response",
   "fetch-usage",
@@ -29,10 +33,12 @@ export const ProviderOperationSchema = Schema.Literals([
   "run-command",
 ]);
 
+/** Schema for finite numeric values greater than or equal to zero. */
 export const NonNegativeFiniteSchema = Schema.Finite.check(
   Schema.isGreaterThanOrEqualTo(0)
 );
 
+/** Common allow-listed failure causes for structured provider errors. */
 export const safeCause = {
   cause: Schema.optionalKey(
     Schema.Literals([
@@ -55,6 +61,7 @@ export const safeCause = {
   ),
 };
 
+/** Shared provider and operation fields for provider errors. */
 export const providerContext = {
   operation: ProviderOperationSchema,
   providerID: ProviderIDSchema,
