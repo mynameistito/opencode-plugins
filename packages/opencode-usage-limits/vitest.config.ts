@@ -31,6 +31,7 @@ export default defineConfig({
     },
     environment: "node",
     include: ["__tests__/**/*.test.{ts,tsx}"],
+    isolate: false,
     server: {
       deps: {
         inline: ["@opencode/plugin", "@opentui/solid", "solid-js"],
