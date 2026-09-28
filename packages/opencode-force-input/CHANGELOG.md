@@ -1,5 +1,12 @@
 # @mynameistito/opencode-force-input
 
+## 1.1.6
+
+### Patch Changes
+
+- c5e8d3d: Update package.json metadata and added tsconfig.json schema's
+- 88c6991: Document shell-specific commands for clearing cached plugin packages before reinstalling.
+
 ## 1.1.5
 
 ### Patch Changes

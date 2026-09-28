@@ -1,5 +1,14 @@
 # @mynameistito/opencode-plugins-docs
 
+## 0.0.5
+
+### Patch Changes
+
+- c5e8d3d: Update package.json metadata and added tsconfig.json schema's
+- 0cb589d: Sort usage-limit providers and align logo labels
+- 4cca260: Use a dark palette for docs Open Graph images
+- 88c6991: Document shell-specific cache cleanup commands
+
 ## 0.0.4
 
 ### Patch Changes
