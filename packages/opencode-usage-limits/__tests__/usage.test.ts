@@ -1,5 +1,5 @@
 import { Result } from "effect";
-import { describe, expect, test } from "vitest";
+import { describe, expect, expectTypeOf, test } from "vitest";
 
 import {
   countQuota,
@@ -9,14 +9,10 @@ import {
 } from "@/usage.ts";
 import type { Percentage, QuotaCount } from "@/usage.ts";
 
-type IsAssignable<From, To> = From extends To ? true : false;
-const plainNumberIsPercentage: IsAssignable<number, Percentage> = false;
-const plainNumberIsQuotaCount: IsAssignable<number, QuotaCount> = false;
-
 describe("usage domain invariants", () => {
   test("keeps refined numeric types nominal", () => {
-    expect(plainNumberIsPercentage).toBeFalsy();
-    expect(plainNumberIsQuotaCount).toBeFalsy();
+    expectTypeOf<number>().not.toMatchTypeOf<Percentage>();
+    expectTypeOf<number>().not.toMatchTypeOf<QuotaCount>();
   });
 
   test.each([0, 42.5, 100])("accepts finite percentage %s", (value) => {
