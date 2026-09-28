@@ -47,7 +47,9 @@ export interface UsageLimitsTuiDependencies {
 }
 
 export interface UsageLimitsSlotContext {
+  /** Active session identifier, when a session is selected. */
   readonly sessionID?: string;
+  /** Composer mode; shell mode does not show the usage footer. */
   readonly mode?: "normal" | "shell";
 }
 
@@ -57,6 +59,7 @@ interface UsageLimitsSlotClaim {
 }
 
 export interface UsageLimitsContext {
+  /** Session data used to determine the active provider. */
   readonly data: {
     readonly session: {
       readonly get: (sessionID: string) =>
@@ -69,12 +72,20 @@ export interface UsageLimitsContext {
       };
     };
   };
+  /** Current OpenCode theme used by plugin UI components. */
   readonly theme: UsageTheme;
+  /** Registers UI contributions and returns a disposer for each slot. */
   readonly ui: {
     readonly slot: (claim: UsageLimitsSlotClaim) => () => void;
   };
 }
 
+/**
+ * Creates provider runtime dependencies backed by the production services.
+ *
+ * @param loaders - Optional configuration and auth loader overrides.
+ * @returns Dependencies using production HTTP, filesystem, and command services.
+ */
 export const makeProductionDependencies = (
   loaders?: Pick<UsageLimitsTuiDependencies, "loadConfig" | "loadOpenCodeAuth">
 ): UsageLimitsTuiDependencies => {
@@ -100,7 +111,7 @@ const productionDependencies = makeProductionDependencies();
  * slots for both the sidebar panel and prompt-footer indicator.
  *
  * @param dependencies - Runtime loaders, provider fetcher, scheduler, and clock.
- * @returns The configured OpenCode v2 plugin setup function.
+ * @returns A setup function that registers slots and starts the refresh loop.
  */
 export const createUsageLimitsPlugin =
   (dependencies: UsageLimitsTuiDependencies) =>

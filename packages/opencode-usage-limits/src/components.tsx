@@ -131,6 +131,13 @@ const UsageWindowRows = (props: {
   </For>
 );
 
+/**
+ * Determines whether a provider state has visible sidebar content.
+ *
+ * @param state - Current state of one provider.
+ * @param showErrors - Whether provider errors should be displayed.
+ * @returns `true` when usage or a permitted error should be rendered.
+ */
 export const shouldRenderProviderState = (
   state: ProviderState,
   showErrors: boolean
@@ -148,12 +155,24 @@ export const shouldRenderProviderState = (
   return showErrors && state.errorKind !== "missing_credentials";
 };
 
+/**
+ * Renders provider usage, diagnostics, stale state, and refresh time in the sidebar.
+ *
+ * @param props - Provider snapshots and visual preferences for the panel.
+ * @returns The sidebar panel, or `null` when there is nothing to display.
+ */
 export const UsageLimitsPanel = (props: {
+  /** Optional non-fatal configuration and auth diagnostics. */
   diagnostics?: readonly ConfigDiagnostic[];
+  /** Current states for enabled providers. */
   states: readonly ProviderState[];
+  /** Whether provider errors should be included in the panel. */
   showErrors: boolean;
+  /** Active OpenCode theme. */
   theme: UsageTheme;
+  /** Timestamp of the last completed refresh, or `null` before the first. */
   lastRefreshAt: Date | null;
+  /** Per-provider display preferences resolved from configuration. */
   providerDisplays: Readonly<
     Partial<Record<ProviderState["id"], ProviderDisplayConfig>>
   >;
@@ -277,8 +296,11 @@ export const UsageLimitsPanel = (props: {
  * @returns Solid/OpenTUI JSX for the prompt footer slot.
  */
 export const BottomUsage = (props: {
+  /** Whether to render a usage bar before the text. */
   showBar: boolean;
+  /** Active provider window, or `null` when no usage is available. */
   window: UsageWindow | null;
+  /** Active OpenCode theme. */
   theme: UsageTheme;
 }) => {
   const colors = resolveTheme(props.theme);

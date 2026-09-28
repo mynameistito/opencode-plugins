@@ -9,6 +9,7 @@ import type { OpenCodeAuth, ResolvedUsageLimitsConfig } from "@/types.ts";
 import { isRecord, isString, readJsonFile } from "@/utils.ts";
 import type { JsonValue } from "@/utils.ts";
 
+/** Reads and parses one JSON-compatible configuration or auth file. */
 export type ConfigFileReader = (filePath: string) => Promise<JsonValue>;
 
 /**
@@ -29,8 +30,15 @@ const CONFIG_PATH = path.join(
   "opencode",
   "usage-limits.jsonc"
 );
-/** Default OpenCode auth path shared by installed providers. */
-/** Resolves the default OpenCode auth-file path for a runtime platform. */
+/**
+ * Resolves OpenCode's default auth-file path for the given runtime platform.
+ *
+ * @param platform - Runtime platform identifier, such as `win32` or `linux`.
+ * @param dataHome - Absolute XDG data directory override, if configured.
+ * @param localAppData - Windows local application-data directory, if available.
+ * @param home - User home directory used as the final fallback.
+ * @returns Absolute path to OpenCode's `auth.json` file.
+ */
 export const defaultOpenCodeAuthPath = (
   platform: string,
   dataHome: string | undefined,
@@ -66,6 +74,7 @@ export const DEFAULT_CONFIG: ResolvedUsageLimitsConfig = {
 const isMissingFile = (error: Error): boolean =>
   error instanceof Error && "code" in error && error.code === "ENOENT";
 
+/** Non-fatal issue encountered while loading configuration or auth data. */
 export type ConfigDiagnostic =
   | { readonly kind: "config-read"; readonly message: string }
   | { readonly kind: "config-decode"; readonly message: string }
@@ -74,7 +83,9 @@ export type ConfigDiagnostic =
   | { readonly kind: "auth-decode"; readonly message: string };
 
 export interface OpenCodeAuthLoad {
+  /** Recognized credentials; empty when auth is unavailable or invalid. */
   readonly auth: OpenCodeAuth;
+  /** Non-fatal diagnostic describing why auth could not be fully loaded. */
   readonly diagnostic?: ConfigDiagnostic;
 }
 
@@ -103,7 +114,15 @@ const hasMalformedAuthField = (input: JsonValue): boolean => {
   );
 };
 
-/** Loads and parses the usage-limits plugin configuration. */
+/**
+ * Reads and validates the user's usage-limits configuration file.
+ *
+ * Missing files resolve to {@link DEFAULT_CONFIG}; read and decode failures are
+ * returned as typed failures rather than thrown.
+ *
+ * @param read - Injectable file reader, defaulting to the filesystem reader.
+ * @returns Resolved configuration or a typed read/decode failure.
+ */
 export const loadConfig = async (
   read: ConfigFileReader = readJsonFile
 ): Promise<
@@ -130,7 +149,15 @@ export const loadConfig = async (
   }
 };
 
-/** Loads recognized OpenCode auth fields without making auth absence fatal. */
+/**
+ * Reads supported credentials from OpenCode's shared auth file.
+ *
+ * Auth-file absence and read/decode problems are reported as non-fatal
+ * diagnostics so provider-specific credential sources can still be tried.
+ *
+ * @param read - Injectable file reader, defaulting to the filesystem reader.
+ * @returns Recognized auth values and an optional diagnostic.
+ */
 export const loadOpenCodeAuth = async (
   read: ConfigFileReader = readJsonFile
 ): Promise<OpenCodeAuthLoad> => {

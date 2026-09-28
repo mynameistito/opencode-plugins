@@ -22,15 +22,21 @@ import type {
 } from "@/types.ts";
 
 export interface CoordinatorSnapshot {
+  /** Configuration or auth diagnostics to display. */
   readonly diagnostics: readonly ConfigDiagnostic[];
+  /** Latest state for each configured provider. */
   readonly states: readonly ProviderState[];
+  /** Resolved per-provider sidebar and footer display preferences. */
   readonly providerDisplays: Readonly<
     Partial<Record<ProviderID, ProviderDisplayConfig>>
   >;
+  /** Whether provider errors should be shown in the sidebar. */
   readonly showErrors: boolean;
+  /** Time of the most recent completed provider refresh, if any. */
   readonly lastRefreshAt: Date | null;
 }
 
+/** Dependencies and observable effects for the periodic usage refresh loop. */
 export interface UsageCoordinatorDependencies {
   readonly loadConfig: Effect.Effect<
     Result.Result<ResolvedUsageLimitsConfig, unknown>
@@ -127,6 +133,15 @@ const configDiagnosticFor = (
   };
 };
 
+/**
+ * Runs the recurring configuration load, provider fetch, and snapshot publish loop.
+ *
+ * Successful provider results are retained for stale-data fallback after later
+ * fetch failures. The returned Effect runs until interrupted.
+ *
+ * @param dependencies - Loaders, provider fetcher, clock, scheduler, and publisher.
+ * @returns Effect that completes only when interrupted or failed by interruption.
+ */
 export const usageCoordinator = (
   dependencies: UsageCoordinatorDependencies
 ): Effect.Effect<void> =>

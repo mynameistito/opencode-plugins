@@ -40,6 +40,12 @@ const getProviderFromMessage = (message: JsonValue): string | undefined => {
   return undefined;
 };
 
+/**
+ * Finds the provider ID on the newest session message that includes one.
+ *
+ * @param messages - Session messages ordered from oldest to newest.
+ * @returns The most recent provider ID, or `undefined` if none is present.
+ */
 export const currentProviderID = (
   messages: readonly JsonValue[]
 ): string | undefined => {
@@ -125,6 +131,14 @@ const selectUsageForProvider = (
   return window ? { providerID: usageID, window } : null;
 };
 
+/**
+ * Resolves the plugin provider that supplies usage for the active session.
+ *
+ * @param states - Latest state for each configured provider.
+ * @param providerID - OpenCode provider ID associated with the session.
+ * @param providerDisplays - Optional per-provider footer window preferences.
+ * @returns Matching plugin provider ID, or `null` if usage is unavailable.
+ */
 export const usageProviderFor = (
   states: readonly ProviderState[],
   providerID: string | undefined,
@@ -135,6 +149,14 @@ export const usageProviderFor = (
   selectUsageForProvider(states, providerID, providerDisplays)?.providerID ??
   null;
 
+/**
+ * Selects the active provider's preferred usage window for the footer.
+ *
+ * @param states - Latest state for each configured provider.
+ * @param providerID - OpenCode provider ID associated with the session.
+ * @param providerDisplays - Optional per-provider footer window preferences.
+ * @returns Selected quota window, or `null` when no window can be shown.
+ */
 export const usageForProvider = (
   states: readonly ProviderState[],
   providerID: string | undefined,

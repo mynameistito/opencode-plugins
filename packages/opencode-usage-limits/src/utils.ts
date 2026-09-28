@@ -80,6 +80,13 @@ export const isRecord = <T>(value: T): value is T & JsonObject =>
   !Array.isArray(value) &&
   Object.prototype.toString.call(value) === "[object Object]";
 
+/** Narrows an unknown value to a string. */
+/**
+ * Checks whether a value is a string and narrows its type.
+ *
+ * @param value - Value to inspect.
+ * @returns `true` when `value` is a string.
+ */
 export const isString = <T>(value: T): value is T & string =>
   Schema.is(Schema.String)(value);
 
