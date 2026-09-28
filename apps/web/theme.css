@@ -32,34 +32,6 @@
     transform 150ms ease;
 }
 
-.provider-logo-grid a[href="#alibaba-token-plan"] {
-  order: 1;
-}
-
-.provider-logo-grid a[href="#minimax"] {
-  order: 2;
-}
-
-.provider-logo-grid a[href="#openai"] {
-  order: 3;
-}
-
-.provider-logo-grid a[href="#opencode-go"] {
-  order: 4;
-}
-
-.provider-logo-grid a[href="#qwen"] {
-  order: 5;
-}
-
-.provider-logo-grid a[href="#synthetic"] {
-  order: 6;
-}
-
-.provider-logo-grid a[href="#zai"] {
-  order: 7;
-}
-
 .provider-logo-grid a:hover,
 .provider-logo-grid a:focus-visible {
   border-color: var(--blume-accent);
