@@ -10,10 +10,15 @@ import {
 import type { ForceHintData, ForceHintTheme } from "./hint.ts";
 
 export interface ForceHintProps {
+  /** Reactive session data used to track execution state. */
   readonly data: ForceHintData;
+  /** Whether the user-facing hint is enabled. */
   readonly enabled: boolean;
+  /** Current composer mode; the hint is hidden in shell mode. */
   readonly mode: "normal" | "shell";
+  /** Active session identifier, if a session is selected. */
   readonly sessionID: string | undefined;
+  /** Current OpenCode theme in either supported shape. */
   readonly theme: ForceHintTheme;
 }
 
@@ -23,6 +28,9 @@ export interface ForceHintProps {
  * `prompt.footer.status` (the footer row directly below the border) and is
  * lifted by an absolute overlay: one row up is the bottom border, two rows up
  * is the composer's own info row, whose right side is empty space.
+ *
+ * @param props - Session state, display options, and theme for the hint.
+ * @returns The reactive composer hint element.
  */
 export const ForceHint = (props: ForceHintProps): JSX.Element => {
   const [tick, setTick] = createSignal(0);
