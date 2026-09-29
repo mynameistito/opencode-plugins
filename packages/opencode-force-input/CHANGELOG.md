@@ -1,5 +1,15 @@
 # @mynameistito/opencode-force-input
 
+## 1.1.7
+
+### Patch Changes
+
+- 07b8ceb: Add complete TSDoc coverage to the force-input package
+- 1d8ac74: Refresh shared workspace tooling used to validate the plugin
+- 369b015: chore: Migrate to @opencode/plugin@2.0.18
+- f9deb00: Updated @opencode/plugin to 2.0.20
+- de6ca28: Updated @opencode/plugin to 2.0.19
+
 ## 1.1.6
 
 ### Patch Changes

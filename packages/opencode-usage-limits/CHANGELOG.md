@@ -1,5 +1,15 @@
 # @mynameistito/opencode-usage-limits
 
+## 1.1.8
+
+### Patch Changes
+
+- 7172ec1: Add complete TSDoc coverage to the usage-limits package
+- 369b015: chore: Migrate to @opencode/plugin@2.0.18
+- f9deb00: Updated @opencode/plugin to 2.0.20
+- 1d8ac74: Refresh shared workspace tooling used to validate the plugin
+- de6ca28: Updated @opencode/plugin to 2.0.19
+
 ## 1.1.7
 
 ### Patch Changes
