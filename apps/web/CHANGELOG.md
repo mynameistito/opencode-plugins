@@ -1,5 +1,11 @@
 # @mynameistito/opencode-plugins-docs
 
+## 0.0.6
+
+### Patch Changes
+
+- 1d8ac74: Upgrade the docs site to Blume 2 and migrate its config
+
 ## 0.0.5
 
 ### Patch Changes
