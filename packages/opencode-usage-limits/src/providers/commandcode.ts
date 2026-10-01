@@ -71,10 +71,7 @@ const keyFromAuth = (
   return undefined;
 };
 
-const orgIdFromWhoami = (payload: JsonValue): string | undefined => {
-  if (!isRecord(payload)) {
-    return undefined;
-  }
+const orgIdFromWhoami = (payload: JsonObject): string | undefined => {
   const scope = isRecord(payload.data) ? payload.data : payload;
   const org = isRecord(scope.org) ? scope.org : scope.organization;
   if (!isRecord(org) || !isJsonString(org.id) || org.id.trim() === "") {
@@ -83,10 +80,7 @@ const orgIdFromWhoami = (payload: JsonValue): string | undefined => {
   return org.id;
 };
 
-const whoamiReportsFailure = (payload: JsonValue): boolean => {
-  if (!isRecord(payload)) {
-    return false;
-  }
+const whoamiReportsFailure = (payload: JsonObject): boolean => {
   if (isJsonBoolean(payload.success) && !payload.success) {
     return true;
   }
@@ -124,16 +118,14 @@ const commandCodeWindow = (
   if (Result.isFailure(used) || Result.isFailure(cap) || cap.success <= 0) {
     return null;
   }
-  const percent = parseUsagePercentage(
-    Math.min((used.success / cap.success) * 100, 100)
-  );
-  if (Result.isFailure(percent)) {
-    return null;
-  }
   return {
     kind,
     label,
-    quota: percentageQuota(percent.success),
+    quota: percentageQuota(
+      Result.getOrThrow(
+        parseUsagePercentage(Math.min((used.success / cap.success) * 100, 100))
+      )
+    ),
     resetsAt: resetFromEpochMs(value.resetAt),
   };
 };
@@ -175,14 +167,12 @@ const commandCodeMonthlyWindow = (
   if (total <= 0) {
     return null;
   }
-  const percent = parseUsagePercentage((spent / total) * 100);
-  if (Result.isFailure(percent)) {
-    return null;
-  }
   return {
     kind: "monthly",
     label: "monthly",
-    quota: percentageQuota(percent.success),
+    quota: percentageQuota(
+      Result.getOrThrow(parseUsagePercentage((spent / total) * 100))
+    ),
     resetsAt: null,
   };
 };
@@ -226,7 +216,7 @@ const fetchCommandCodeUsageEffect = (
       timeoutMs,
       url: commandCodeUrl(baseUrl, WHOAMI_PATH, { limits: "1" }),
     });
-    if (whoamiReportsFailure(whoami)) {
+    if (!isRecord(whoami) || whoamiReportsFailure(whoami)) {
       return yield* decodeFailure();
     }
     const orgId = orgIdFromWhoami(whoami);

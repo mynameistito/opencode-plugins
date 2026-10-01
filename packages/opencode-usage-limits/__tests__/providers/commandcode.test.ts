@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 
 import { fetchCommandCodeUsage } from "@/providers/commandcode.ts";
+import type { JsonObject, JsonValue } from "@/utils.ts";
 
 import { resetFetchMock } from "./helpers.ts";
 
@@ -9,21 +10,31 @@ type FetchMock = (
   init?: RequestInit
 ) => Promise<Response>;
 
-const whoami = (orgId?: string) =>
+const whoami = (orgId?: string | number) =>
   Response.json(
     orgId === undefined
       ? { success: true, user: { id: "user_fixture" } }
       : { org: { id: orgId }, success: true }
   );
 
-const credits = () =>
+const defaultWindowLimits: JsonObject = {
+  fiveHour: { cap: 14, resetAt: 1_789_810_659_226, used: 7 },
+  weekly: { cap: 35, resetAt: 1_790_397_459_226, used: 7 },
+};
+
+const defaultCredits: JsonObject = {
+  freeCredits: 0,
+  monthlyCredits: 70,
+  purchasedCredits: 5,
+};
+
+const creditsWith = (windowLimits: JsonObject, accountCredits: JsonValue) =>
   Response.json({
-    credits: { freeCredits: 0, monthlyCredits: 70, purchasedCredits: 5 },
-    windowLimits: {
-      fiveHour: { cap: 14, resetAt: 1_789_810_659_226, used: 7 },
-      weekly: { cap: 35, resetAt: 1_790_397_459_226, used: 7 },
-    },
+    credits: accountCredits,
+    windowLimits,
   });
+
+const credits = () => creditsWith(defaultWindowLimits, defaultCredits);
 
 const installResponses = (responses: readonly Response[]) => {
   let index = 0;
@@ -94,6 +105,42 @@ describe("Command Code provider", () => {
     ]);
   });
 
+  test("ignores an invalid organization id and accepts nested whoami data", async () => {
+    const fetchMock = installResponses([
+      Response.json({ data: { organization: { id: 42 } }, success: true }),
+      credits(),
+      Response.json({ totalCost: 5 }),
+    ]);
+
+    await fetchCommandCodeUsage(undefined, { apiKey: "cc-token" }, 1000);
+
+    expect(fetchMock.mock.calls.map(([url]) => String(url))).toStrictEqual([
+      "https://api.commandcode.ai/alpha/whoami?limits=1",
+      "https://api.commandcode.ai/alpha/billing/credits",
+      "https://api.commandcode.ai/alpha/usage/summary",
+    ]);
+  });
+
+  test("fails when nested whoami reports an unsuccessful response", async () => {
+    const fetchMock = installResponses([
+      Response.json({ data: { success: false } }),
+    ]);
+
+    await expect(
+      fetchCommandCodeUsage(undefined, { commandcode: { apiKey: "key" } }, 1000)
+    ).rejects.toThrow("invalid Command Code usage");
+    expect(fetchMock).toHaveBeenCalledOnce();
+  });
+
+  test("does not treat malformed whoami data as a personal account", async () => {
+    const fetchMock = installResponses([Response.json(null)]);
+
+    await expect(
+      fetchCommandCodeUsage(undefined, { commandcode: { key: "key" } }, 1000)
+    ).rejects.toThrow("invalid Command Code usage");
+    expect(fetchMock).toHaveBeenCalledOnce();
+  });
+
   test("keeps monthly quota unknown when its summary request fails", async () => {
     installResponses([
       whoami(),
@@ -111,6 +158,81 @@ describe("Command Code provider", () => {
       kind: "monthly",
       quota: { _tag: "Unknown" },
     });
+  });
+
+  test.each([
+    ["missing credits", null],
+    [
+      "invalid credit balances",
+      { freeCredits: 0, monthlyCredits: "bad", purchasedCredits: 0 },
+    ],
+    [
+      "empty credit pool",
+      { freeCredits: 0, monthlyCredits: 0, purchasedCredits: 0 },
+    ],
+  ])("omits monthly usage with %s", async (_label, accountCredits) => {
+    installResponses([
+      whoami(),
+      creditsWith(defaultWindowLimits, accountCredits),
+      Response.json({ totalCredits: 0 }),
+    ]);
+
+    const usage = await fetchCommandCodeUsage(
+      undefined,
+      { commandcode: { key: "cc-token" } },
+      1000
+    );
+
+    expect(usage.windows).toHaveLength(2);
+  });
+
+  test("omits unusable credit buckets but keeps valid windows", async () => {
+    installResponses([
+      whoami(),
+      creditsWith(
+        {
+          fiveHour: { cap: 0, used: 1 },
+          weekly: { cap: 35, used: 7 },
+        },
+        defaultCredits
+      ),
+      Response.json({ totalCredits: 5 }),
+    ]);
+
+    const usage = await fetchCommandCodeUsage(
+      undefined,
+      { commandcode: { key: "cc-token" } },
+      1000
+    );
+
+    expect(usage.windows.map((window) => window.kind)).toStrictEqual([
+      "weekly",
+      "monthly",
+    ]);
+  });
+
+  test("rejects malformed billing responses and empty window sets", async () => {
+    installResponses([whoami(), Response.json({ credits: {} })]);
+    await expect(
+      fetchCommandCodeUsage(
+        undefined,
+        { commandcode: { key: "cc-token" } },
+        1000
+      )
+    ).rejects.toThrow("invalid Command Code usage");
+
+    installResponses([
+      whoami(),
+      creditsWith({ fiveHour: null, weekly: null }, null),
+      Response.json({ totalCredits: 5 }),
+    ]);
+    await expect(
+      fetchCommandCodeUsage(
+        undefined,
+        { commandcode: { key: "cc-token" } },
+        1000
+      )
+    ).rejects.toThrow("invalid Command Code usage");
   });
 
   test("does not issue unscoped requests when whoami fails", async () => {
