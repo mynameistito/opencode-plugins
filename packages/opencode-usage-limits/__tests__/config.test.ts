@@ -48,6 +48,7 @@ interface PublishedSchema {
   $defs: {
     alibabaTokenPlanProvider: PublishedProviderDefinition;
     codexProvider: PublishedProviderDefinition;
+    commandCodeProvider: PublishedProviderDefinition;
     commonDisplayFields: PublishedProviderDefinition;
     minimaxProvider: PublishedProviderDefinition;
     openCodeGoProvider: PublishedProviderDefinition;
@@ -60,6 +61,7 @@ interface PublishedSchema {
       properties: {
         "alibaba-token-plan": { $ref: "#/$defs/alibabaTokenPlanProvider" };
         codex: { $ref: "#/$defs/codexProvider" };
+        commandcode: { $ref: "#/$defs/commandCodeProvider" };
         minimax: { $ref: "#/$defs/minimaxProvider" };
         "opencode-go": { $ref: "#/$defs/openCodeGoProvider" };
         qwen: { $ref: "#/$defs/qwenProvider" };
@@ -86,6 +88,9 @@ describe("configuration parsing", () => {
       codex: Object.keys(
         publishedSchema.$defs.codexProvider.properties
       ).toSorted(),
+      commandcode: Object.keys(
+        publishedSchema.$defs.commandCodeProvider.properties
+      ).toSorted(),
       minimax: Object.keys(
         publishedSchema.$defs.minimaxProvider.properties
       ).toSorted(),
@@ -104,6 +109,7 @@ describe("configuration parsing", () => {
     expect(publishedSchema.properties.providers.properties).toStrictEqual({
       "alibaba-token-plan": { $ref: "#/$defs/alibabaTokenPlanProvider" },
       codex: { $ref: "#/$defs/codexProvider" },
+      commandcode: { $ref: "#/$defs/commandCodeProvider" },
       minimax: { $ref: "#/$defs/minimaxProvider" },
       "opencode-go": { $ref: "#/$defs/openCodeGoProvider" },
       qwen: { $ref: "#/$defs/qwenProvider" },
@@ -129,6 +135,7 @@ describe("configuration parsing", () => {
       ].toSorted()
     );
     const apiKeyProviders = [
+      providerFields.commandcode,
       providerFields.minimax,
       providerFields["opencode-go"],
       providerFields.synthetic,
@@ -175,13 +182,24 @@ describe("configuration parsing", () => {
           showSidebarBar: true,
           sidebarWindow: "weekly",
         },
+        commandcode: {
+          apiKey: "commandcode-secret",
+          authPath: "~/.config/opencode/auth.json",
+          baseUrl: "https://api.commandcode.ai",
+          enabled: true,
+          label: "CC",
+        },
       },
     });
 
     const success = Result.isSuccess(result) ? result.success : undefined;
     const apiKey = success?.providers.codex?.apiKey;
+    const commandCodeApiKey = success?.providers.commandcode?.apiKey;
     expect(Result.isSuccess(result)).toBeTruthy();
-    expect(Redacted.isRedacted(apiKey)).toBeTruthy();
+    expect([
+      Redacted.isRedacted(apiKey),
+      Redacted.isRedacted(commandCodeApiKey),
+    ]).toStrictEqual([true, true]);
     expect(String(apiKey)).not.toContain("do-not-log");
     expect(success?.providers.codex).toMatchObject({
       authPath: "~/.codex/auth.json",
@@ -193,6 +211,12 @@ describe("configuration parsing", () => {
       showFooterBar: false,
       showSidebarBar: true,
       sidebarWindow: "weekly",
+    });
+    expect(success?.providers.commandcode).toMatchObject({
+      authPath: "~/.config/opencode/auth.json",
+      baseUrl: "https://api.commandcode.ai",
+      enabled: true,
+      label: "CC",
     });
   });
 
@@ -460,6 +484,7 @@ describe("configuration loading", () => {
 
   test("parses every recognized auth entry and ignores non-object input", () => {
     const auth = parseOpenCodeAuth({
+      commandcode: { key: "commandcode" },
       minimax: { key: "minimax" },
       "minimax-coding-plan": { apiKey: "coding" },
       "minimax-token-plan": { key: "token-plan" },
@@ -478,6 +503,7 @@ describe("configuration loading", () => {
       credentialValue(auth.openai?.accountId),
       credentialValue(auth.opencode?.key),
       credentialValue(auth["opencode-go"]?.key),
+      credentialValue(auth.commandcode?.key),
       credentialValue(auth.synthetic?.apiKey),
       credentialValue(auth.zai?.key),
       credentialValue(auth["zai-coding-plan"]?.key),
@@ -488,6 +514,7 @@ describe("configuration loading", () => {
       "account",
       "opencode",
       "go",
+      "commandcode",
       "synthetic",
       "zai",
       "zai-plan",

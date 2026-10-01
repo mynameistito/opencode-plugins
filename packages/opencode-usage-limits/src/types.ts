@@ -28,7 +28,8 @@ export type ProviderID =
   | "synthetic"
   | "minimax"
   | "qwen"
-  | "opencode-go";
+  | "opencode-go"
+  | "commandcode";
 
 /** Sensitive string accepted by parsed config and legacy provider boundaries. */
 type Credential = Redacted.Redacted<string> | string;
@@ -198,6 +199,16 @@ export interface OpenCodeGoProviderConfig extends CommonProviderConfig {
   readonly baseUrl?: string;
 }
 
+/** Command Code provider configuration. */
+export interface CommandCodeProviderConfig extends CommonProviderConfig {
+  /** Command Code API credential override. */
+  readonly apiKey?: Credential;
+  /** Optional path to an auth file; supports a leading `~`. */
+  readonly authPath?: string;
+  /** HTTPS API base URL override. */
+  readonly baseUrl?: string;
+}
+
 /** Provider configuration indexed by literal provider ID. */
 export interface ProviderConfigMap {
   /** Alibaba Personal/Solo Token Plan settings. */
@@ -214,6 +225,8 @@ export interface ProviderConfigMap {
   readonly zai: ZaiProviderConfig;
   /** OpenCode GO settings. */
   readonly "opencode-go": OpenCodeGoProviderConfig;
+  /** Command Code settings. */
+  readonly commandcode: CommandCodeProviderConfig;
 }
 
 /** Any provider-specific configuration. */
@@ -259,6 +272,8 @@ export interface OpenCodeAuth {
   "minimax-token-plan"?: OpenCodeAuthEntry | null;
   /** OpenCode GO credentials stored under the provider's catalog ID. */
   "opencode-go"?: OpenCodeAuthEntry | null;
+  /** Command Code credentials stored under OpenCode's provider ID. */
+  commandcode?: OpenCodeAuthEntry | null;
   /** OpenCode Zen credentials stored under the legacy provider ID. */
   opencode?: OpenCodeAuthEntry | null;
 }
