@@ -1,7 +1,7 @@
 {
   "$schema": "https://www.schemastore.org/package.json",
   "name": "@mynameistito/opencode-plugins-docs",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "private": true,
   "description": "Documentation site for mynameistito's OpenCode plugins.",
   "homepage": "https://github.com/mynameistito/opencode-plugins#readme",
