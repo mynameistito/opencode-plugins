@@ -107,7 +107,12 @@ const cacheProviderStates = (
   lastStates: Map<ProviderID, ProviderState>
 ): void => {
   for (const state of states) {
-    lastStates.set(state.id, state);
+    if (
+      state.status === "ready" ||
+      (state.status === "error" && state.previous)
+    ) {
+      lastStates.set(state.id, state);
+    }
   }
 };
 
@@ -193,6 +198,8 @@ export const usageCoordinator = (
         : configResult.success;
 
       const intervalMs = intervalMilliseconds(config.refreshIntervalSeconds);
+      const staleAfterMs = intervalMs * 2;
+      const refreshStartedAt = yield* dependencies.now;
       const providers = config.enabled ? getProviderConfigs(config) : [];
       const providerIDs = new Set(providers.map(([id]) => id));
       clearDisabledProviderStates(providerIDs, lastStates, lastSuccess);
@@ -201,9 +208,22 @@ export const usageCoordinator = (
         lastRefreshAt,
         providerDisplays: providerDisplaysFor(providers),
         showErrors: config.showErrors,
-        states: providers.map(
-          ([id, provider]) => lastStates.get(id) ?? loadingState(id, provider)
-        ),
+        states: providers.map(([id, provider]) => {
+          const previous = lastStates.get(id);
+          if (!previous) {
+            return loadingState(id, provider);
+          }
+          if (previous.status === "ready") {
+            return {
+              ...previous,
+              stale:
+                refreshStartedAt.getTime() -
+                  previous.data.capturedAt.getTime() >
+                staleAfterMs,
+            };
+          }
+          return previous;
+        }),
       });
 
       if (providers.length > 0) {
@@ -267,7 +287,6 @@ export const usageCoordinator = (
         );
         const now = yield* dependencies.now;
         lastRefreshAt = now;
-        const staleAfterMs = intervalMs * 2;
         const states = terminalStates.map((state) =>
           state.status === "ready"
             ? {

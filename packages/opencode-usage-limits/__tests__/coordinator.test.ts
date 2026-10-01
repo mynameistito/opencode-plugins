@@ -210,10 +210,17 @@ describe("usage coordinator", () => {
     await Effect.runPromise(Fiber.interrupt(fiber));
   });
 
-  test("keeps the last completed snapshot visible while refreshing", async () => {
+  test("keeps completed data visible and updates staleness while refreshing", async () => {
     const secondFetches = new Map<ProviderID, Deferred.Deferred<boolean>>();
     const gates = new Map<ProviderID, Deferred.Deferred<boolean>>();
     const fetchCounts = new Map<ProviderID, number>();
+    const refreshTimes = [
+      new Date("2026-08-14T12:00:00.000Z"),
+      new Date("2026-08-14T12:00:15.000Z"),
+      new Date("2026-08-14T12:00:31.000Z"),
+      new Date("2026-08-14T12:00:40.000Z"),
+    ];
+    let nowIndex = 0;
     const gateEntries = await Promise.all(
       (["codex", "zai"] as const).map(
         async (id) =>
@@ -237,6 +244,14 @@ describe("usage coordinator", () => {
       return Deferred.await(gate).pipe(Effect.as(usage(id)));
     });
     const snapshots: CoordinatorSnapshot[] = [];
+    harness.dependencies.now = Effect.sync(() => {
+      const now = refreshTimes[nowIndex];
+      nowIndex += 1;
+      if (!now) {
+        throw new Error("coordinator clock sequence exhausted");
+      }
+      return now;
+    });
     harness.dependencies.publish = (snapshot) =>
       Effect.sync(() => {
         snapshots.push(snapshot);
@@ -247,12 +262,12 @@ describe("usage coordinator", () => {
 
     await yieldToEventLoop();
     await yieldToEventLoop();
-    expect(snapshots[1]?.states.map((state) => state.status)).toStrictEqual([
-      "ready",
-      "ready",
+    expect(snapshots[1]?.states).toMatchObject([
+      { stale: false, status: "ready" },
+      { stale: false, status: "ready" },
     ]);
     const completedAt = snapshots[1]?.lastRefreshAt;
-    expect(completedAt).toBeInstanceOf(Date);
+    expect(completedAt).toBe(refreshTimes[1]);
 
     const [firstSleep] = harness.sleeps;
     if (!firstSleep) {
@@ -261,12 +276,137 @@ describe("usage coordinator", () => {
     await Effect.runPromise(Deferred.succeed(firstSleep, true));
     await yieldToEventLoop();
 
-    expect(secondFetches.size).toBe(2);
-    expect(snapshots[2]?.states.map((state) => state.status)).toStrictEqual([
-      "ready",
-      "ready",
-    ]);
-    expect(snapshots[2]?.lastRefreshAt).toBe(completedAt);
+    expect({
+      inFlightCount: secondFetches.size,
+      inFlightData: snapshots[2]?.states.map(
+        (state) => state.status === "ready" && state.data
+      ),
+      inFlightRefreshAt: snapshots[2]?.lastRefreshAt,
+      inFlightStates: snapshots[2]?.states.map((state) => ({
+        stale: state.status === "ready" && state.stale,
+        status: state.status,
+      })),
+    }).toStrictEqual({
+      inFlightCount: 2,
+      inFlightData: snapshots[1]?.states.map(
+        (state) => state.status === "ready" && state.data
+      ),
+      inFlightRefreshAt: completedAt,
+      inFlightStates: [
+        { stale: true, status: "ready" },
+        { stale: true, status: "ready" },
+      ],
+    });
+
+    await Promise.all(
+      [...secondFetches.values()].map((gate) =>
+        Effect.runPromise(Deferred.succeed(gate, true))
+      )
+    );
+    await yieldToEventLoop();
+    expect(snapshots[3]?.lastRefreshAt).toBe(refreshTimes[3]);
+    await Effect.runPromise(Fiber.interrupt(fiber));
+  });
+
+  test("shows loading again for providers that have never succeeded", async () => {
+    const gate = await Effect.runPromise(Deferred.make<boolean>());
+    let fetches = 0;
+    const noZaiConfig: ResolvedUsageLimitsConfig = {
+      ...config,
+      providers: { codex: { enabled: true }, zai: { enabled: false } },
+      showErrors: false,
+    };
+    const harness = dependencies((id) => {
+      fetches += 1;
+      return fetches === 1
+        ? Effect.fail(
+            new MissingProviderCredentialsError({
+              operation: "fetch-usage",
+              providerID: "codex",
+            })
+          )
+        : Deferred.await(gate).pipe(Effect.as(usage(id)));
+    }, noZaiConfig);
+    const snapshots: CoordinatorSnapshot[] = [];
+    harness.dependencies.publish = (snapshot) =>
+      Effect.sync(() => {
+        snapshots.push(snapshot);
+      });
+    const fiber = Effect.runFork(
+      Effect.scoped(usageCoordinator(harness.dependencies))
+    );
+
+    await yieldToEventLoop();
+    await yieldToEventLoop();
+    expect(snapshots[1]?.states).toMatchObject([{ status: "error" }]);
+    expect(snapshots[1]?.showErrors).toBeFalsy();
+    const [firstSleep] = harness.sleeps;
+    if (!firstSleep) {
+      throw new Error("first refresh did not schedule a sleep");
+    }
+    await Effect.runPromise(Deferred.succeed(firstSleep, true));
+    await yieldToEventLoop();
+
+    expect(snapshots[2]?.states).toMatchObject([{ status: "loading" }]);
+    expect(snapshots[2]?.showErrors).toBeFalsy();
+    await Effect.runPromise(Fiber.interrupt(fiber));
+  });
+
+  test("retains the previous success after an error on later refreshes", async () => {
+    const retryGate = await Effect.runPromise(Deferred.make<boolean>());
+    let fetches = 0;
+    const codexConfig: ResolvedUsageLimitsConfig = {
+      ...config,
+      providers: { codex: { enabled: true }, zai: { enabled: false } },
+      showErrors: false,
+    };
+    const harness = dependencies((id) => {
+      fetches += 1;
+      if (fetches === 1) {
+        return Effect.succeed(usage(id));
+      }
+      if (fetches === 2) {
+        return Effect.fail(
+          new MissingProviderCredentialsError({
+            operation: "fetch-usage",
+            providerID: id,
+          })
+        );
+      }
+      return Deferred.await(retryGate).pipe(Effect.as(usage(id)));
+    }, codexConfig);
+    const snapshots: CoordinatorSnapshot[] = [];
+    harness.dependencies.publish = (snapshot) =>
+      Effect.sync(() => {
+        snapshots.push(snapshot);
+      });
+    const fiber = Effect.runFork(
+      Effect.scoped(usageCoordinator(harness.dependencies))
+    );
+
+    await yieldToEventLoop();
+    await yieldToEventLoop();
+    const [firstSleep] = harness.sleeps;
+    if (!firstSleep) {
+      throw new Error("first refresh did not schedule a sleep");
+    }
+    await Effect.runPromise(Deferred.succeed(firstSleep, true));
+    await yieldToEventLoop();
+    await yieldToEventLoop();
+    const [secondSleep] = harness.sleeps.slice(1);
+    if (!secondSleep) {
+      throw new Error("second refresh did not schedule a sleep");
+    }
+    await Effect.runPromise(Deferred.succeed(secondSleep, true));
+    await yieldToEventLoop();
+
+    expect({
+      showErrors: snapshots[4]?.showErrors,
+      state: snapshots[4]?.states[0],
+    }).toMatchObject({
+      showErrors: false,
+      state: { previous: { id: "codex" }, status: "error" },
+    });
     await Effect.runPromise(Fiber.interrupt(fiber));
   });
 
