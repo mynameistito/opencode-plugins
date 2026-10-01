@@ -210,6 +210,66 @@ describe("usage coordinator", () => {
     await Effect.runPromise(Fiber.interrupt(fiber));
   });
 
+  test("keeps the last completed snapshot visible while refreshing", async () => {
+    const secondFetches = new Map<ProviderID, Deferred.Deferred<boolean>>();
+    const gates = new Map<ProviderID, Deferred.Deferred<boolean>>();
+    const fetchCounts = new Map<ProviderID, number>();
+    const gateEntries = await Promise.all(
+      (["codex", "zai"] as const).map(
+        async (id) =>
+          [id, await Effect.runPromise(Deferred.make<boolean>())] as const
+      )
+    );
+    for (const [id, gate] of gateEntries) {
+      gates.set(id, gate);
+    }
+    const harness = dependencies((id) => {
+      const count = (fetchCounts.get(id) ?? 0) + 1;
+      fetchCounts.set(id, count);
+      if (count === 1) {
+        return Effect.succeed(usage(id));
+      }
+      const gate = gates.get(id);
+      if (!gate) {
+        throw new Error(`missing refresh gate for ${id}`);
+      }
+      secondFetches.set(id, gate);
+      return Deferred.await(gate).pipe(Effect.as(usage(id)));
+    });
+    const snapshots: CoordinatorSnapshot[] = [];
+    harness.dependencies.publish = (snapshot) =>
+      Effect.sync(() => {
+        snapshots.push(snapshot);
+      });
+    const fiber = Effect.runFork(
+      Effect.scoped(usageCoordinator(harness.dependencies))
+    );
+
+    await yieldToEventLoop();
+    await yieldToEventLoop();
+    expect(snapshots[1]?.states.map((state) => state.status)).toStrictEqual([
+      "ready",
+      "ready",
+    ]);
+    const completedAt = snapshots[1]?.lastRefreshAt;
+    expect(completedAt).toBeInstanceOf(Date);
+
+    const [firstSleep] = harness.sleeps;
+    if (!firstSleep) {
+      throw new Error("first refresh did not schedule a sleep");
+    }
+    await Effect.runPromise(Deferred.succeed(firstSleep, true));
+    await yieldToEventLoop();
+
+    expect(secondFetches.size).toBe(2);
+    expect(snapshots[2]?.states.map((state) => state.status)).toStrictEqual([
+      "ready",
+      "ready",
+    ]);
+    expect(snapshots[2]?.lastRefreshAt).toBe(completedAt);
+    await Effect.runPromise(Fiber.interrupt(fiber));
+  });
+
   test("interrupts active provider work without publishing after disposal", async () => {
     const gate = await Effect.runPromise(Deferred.make<boolean>());
     const harness = dependencies((id) =>
