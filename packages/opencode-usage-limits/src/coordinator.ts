@@ -89,6 +89,33 @@ const providerDisplaysFor = (
     ])
   );
 
+const clearDisabledProviderStates = (
+  providerIDs: ReadonlySet<ProviderID>,
+  lastStates: Map<ProviderID, ProviderState>,
+  lastSuccess: Map<ProviderID, ProviderUsage>
+): void => {
+  for (const id of lastStates.keys()) {
+    if (!providerIDs.has(id)) {
+      lastStates.delete(id);
+      lastSuccess.delete(id);
+    }
+  }
+};
+
+const cacheProviderStates = (
+  states: readonly ProviderState[],
+  lastStates: Map<ProviderID, ProviderState>
+): void => {
+  for (const state of states) {
+    if (
+      state.status === "ready" ||
+      (state.status === "error" && state.previous)
+    ) {
+      lastStates.set(state.id, state);
+    }
+  }
+};
+
 const safePublish = (
   dependencies: UsageCoordinatorDependencies,
   snapshot: CoordinatorSnapshot
@@ -147,6 +174,8 @@ export const usageCoordinator = (
 ): Effect.Effect<void> =>
   Effect.gen(function* coordinatorLoop() {
     const lastSuccess = new Map<ProviderID, ProviderUsage>();
+    const lastStates = new Map<ProviderID, ProviderState>();
+    let lastRefreshAt: Date | null = null;
     while (true) {
       const configResult = yield* dependencies.loadConfig.pipe(
         Effect.catchCause((cause) =>
@@ -169,13 +198,32 @@ export const usageCoordinator = (
         : configResult.success;
 
       const intervalMs = intervalMilliseconds(config.refreshIntervalSeconds);
+      const staleAfterMs = intervalMs * 2;
+      const refreshStartedAt = yield* dependencies.now;
       const providers = config.enabled ? getProviderConfigs(config) : [];
+      const providerIDs = new Set(providers.map(([id]) => id));
+      clearDisabledProviderStates(providerIDs, lastStates, lastSuccess);
       yield* safePublish(dependencies, {
         diagnostics: configDiagnostic ? [configDiagnostic] : [],
-        lastRefreshAt: null,
+        lastRefreshAt,
         providerDisplays: providerDisplaysFor(providers),
         showErrors: config.showErrors,
-        states: providers.map(([id, provider]) => loadingState(id, provider)),
+        states: providers.map(([id, provider]) => {
+          const previous = lastStates.get(id);
+          if (!previous) {
+            return loadingState(id, provider);
+          }
+          if (previous.status === "ready") {
+            return {
+              ...previous,
+              stale:
+                refreshStartedAt.getTime() -
+                  previous.data.capturedAt.getTime() >
+                staleAfterMs,
+            };
+          }
+          return previous;
+        }),
       });
 
       if (providers.length > 0) {
@@ -238,24 +286,27 @@ export const usageCoordinator = (
           { concurrency: "unbounded" }
         );
         const now = yield* dependencies.now;
-        const staleAfterMs = intervalMs * 2;
+        lastRefreshAt = now;
+        const states = terminalStates.map((state) =>
+          state.status === "ready"
+            ? {
+                ...state,
+                stale:
+                  now.getTime() - state.data.capturedAt.getTime() >
+                  staleAfterMs,
+              }
+            : state
+        );
+        cacheProviderStates(states, lastStates);
         yield* safePublish(dependencies, {
           diagnostics: authLoad.diagnostic ? [authLoad.diagnostic] : [],
           lastRefreshAt: now,
           providerDisplays: providerDisplaysFor(providers),
           showErrors: config.showErrors,
-          states: terminalStates.map((state) =>
-            state.status === "ready"
-              ? {
-                  ...state,
-                  stale:
-                    now.getTime() - state.data.capturedAt.getTime() >
-                    staleAfterMs,
-                }
-              : state
-          ),
+          states,
         });
       } else {
+        lastRefreshAt = null;
         yield* safePublish(dependencies, {
           diagnostics: configDiagnostic ? [configDiagnostic] : [],
           lastRefreshAt: null,
