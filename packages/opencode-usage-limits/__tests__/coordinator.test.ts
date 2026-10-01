@@ -270,6 +270,83 @@ describe("usage coordinator", () => {
     await Effect.runPromise(Fiber.interrupt(fiber));
   });
 
+  test("clears cached state when a provider is disabled", async () => {
+    const disabledCodexConfig: ResolvedUsageLimitsConfig = {
+      ...config,
+      providers: {
+        ...config.providers,
+        codex: { enabled: false },
+      },
+    };
+    const configs = [config, disabledCodexConfig, config];
+    let configIndex = 0;
+    let codexFetches = 0;
+    const harness = dependencies((id) => {
+      if (id === "codex") {
+        codexFetches += 1;
+        if (codexFetches > 1) {
+          return Effect.fail(
+            new MissingProviderCredentialsError({
+              operation: "fetch-usage",
+              providerID: id,
+            })
+          );
+        }
+      }
+      return Effect.succeed(usage(id));
+    });
+    const snapshots: CoordinatorSnapshot[] = [];
+    harness.dependencies.loadConfig = Effect.sync(() => {
+      const currentConfig = configs[configIndex];
+      configIndex += 1;
+      if (!currentConfig) {
+        throw new Error("coordinator config sequence exhausted");
+      }
+      return successfulConfig(currentConfig);
+    });
+    harness.dependencies.publish = (snapshot) =>
+      Effect.sync(() => {
+        snapshots.push(snapshot);
+      });
+    const fiber = Effect.runFork(
+      Effect.scoped(usageCoordinator(harness.dependencies))
+    );
+
+    await yieldToEventLoop();
+    await yieldToEventLoop();
+    const [firstSleep] = harness.sleeps;
+    if (!firstSleep) {
+      throw new Error("first refresh did not schedule a sleep");
+    }
+    await Effect.runPromise(Deferred.succeed(firstSleep, true));
+    await yieldToEventLoop();
+    await yieldToEventLoop();
+
+    expect(
+      snapshots[2]?.states.map((state) => [state.id, state.status])
+    ).toStrictEqual([["zai", "ready"]]);
+    const [secondSleep] = harness.sleeps.slice(1);
+    if (!secondSleep) {
+      throw new Error("second refresh did not schedule a sleep");
+    }
+    await Effect.runPromise(Deferred.succeed(secondSleep, true));
+    await yieldToEventLoop();
+    await yieldToEventLoop();
+
+    expect(
+      snapshots[4]?.states.map((state) => [state.id, state.status])
+    ).toStrictEqual([
+      ["codex", "loading"],
+      ["zai", "ready"],
+    ]);
+    expect(snapshots[5]?.states).toMatchObject([
+      { id: "codex", status: "error" },
+      { id: "zai", status: "ready" },
+    ]);
+    expect(snapshots[5]?.states[0]).not.toHaveProperty("previous");
+    await Effect.runPromise(Fiber.interrupt(fiber));
+  });
+
   test("interrupts active provider work without publishing after disposal", async () => {
     const gate = await Effect.runPromise(Deferred.make<boolean>());
     const harness = dependencies((id) =>
