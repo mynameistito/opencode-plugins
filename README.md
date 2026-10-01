@@ -31,8 +31,6 @@ Supported providers:
 - [Qwen](https://qwen.ai/)
 - [ZAI Coding Plan](https://zai.ai/)
 
-
-
 Install it with:
 
 ```bash
