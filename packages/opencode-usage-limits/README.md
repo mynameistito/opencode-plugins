@@ -1,6 +1,6 @@
 # @mynameistito/opencode-usage-limits
 
-OpenCode TUI plugin that shows Codex, OpenCode GO, ZAI, Synthetic, MiniMax Token Plan, Qwen, and Alibaba Token Plan usage limits in the sidebar and prompt footer.
+OpenCode TUI plugin that shows Codex, Command Code, OpenCode GO, ZAI, Synthetic, MiniMax Token Plan, Qwen, and Alibaba Token Plan usage limits in the sidebar and prompt footer.
 
 ## Features
 
@@ -12,7 +12,8 @@ OpenCode TUI plugin that shows Codex, OpenCode GO, ZAI, Synthetic, MiniMax Token
 - Shows current Qwen Token Plan windows from the local `qwencloud` CLI.
 - Shows current Alibaba Token Plan 5-hour and weekly windows from the local `bl` CLI.
 - Shows current OpenCode GO rolling, weekly, and monthly windows.
-- Adds compact prompt-footer usage when the current session uses an OpenAI, OpenCode GO, ZAI Coding Plan, Synthetic, MiniMax Token Plan, or Qwen Token Plan model.
+- Displays current Command Code 5-hour, weekly, and derived monthly credit usage.
+- Adds compact prompt-footer usage when the current session uses an OpenAI, Command Code, OpenCode GO, ZAI Coding Plan, Synthetic, MiniMax Token Plan, or Qwen Token Plan model.
 - Providers are toggled from `~/.config/opencode/usage-limits.jsonc`.
 - Reads OpenCode-connected credentials first, then falls back to explicit config/env credentials.
 
@@ -88,7 +89,7 @@ Create `~/.config/opencode/usage-limits.jsonc` from the complete [`examples/usag
 
 ### Minimal config
 
-If you only need Codex and ZAI with auto-discovered credentials:
+For example, enable Codex, ZAI, and Command Code with auto-discovered credentials:
 
 ```jsonc
 {
@@ -96,6 +97,7 @@ If you only need Codex and ZAI with auto-discovered credentials:
   "providers": {
     "codex": { "enabled": true },
     "zai": { "enabled": true, "authorizationScheme": "raw" },
+    "commandcode": { "enabled": true },
   },
 }
 ```
@@ -156,6 +158,7 @@ The response contract follows the official CLI's [`usage/token-plan.ts`](https:/
 | `qwen` | Qwen Token Plan | `qwencloud` CLI | CLI | — |
 | `alibaba-token-plan` | Alibaba Token Plan | — | CLI | — |
 | `opencode-go` | OpenCode GO usage | `OPENCODE_API_KEY` | Bearer | `https://opencode.ai/zen/go/v1` |
+| `commandcode` | Command Code credits | — | Bearer | `https://api.commandcode.ai` |
 
 Qwen usage requires the local `qwencloud` CLI to be installed and authenticated because the plugin calls its authentication-status and usage commands; an unauthenticated CLI state appears as missing credentials.
 
@@ -193,6 +196,14 @@ MiniMax Token Plan lookup order:
 2. OpenCode auth at `~/.local/share/opencode/auth.json`, provider `minimax-coding-plan`, `minimax`, or `minimax-token-plan`.
 3. Config `apiKey`, including `{env:OC_MINIMAX_TOKEN_PLAN_KEY}` references.
 
+Command Code lookup order:
+
+1. Config `authPath` JSON file (`{ "key": "..." }` / `{ "apiKey": "..." }` / `{ "commandcode": { "key": "..." } }`).
+2. OpenCode auth at `~/.local/share/opencode/auth.json`, provider `commandcode`.
+3. Config `apiKey`, including `{env:COMMANDCODE_API_KEY}` references.
+
+Command Code resolves account scope from `/alpha/whoami` before reading billing data. Organization IDs are sent with credit and summary requests; personal accounts omit the scope. If identity lookup fails, the refresh fails rather than silently querying the personal account. The 5-hour and weekly windows come from `/alpha/billing/credits`; the monthly window is derived from current credit balances and `/alpha/usage/summary`, and stays unknown if the summary is unavailable. OpenCode auth keys are only sent to the default official API URL; custom API URLs require an explicit `apiKey` unless an `authPath` is configured.
+
 ## Display
 
 Sidebar rows look like:
@@ -218,6 +229,8 @@ Prompt footer shows compact usage when the current session model belongs to a su
 5h: 42% used resets 1h 2m
 ```
 
+Command Code sessions use the rolling 5-hour window in the prompt footer.
+
 Provider mapping:
 
 - OpenCode provider `openai` -> Codex usage.
@@ -226,6 +239,7 @@ Provider mapping:
 - OpenCode provider `minimax-coding-plan` -> MiniMax Token Plan usage (prompt footer); `minimax` is also accepted as an alias.
 - OpenCode provider `qwen` -> Qwen Token Plan usage.
 - OpenCode provider `opencode-go` -> OpenCode GO usage.
+- OpenCode provider `commandcode` -> Command Code usage.
 
 ## Development
 

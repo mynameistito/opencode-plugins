@@ -12,12 +12,14 @@ export const ProviderIDSchema = Schema.Literals([
   "qwen",
   "alibaba-token-plan",
   "opencode-go",
+  "commandcode",
 ]);
 
 /** Safe, user-facing missing-credential message for each provider. */
 export const credentialMessages = {
   "alibaba-token-plan": "missing Bailian console login",
   codex: "missing Codex auth",
+  commandcode: "missing Command Code key",
   minimax: "missing MiniMax key",
   "opencode-go": "missing OpenCode GO key",
   qwen: "missing Qwen credentials",

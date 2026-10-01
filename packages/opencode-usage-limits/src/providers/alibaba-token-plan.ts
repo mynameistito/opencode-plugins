@@ -101,7 +101,7 @@ const hasMinimumCliVersion = (actual: readonly number[]): boolean => {
 /** Provider adapter that reads Alibaba Token Plan usage through Bailian CLI. */
 export const alibabaTokenPlanProvider = {
   defaultLabel: "Alibaba Token Plan",
-  displayOrder: 6,
+  displayOrder: 7,
   fetch: (config, _auth, timeoutMs) =>
     Effect.gen(function* fetchAlibabaTokenPlan() {
       const commands = yield* ProviderCommandExecutor;

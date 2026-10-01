@@ -2,11 +2,12 @@
   "$schema": "https://json.schemastore.org/package.json",
   "name": "@mynameistito/opencode-usage-limits",
   "version": "1.1.8",
-  "description": "OpenCode TUI plugin that shows Codex, OpenCode GO, ZAI, Synthetic, MiniMax Token Plan, and Qwen usage limits in the sidebar and prompt footer.",
+  "description": "OpenCode TUI plugin that shows Codex, Command Code, OpenCode GO, ZAI, Synthetic, MiniMax Token Plan, and Qwen usage limits in the sidebar and prompt footer.",
   "keywords": [
     "ai",
     "ai-coding",
     "codex",
+    "commandcode",
     "developer-tools",
     "minimax",
     "minimax-token-plan",

@@ -101,6 +101,14 @@ const openCodeGoProviderConfigSchema = Schema.Struct({
   baseUrl: Schema.optionalKey(Schema.String),
 });
 
+/** Schema for Command Code provider configuration. */
+const commandCodeProviderConfigSchema = Schema.Struct({
+  ...commonProviderFields,
+  apiKey: Schema.optionalKey(secret),
+  authPath: Schema.optionalKey(Schema.String),
+  baseUrl: Schema.optionalKey(Schema.String),
+});
+
 const providersSchema = Schema.Struct({
   "alibaba-token-plan": Schema.optionalKey(
     Schema.Struct({
@@ -109,6 +117,7 @@ const providersSchema = Schema.Struct({
     })
   ),
   codex: Schema.optionalKey(codexProviderConfigSchema),
+  commandcode: Schema.optionalKey(commandCodeProviderConfigSchema),
   minimax: Schema.optionalKey(minimaxProviderConfigSchema),
   "opencode-go": Schema.optionalKey(openCodeGoProviderConfigSchema),
   qwen: Schema.optionalKey(qwenProviderConfigSchema),
@@ -229,6 +238,7 @@ export const parseOpenCodeAuth = (input: JsonValue): OpenCodeAuth => {
   const zai = parseAuthEntry(input.zai);
   const zaiCodingPlan = parseAuthEntry(input["zai-coding-plan"]);
   const openCodeGo = parseAuthEntry(input["opencode-go"]);
+  const commandCode = parseAuthEntry(input.commandcode);
   const opencode = parseAuthEntry(input.opencode);
   const direct = parseAuthEntry(input);
 
@@ -256,6 +266,9 @@ export const parseOpenCodeAuth = (input: JsonValue): OpenCodeAuth => {
   }
   if (openCodeGo) {
     auth["opencode-go"] = openCodeGo;
+  }
+  if (commandCode) {
+    auth.commandcode = commandCode;
   }
   if (opencode) {
     auth.opencode = opencode;

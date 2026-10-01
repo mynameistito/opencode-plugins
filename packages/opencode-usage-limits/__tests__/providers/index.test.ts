@@ -55,6 +55,7 @@ describe("provider manifest", () => {
       ],
       ["qwen", pluginProviderForOpenCode("qwen")],
       ["opencode-go", pluginProviderForOpenCode("opencode-go")],
+      ["commandcode", pluginProviderForOpenCode("commandcode")],
       ["anthropic", pluginProviderForOpenCode("anthropic")],
     ]).toStrictEqual([
       ["openai", "codex"],
@@ -64,6 +65,7 @@ describe("provider manifest", () => {
       ["bailian-token-plan-personal", "qwen"],
       ["qwen", "qwen"],
       ["opencode-go", "opencode-go"],
+      ["commandcode", "commandcode"],
       ["anthropic", null],
     ]);
   });

@@ -58,6 +58,10 @@
   display: none;
 }
 
+.provider-logo-commandcode-light {
+  display: none !important;
+}
+
 .provider-logo-opencode {
   width: 1.6rem !important;
   height: 2rem !important;
@@ -77,4 +81,20 @@
 
 :root:not([data-theme="dark"]) .provider-logo-opencode-light {
   display: block;
+}
+
+:root[data-theme="dark"] .provider-logo-commandcode-dark {
+  display: block;
+}
+
+:root[data-theme="dark"] .provider-logo-commandcode-light {
+  display: none !important;
+}
+
+:root:not([data-theme="dark"]) .provider-logo-commandcode-dark {
+  display: none !important;
+}
+
+:root:not([data-theme="dark"]) .provider-logo-commandcode-light {
+  display: block !important;
 }

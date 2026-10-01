@@ -22,6 +22,7 @@ export class ProviderResponseDecodeError extends schemaTaggedError<ProviderRespo
     const labels = {
       "alibaba-token-plan": "Alibaba Token Plan",
       codex: "Codex",
+      commandcode: "Command Code",
       minimax: "MiniMax",
       "opencode-go": "OpenCode GO",
       qwen: "Qwen",
