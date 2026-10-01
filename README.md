@@ -28,6 +28,8 @@ Supported providers:
 - [Synthetic](https://synthetic.ai/)
 - [Qwen](https://qwen.ai/)
 - [ZAI Coding Plan](https://zai.ai/)
+- [Command Code](https://commandcode.ai/)
+- [Alibaba Token Plan](https://www.alibabacloud.com/help/en/model-studio/token-plan-personal-overview)
 
 Install it with:
 
