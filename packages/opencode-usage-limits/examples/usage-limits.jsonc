@@ -78,5 +78,16 @@
       "apiKey": "{env:OPENCODE_API_KEY}", // Optional fallback when OpenCode auth has no key
       "baseUrl": "https://opencode.ai/zen/go/v1",
     },
+    "commandcode": {
+      "enabled": false,
+      "label": "Command Code",
+      "showSidebarBar": true,
+      "showFooterBar": true,
+      "sidebarWindow": "all",
+      "footerWindow": "auto",
+      "authPath": "~/.config/opencode/auth.json",
+      "apiKey": "{env:COMMANDCODE_API_KEY}",
+      "baseUrl": "https://api.commandcode.ai",
+    },
   },
 }
