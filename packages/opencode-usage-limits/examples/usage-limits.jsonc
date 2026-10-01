@@ -86,7 +86,7 @@
       "sidebarWindow": "all",
       "footerWindow": "auto",
       "authPath": "~/.config/opencode/auth.json",
-      "apiKey": "{env:COMMANDCODE_API_KEY}",
+      "apiKey": "{env:COMMANDCODE_API_KEY}", // Optional fallback when OpenCode auth has no key
       "baseUrl": "https://api.commandcode.ai",
     },
   },

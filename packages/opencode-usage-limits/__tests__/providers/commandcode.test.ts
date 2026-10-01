@@ -105,9 +105,9 @@ describe("Command Code provider", () => {
     ]);
   });
 
-  test("ignores an invalid organization id and accepts nested whoami data", async () => {
+  test("scopes requests to an organization nested under data", async () => {
     const fetchMock = installResponses([
-      Response.json({ data: { organization: { id: 42 } }, success: true }),
+      Response.json({ data: { organization: { id: "org_nested" } } }),
       credits(),
       Response.json({ totalCost: 5 }),
     ]);
@@ -116,10 +116,28 @@ describe("Command Code provider", () => {
 
     expect(fetchMock.mock.calls.map(([url]) => String(url))).toStrictEqual([
       "https://api.commandcode.ai/alpha/whoami?limits=1",
-      "https://api.commandcode.ai/alpha/billing/credits",
-      "https://api.commandcode.ai/alpha/usage/summary",
+      "https://api.commandcode.ai/alpha/billing/credits?orgId=org_nested",
+      "https://api.commandcode.ai/alpha/usage/summary?orgId=org_nested",
     ]);
   });
+
+  test.each([
+    ["null", null],
+    ["empty", {}],
+    ["missing user", { success: true }],
+    ["missing user id", { user: {} }],
+    ["invalid organization", { org: { id: 42 }, user: { id: "user" } }],
+  ])(
+    "rejects %s whoami payloads before billing requests",
+    async (_label, body) => {
+      const fetchMock = installResponses([Response.json(body)]);
+
+      await expect(
+        fetchCommandCodeUsage(undefined, { commandcode: { key: "key" } }, 1000)
+      ).rejects.toThrow("invalid Command Code usage");
+      expect(fetchMock).toHaveBeenCalledOnce();
+    }
+  );
 
   test("fails when nested whoami reports an unsuccessful response", async () => {
     const fetchMock = installResponses([
@@ -128,15 +146,6 @@ describe("Command Code provider", () => {
 
     await expect(
       fetchCommandCodeUsage(undefined, { commandcode: { apiKey: "key" } }, 1000)
-    ).rejects.toThrow("invalid Command Code usage");
-    expect(fetchMock).toHaveBeenCalledOnce();
-  });
-
-  test("does not treat malformed whoami data as a personal account", async () => {
-    const fetchMock = installResponses([Response.json(null)]);
-
-    await expect(
-      fetchCommandCodeUsage(undefined, { commandcode: { key: "key" } }, 1000)
     ).rejects.toThrow("invalid Command Code usage");
     expect(fetchMock).toHaveBeenCalledOnce();
   });
@@ -277,7 +286,8 @@ describe("Command Code provider", () => {
     await fetchCommandCodeUsage(
       {
         apiKey: "configured-token",
-        baseUrl: "https://cc.example.test/proxy?tenant=workspace#section",
+        baseUrl:
+          "https://cc.example.test/proxy?orgId=untrusted&tenant=workspace#section",
       },
       { commandcode: { key: "must-not-leak" } },
       1000

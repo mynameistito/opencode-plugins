@@ -1,4 +1,4 @@
-import { Clock, Effect, Redacted, Result } from "effect";
+import { Cause, Clock, Effect, Redacted, Result } from "effect";
 
 import {
   MissingProviderCredentialsError,
@@ -45,6 +45,7 @@ const commandCodeUrl = (
   }
   url.pathname = `${pathname}${endpoint}`;
   url.hash = "";
+  url.searchParams.delete("orgId");
   for (const [key, value] of Object.entries(query)) {
     if (value) {
       url.searchParams.set(key, value);
@@ -71,15 +72,6 @@ const keyFromAuth = (
   return undefined;
 };
 
-const orgIdFromWhoami = (payload: JsonObject): string | undefined => {
-  const scope = isRecord(payload.data) ? payload.data : payload;
-  const org = isRecord(scope.org) ? scope.org : scope.organization;
-  if (!isRecord(org) || !isJsonString(org.id) || org.id.trim() === "") {
-    return undefined;
-  }
-  return org.id;
-};
-
 const whoamiReportsFailure = (payload: JsonObject): boolean => {
   if (isJsonBoolean(payload.success) && !payload.success) {
     return true;
@@ -89,6 +81,34 @@ const whoamiReportsFailure = (payload: JsonObject): boolean => {
     isJsonBoolean(payload.data.success) &&
     !payload.data.success
   );
+};
+
+interface CommandCodeIdentity {
+  readonly orgId?: string;
+}
+
+const identityFromWhoami = (payload: JsonValue): CommandCodeIdentity | null => {
+  if (!isRecord(payload) || whoamiReportsFailure(payload)) {
+    return null;
+  }
+  const scope = isRecord(payload.data) ? payload.data : payload;
+  const orgValue = scope.org ?? scope.organization;
+  if (orgValue !== undefined && orgValue !== null) {
+    if (
+      !isRecord(orgValue) ||
+      !isJsonString(orgValue.id) ||
+      orgValue.id.trim() === ""
+    ) {
+      return null;
+    }
+    const { id: orgId } = orgValue;
+    return { orgId };
+  }
+  const { user } = scope;
+  if (!isRecord(user) || !isJsonString(user.id) || user.id.trim() === "") {
+    return null;
+  }
+  return {};
 };
 
 const decodeFailure = () =>
@@ -216,16 +236,16 @@ const fetchCommandCodeUsageEffect = (
       timeoutMs,
       url: commandCodeUrl(baseUrl, WHOAMI_PATH, { limits: "1" }),
     });
-    if (!isRecord(whoami) || whoamiReportsFailure(whoami)) {
+    const identity = identityFromWhoami(whoami);
+    if (!identity) {
       return yield* decodeFailure();
     }
-    const orgId = orgIdFromWhoami(whoami);
     const payload = yield* http.requestJson({
       headers,
       method: "GET",
       providerID: PROVIDER_ID,
       timeoutMs,
-      url: commandCodeUrl(baseUrl, CREDITS_PATH, { orgId }),
+      url: commandCodeUrl(baseUrl, CREDITS_PATH, { orgId: identity.orgId }),
     });
     if (!isRecord(payload) || !isRecord(payload.windowLimits)) {
       return yield* decodeFailure();
@@ -237,9 +257,17 @@ const fetchCommandCodeUsageEffect = (
         method: "GET",
         providerID: PROVIDER_ID,
         timeoutMs,
-        url: commandCodeUrl(baseUrl, SUMMARY_PATH, { orgId }),
+        url: commandCodeUrl(baseUrl, SUMMARY_PATH, {
+          orgId: identity.orgId,
+        }),
       })
-      .pipe(Effect.catchCause(() => Effect.succeed<JsonValue | null>(null)));
+      .pipe(
+        Effect.catchCause((cause) =>
+          Cause.hasInterruptsOnly(cause)
+            ? Effect.failCause(cause)
+            : Effect.succeed<JsonValue | null>(null)
+        )
+      );
     const limits = payload.windowLimits;
     const windows = [
       commandCodeWindow(limits.fiveHour, "rolling", "5h"),
