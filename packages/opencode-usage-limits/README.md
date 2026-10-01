@@ -12,7 +12,7 @@ OpenCode TUI plugin that shows Codex, Command Code, OpenCode GO, ZAI, Synthetic,
 - Shows current Qwen Token Plan windows from the local `qwencloud` CLI.
 - Shows current Alibaba Token Plan 5-hour and weekly windows from the local `bl` CLI.
 - Shows current OpenCode GO rolling, weekly, and monthly windows.
-- Shows current Command Code 5-hour, weekly, and derived monthly credit usage.
+- Displays current Command Code 5-hour, weekly, and derived monthly credit usage.
 - Adds compact prompt-footer usage when the current session uses an OpenAI, Command Code, OpenCode GO, ZAI Coding Plan, Synthetic, MiniMax Token Plan, or Qwen Token Plan model.
 - Providers are toggled from `~/.config/opencode/usage-limits.jsonc`.
 - Reads OpenCode-connected credentials first, then falls back to explicit config/env credentials.
