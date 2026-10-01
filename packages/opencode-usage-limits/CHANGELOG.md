@@ -1,5 +1,16 @@
 # @mynameistito/opencode-usage-limits
 
+## 1.2.0
+
+### Minor Changes
+
+- bcafe63: Add Command Code usage provider
+
+### Patch Changes
+
+- 8b86d65: chore: Migrate to @opencode/plugin@2.0.21
+- 0f4d9de: Keep the previous usage snapshot visible while provider data refreshes.
+
 ## 1.1.8
 
 ### Patch Changes
