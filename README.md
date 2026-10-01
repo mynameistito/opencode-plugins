@@ -22,14 +22,16 @@ Shows provider usage limits in the sidebar and prompt footer.
 
 Supported providers:
 
+- [Alibaba Token Plan](https://www.alibabacloud.com/help/en/model-studio/token-plan-personal-overview)
 - [ChatGPT](https://chatgpt.com/)
+- [Command Code](https://commandcode.ai/)
 - [OpenCode GO](https://opencode.ai/go)
 - [MiniMax Token Plan](https://www.minimax.ai/)
 - [Synthetic](https://synthetic.ai/)
 - [Qwen](https://qwen.ai/)
 - [ZAI Coding Plan](https://zai.ai/)
-- [Command Code](https://commandcode.ai/)
-- [Alibaba Token Plan](https://www.alibabacloud.com/help/en/model-studio/token-plan-personal-overview)
+
+
 
 Install it with:
 
