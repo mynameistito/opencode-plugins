@@ -51,6 +51,18 @@ The top-level `enabled` flag disables the plugin. Each provider's `enabled` flag
     />
     <span class="provider-logo-name">Alibaba Cloud</span>
   </a>
+  <a href="#command-code" aria-label="Command Code">
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="m8 7-5 5 5 5m8-10 5 5-5 5m-2-12-4 14"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.8"
+      />
+    </svg>
+    <span class="provider-logo-name">Command Code</span>
+  </a>
   <a href="#minimax" aria-label="MiniMax">
     <img src="https://cdn.simpleicons.org/minimax" alt="MiniMax" />
     <span class="provider-logo-name">MiniMax</span>
@@ -135,6 +147,23 @@ The top-level `enabled` flag disables the plugin. Each provider's `enabled` flag
 ### Alibaba Token Plan
 
 Personal Token Plan five-hour and weekly windows from the authenticated Bailian `bl` CLI (version 1.15.0 or newer). See the [Bailian documentation](https://help.aliyun.com/zh/model-studio/user-guide/obtain-api-key).
+
+### Command Code
+
+Rolling five-hour and weekly windows from the Command Code billing API, with monthly usage derived from the current credit balance and usage summary. The monthly window is shown as unknown when its summary cannot be read. Organization accounts are scoped using the identity returned by `/alpha/whoami`; personal accounts use unscoped requests. Command Code's rolling 5-hour window can also appear in the prompt footer.
+
+Credentials are discovered from OpenCode auth for the `commandcode` provider. As a fallback, configure `apiKey` (for example, `{env:COMMANDCODE_API_KEY}`):
+
+```jsonc
+{
+  "providers": {
+    "commandcode": {
+      "enabled": true,
+      "apiKey": "{env:COMMANDCODE_API_KEY}", // Optional fallback
+    },
+  },
+}
+```
 
 ### MiniMax
 
