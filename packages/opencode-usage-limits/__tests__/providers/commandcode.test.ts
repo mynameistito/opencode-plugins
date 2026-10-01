@@ -160,6 +160,25 @@ describe("Command Code provider", () => {
     });
   });
 
+  test("keeps monthly quota unknown when summary usage is malformed", async () => {
+    installResponses([
+      whoami(),
+      credits(),
+      Response.json({ totalCredits: "bad" }),
+    ]);
+
+    const usage = await fetchCommandCodeUsage(
+      undefined,
+      { commandcode: { key: "cc-token" } },
+      1000
+    );
+
+    expect(usage.windows.at(-1)).toMatchObject({
+      kind: "monthly",
+      quota: { _tag: "Unknown" },
+    });
+  });
+
   test.each([
     ["missing credits", null],
     [
@@ -276,6 +295,9 @@ describe("Command Code provider", () => {
 
   test("rejects missing credentials and explicit whoami failure bodies", async () => {
     await expect(fetchCommandCodeUsage(undefined, {}, 1000)).rejects.toThrow(
+      "missing Command Code key"
+    );
+    await expect(fetchCommandCodeUsage(undefined, null, 1000)).rejects.toThrow(
       "missing Command Code key"
     );
 

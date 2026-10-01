@@ -179,7 +179,7 @@ const commandCodeMonthlyWindow = (
 
 const fetchCommandCodeUsageEffect = (
   config: CommandCodeProviderConfig | undefined,
-  openCodeAuth: OpenCodeAuth,
+  openCodeAuth: OpenCodeAuth | null,
   timeoutMs: number
 ): ReturnType<ProviderDefinition<"commandcode">["fetch"]> =>
   Effect.gen(function* runFetchCommandCodeUsage() {
@@ -260,7 +260,7 @@ const fetchCommandCodeUsageEffect = (
 /** Fetches and normalizes Command Code usage using the provider runtime. */
 export const fetchCommandCodeUsage = (
   config: CommandCodeProviderConfig | undefined,
-  openCodeAuth: OpenCodeAuth,
+  openCodeAuth: OpenCodeAuth | null,
   timeoutMs: number
 ): Promise<ProviderUsage<"commandcode">> =>
   Effect.runPromise(
