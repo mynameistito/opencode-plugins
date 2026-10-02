@@ -37,9 +37,9 @@
   "devDependencies": {
     "@types/node": "catalog:",
     "@typescript/native": "catalog:",
-    "alchemy": "2.0.0-beta.79",
-    "blume": "2.0.3",
-    "react-grab": "^0.2.0",
+    "alchemy": "catalog:",
+    "blume": "catalog:",
+    "react-grab": "catalog:",
     "typescript": "catalog:"
   },
   "packageManager": "bun@1.4.2"
