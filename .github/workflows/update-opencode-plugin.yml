@@ -80,7 +80,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.latest.outputs.version }}
         run: |
-          pr_number=$(gh pr list --head update-opencode-plugin --base main --json number --jq '.[0].number')
+          pr_number=$(gh pr list --head update-opencode-plugin --base main --json number --jq 'if length > 0 then .[0].number else empty end')
           if [ -n "$pr_number" ]; then
             gh pr edit "$pr_number" --title "chore(deps): update @opencode/plugin" --body "Updates the shared @opencode/plugin dependency to $VERSION and includes patch Changesets for usage-limits and force-input."
           else

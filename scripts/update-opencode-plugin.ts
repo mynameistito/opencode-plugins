@@ -31,7 +31,8 @@ const currentVersion = parseSerializedSemVer(
 );
 
 const response = await fetch(
-  "https://registry.npmjs.org/@opencode%2fplugin/latest"
+  "https://registry.npmjs.org/@opencode%2fplugin/latest",
+  { signal: AbortSignal.timeout(15_000) }
 );
 
 if (!response.ok) {
