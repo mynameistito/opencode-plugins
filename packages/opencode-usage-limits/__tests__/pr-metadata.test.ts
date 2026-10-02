@@ -99,8 +99,27 @@ describe("PR metadata helpers", () => {
   });
 
   it("exempts generated Changesets release pull requests", () => {
-    expect(isChangesetReleasePR("changeset-release/main")).toBeTruthy();
-    expect(isChangesetReleasePR("feature/update-plugin")).toBeFalsy();
+    expect(
+      isChangesetReleasePR(
+        "changeset-release/main",
+        "mynameistito/opencode-plugins",
+        "mynameistito/opencode-plugins"
+      )
+    ).toBeTruthy();
+    expect(
+      isChangesetReleasePR(
+        "changeset-release/main",
+        "fork/opencode-plugins",
+        "mynameistito/opencode-plugins"
+      )
+    ).toBeFalsy();
+    expect(
+      isChangesetReleasePR(
+        "feature/update-plugin",
+        "mynameistito/opencode-plugins",
+        "mynameistito/opencode-plugins"
+      )
+    ).toBeFalsy();
   });
 
   it("recognizes only GitHub's duplicate-label validation response", () => {

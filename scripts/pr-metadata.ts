@@ -231,7 +231,12 @@ if (labelsToRemove.length > 0) {
 
 const skipChangeset = currentLabels.includes(skipChangesetLabel);
 const requiredPackages =
-  skipChangeset || isChangesetReleasePR(pullRequest.head.ref)
+  skipChangeset ||
+  isChangesetReleasePR(
+    pullRequest.head.ref,
+    pullRequest.head.repo?.full_name,
+    `${owner}/${repository}`
+  )
     ? new Set<string>()
     : getRequiredChangesets(files.map(({ filename }) => filename));
 

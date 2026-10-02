@@ -21,19 +21,18 @@ permissions:
 jobs:
   actionlint:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      checks: write
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: actionlint
-        uses: reviewdog/action-actionlint@a5524e1c19e62881d79c1f1b9b6f09f16356e281 # v1.65.2
+        uses: raven-actions/actionlint@3d39aea434753780c3b3d4a1a31c854b4dbf49d7 # v2
         with:
-          fail_level: error
-          reporter: ${{ github.event_name == 'pull_request' && 'github-pr-check' || 'github-check' }}
+          version: 1.7.11
+          cache: false
+          shellcheck: false
+          pyflakes: false
 
   zizmor:
     runs-on: ubuntu-latest

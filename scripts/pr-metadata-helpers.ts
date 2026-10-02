@@ -91,10 +91,16 @@ export const getPullRequestFilePageCount = (changedFiles: number): number => {
  * Identify the release PR branch created by Changesets.
  *
  * @param headRef - The pull request head branch name.
- * @returns Whether the branch uses Changesets' release PR prefix.
+ * @param headRepository - The repository containing the pull request head.
+ * @param baseRepository - The repository receiving the pull request.
+ * @returns Whether a same-repository branch uses Changesets' release PR prefix.
  */
-export const isChangesetReleasePR = (headRef: string): boolean =>
-  headRef.startsWith("changeset-release/");
+export const isChangesetReleasePR = (
+  headRef: string,
+  headRepository: string | null | undefined,
+  baseRepository: string
+): boolean =>
+  headRepository === baseRepository && headRef.startsWith("changeset-release/");
 
 /**
  * Check whether a GitHub API validation response is specifically a duplicate label.
