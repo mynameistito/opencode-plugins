@@ -1,3 +1,4 @@
+# Temporary smoke test for PR metadata labeling.
 name: Update @opencode/plugin
 
 on:
