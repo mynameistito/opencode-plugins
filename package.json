@@ -79,6 +79,9 @@
     "@typescript/native": "npm:typescript@^7.0.2",
     "effect": "4.0.0-rc.115",
     "solid-js": "1.9.12",
-    "typescript": "npm:@typescript/typescript6@^6.0.2"
+    "typescript": "npm:@typescript/typescript6@^6.0.2",
+    "alchemy": "2.0.0-beta.79",
+    "blume": "2.0.3",
+    "react-grab": "^0.2.0"
   }
 }
