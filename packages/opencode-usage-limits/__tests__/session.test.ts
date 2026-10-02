@@ -1,5 +1,5 @@
 import { Result } from "effect";
-import { describe, expect, test } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import {
   currentProviderID,
@@ -21,7 +21,7 @@ const window = (label: string, usedPercent = 25): UsageWindow => ({
 });
 
 describe("session helpers", () => {
-  test("finds the most recent provider id from top-level or model message data", () => {
+  it("finds the most recent provider id from top-level or model message data", () => {
     expect(
       currentProviderID([
         { providerID: "openai" },
@@ -34,7 +34,7 @@ describe("session helpers", () => {
     );
   });
 
-  test("finds provider ids from v2 session message info", () => {
+  it("finds provider ids from v2 session message info", () => {
     expect(
       currentProviderID([
         {
@@ -65,13 +65,13 @@ describe("session helpers", () => {
     ).toBe("openai");
   });
 
-  test("ignores invalid message shapes", () => {
+  it("ignores invalid message shapes", () => {
     expect(
       currentProviderID([null, [], { model: null }, { providerID: 1 }])
     ).toBeUndefined();
   });
 
-  test("finds provider ids in fallback message fields", () => {
+  it("finds provider ids in fallback message fields", () => {
     expect(currentProviderID([{ info: {}, providerID: "openai" }])).toBe(
       "openai"
     );
@@ -81,7 +81,7 @@ describe("session helpers", () => {
     expect(currentProviderID([])).toBeUndefined();
   });
 
-  test("selects Codex usage for OpenAI sessions and prefers the 5h window", () => {
+  it("selects Codex usage for OpenAI sessions and prefers the 5h window", () => {
     const states: ProviderState[] = [
       {
         data: {
@@ -101,7 +101,7 @@ describe("session helpers", () => {
     expect(Number(usage ? quotaUsedPercent(usage.quota) : null)).toBe(75);
   });
 
-  test("selects ZAI token usage and falls back to previous data from error states", () => {
+  it("selects ZAI token usage and falls back to previous data from error states", () => {
     const states: ProviderState[] = [
       {
         id: "zai",
@@ -122,7 +122,7 @@ describe("session helpers", () => {
     expect(Number(usage ? quotaUsedPercent(usage.quota) : null)).toBe(88);
   });
 
-  test("selects MiniMax usage for minimax-coding-plan sessions", () => {
+  it("selects MiniMax usage for minimax-coding-plan sessions", () => {
     const states: ProviderState[] = [
       {
         data: {
@@ -143,7 +143,7 @@ describe("session helpers", () => {
     expect(Number(usage ? quotaUsedPercent(usage.quota) : null)).toBe(88);
   });
 
-  test("selects a requested footer window and falls back to auto", () => {
+  it("selects a requested footer window and falls back to auto", () => {
     const states: ProviderState[] = [
       {
         data: {
@@ -181,7 +181,7 @@ describe("session helpers", () => {
     ).toBe("5h");
   });
 
-  test("selects footer usage when its bar is hidden", () => {
+  it("selects footer usage when its bar is hidden", () => {
     const states: ProviderState[] = [
       {
         data: {
@@ -209,7 +209,7 @@ describe("session helpers", () => {
     ).toBe("5h");
   });
 
-  test("returns null for unknown providers or unavailable data", () => {
+  it("returns null for unknown providers or unavailable data", () => {
     expect(usageForProvider([], "anthropic")).toBeNull();
     expect(
       usageForProvider(
@@ -220,7 +220,7 @@ describe("session helpers", () => {
     expect(usageProviderFor([], "unknown-provider")).toBeNull();
   });
 
-  test("falls back to the first window when a requested window is unavailable", () => {
+  it("falls back to the first window when a requested window is unavailable", () => {
     const states: ProviderState[] = [
       {
         data: {
@@ -249,7 +249,7 @@ describe("session helpers", () => {
     expect(usageProviderFor(states, "openai")).toBe("codex");
   });
 
-  test("falls back to the provider's preferred kind before the first window", () => {
+  it("falls back to the provider's preferred kind before the first window", () => {
     const states: ProviderState[] = [
       {
         data: {
@@ -277,7 +277,7 @@ describe("session helpers", () => {
     ).toBe("rolling");
   });
 
-  test("returns no selected window when the active provider has no windows", () => {
+  it("returns no selected window when the active provider has no windows", () => {
     const states: ProviderState[] = [
       {
         data: {
@@ -296,7 +296,7 @@ describe("session helpers", () => {
     expect(usageProviderFor(states, "openai")).toBeNull();
   });
 
-  test("does not use another provider when the session provider is unavailable", () => {
+  it("does not use another provider when the session provider is unavailable", () => {
     const states: ProviderState[] = [
       {
         data: {
@@ -315,7 +315,7 @@ describe("session helpers", () => {
     expect(usageForProvider(states, "anthropic")).toBeNull();
   });
 
-  test("does not use another provider when the active provider has no data", () => {
+  it("does not use another provider when the active provider has no data", () => {
     const states: ProviderState[] = [
       {
         data: {

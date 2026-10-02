@@ -2,7 +2,7 @@ import { rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { afterEach, describe, expect, test } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
 import { fetchOpenCodeGoUsage } from "@/providers/opencode-go.ts";
 
@@ -11,7 +11,7 @@ import { installFetchMock, resetFetchMock } from "./helpers.ts";
 describe("OpenCode GO provider", () => {
   afterEach(resetFetchMock);
 
-  test.each([
+  it.each([
     [
       "valid",
       JSON.stringify({ "opencode-go": { key: "file-key" } }),
@@ -49,7 +49,7 @@ describe("OpenCode GO provider", () => {
     }
   );
 
-  test("builds authenticated requests and parses usage windows", async () => {
+  it("builds authenticated requests and parses usage windows", async () => {
     const fetchMock = installFetchMock(
       Response.json({
         usage: {
@@ -93,7 +93,7 @@ describe("OpenCode GO provider", () => {
     ]);
   });
 
-  test("supports the OPENCODE_API_KEY environment reference", async () => {
+  it("supports the OPENCODE_API_KEY environment reference", async () => {
     const fetchMock = installFetchMock(
       Response.json({ usage: { rolling: { percent: 1 } } })
     );
@@ -119,7 +119,7 @@ describe("OpenCode GO provider", () => {
     });
   });
 
-  test("uses nested OpenCode auth credentials", async () => {
+  it("uses nested OpenCode auth credentials", async () => {
     const fetchMock = installFetchMock(
       Response.json({ usage: { rolling: { percent: 1 } } })
     );
@@ -135,7 +135,7 @@ describe("OpenCode GO provider", () => {
     });
   });
 
-  test("parses only well-typed optional usage window fields", async () => {
+  it("parses only well-typed optional usage window fields", async () => {
     installFetchMock(
       Response.json({
         usage: {
@@ -157,13 +157,13 @@ describe("OpenCode GO provider", () => {
     ]);
   });
 
-  test("rejects missing credentials", async () => {
+  it("rejects missing credentials", async () => {
     await expect(fetchOpenCodeGoUsage(undefined, {}, 1000)).rejects.toThrow(
       "missing OpenCode GO key"
     );
   });
 
-  test("rejects malformed usage responses", async () => {
+  it("rejects malformed usage responses", async () => {
     installFetchMock(Response.json({ usage: { rolling: { percent: 101 } } }));
 
     await expect(
@@ -171,7 +171,7 @@ describe("OpenCode GO provider", () => {
     ).rejects.toThrow("invalid OpenCode GO usage");
   });
 
-  test.each([Response.json([]), Response.json({})])(
+  it.each([Response.json([]), Response.json({})])(
     "rejects malformed usage payloads",
     async (response) => {
       installFetchMock(response);

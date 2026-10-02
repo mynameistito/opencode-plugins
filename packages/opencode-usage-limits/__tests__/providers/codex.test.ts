@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 
 import { Effect, Exit, Layer } from "effect";
-import { afterEach, describe, expect, test } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
 import { ProviderTransportError } from "@/errors.ts";
 import { codexProvider, fetchCodexUsage } from "@/providers/codex.ts";
@@ -17,7 +17,7 @@ import { installFetchMock, resetFetchMock } from "./helpers.ts";
 describe("Codex provider", () => {
   afterEach(resetFetchMock);
 
-  test("uses credentials from the configured Codex auth file", async () => {
+  it("uses credentials from the configured Codex auth file", async () => {
     const authPath = path.join(
       tmpdir(),
       `oc-usage-limits-${crypto.randomUUID()}.json`
@@ -46,7 +46,7 @@ describe("Codex provider", () => {
     }
   });
 
-  test("falls back to Codex auth when OpenCode credentials are rejected", async () => {
+  it("falls back to Codex auth when OpenCode credentials are rejected", async () => {
     const authPath = path.join(
       tmpdir(),
       `oc-usage-limits-${crypto.randomUUID()}.json`
@@ -98,7 +98,7 @@ describe("Codex provider", () => {
     }
   });
 
-  test("preserves a configured API key during the auth fallback", async () => {
+  it("preserves a configured API key during the auth fallback", async () => {
     let attempts = 0;
     const fetchMock = installFetchMock(
       Response.json({ rate_limit: { primary_window: { used_percent: 13 } } })
@@ -128,7 +128,7 @@ describe("Codex provider", () => {
     });
   });
 
-  test("rejects a missing configured Codex auth file", async () => {
+  it("rejects a missing configured Codex auth file", async () => {
     const authPath = path.join(
       tmpdir(),
       `oc-usage-limits-${crypto.randomUUID()}.json`
@@ -139,7 +139,7 @@ describe("Codex provider", () => {
     );
   });
 
-  test("uses the default Codex auth path when no fallback credential is configured", async () => {
+  it("uses the default Codex auth path when no fallback credential is configured", async () => {
     const paths: string[] = [];
     const files = Layer.succeed(ProviderFileSystem, {
       readJson: (input) =>
@@ -190,7 +190,7 @@ describe("Codex provider", () => {
     expect(paths).toContain("~/.codex/auth.json");
   });
 
-  test("rejects auth files without a token object or complete credentials", async () => {
+  it("rejects auth files without a token object or complete credentials", async () => {
     const authPath = path.join(
       tmpdir(),
       `oc-usage-limits-${crypto.randomUUID()}.json`
@@ -208,7 +208,7 @@ describe("Codex provider", () => {
     }
   });
 
-  test.each(["null", JSON.stringify({}), JSON.stringify({ tokens: "bad" })])(
+  it.each(["null", JSON.stringify({}), JSON.stringify({ tokens: "bad" })])(
     "rejects malformed auth file payload %s",
     async (contents) => {
       const authPath = path.join(
@@ -226,7 +226,7 @@ describe("Codex provider", () => {
     }
   );
 
-  test("does not retry unauthorized requests for a custom host", async () => {
+  it("does not retry unauthorized requests for a custom host", async () => {
     const fetchMock = installFetchMock(new Response(null, { status: 401 }));
 
     await expect(
@@ -239,7 +239,7 @@ describe("Codex provider", () => {
     expect(fetchMock).toHaveBeenCalledOnce();
   });
 
-  test("ignores optional response fields with invalid types", async () => {
+  it("ignores optional response fields with invalid types", async () => {
     installFetchMock(
       Response.json({
         plan_type: 42,
@@ -265,7 +265,7 @@ describe("Codex provider", () => {
     expect(usage.tierName).toBeUndefined();
   });
 
-  test("accepts a window with no optional fields and omits invalid nested windows", async () => {
+  it("accepts a window with no optional fields and omits invalid nested windows", async () => {
     installFetchMock(
       Response.json({
         rate_limit: {
@@ -286,7 +286,7 @@ describe("Codex provider", () => {
     ]);
   });
 
-  test("treats non-object optional Codex windows as absent", async () => {
+  it("treats non-object optional Codex windows as absent", async () => {
     installFetchMock(
       Response.json({
         plan_type: 42,
@@ -303,7 +303,7 @@ describe("Codex provider", () => {
     ).rejects.toThrow("invalid Codex usage");
   });
 
-  test("rejects invalid primary window percentages", async () => {
+  it("rejects invalid primary window percentages", async () => {
     installFetchMock(
       Response.json({ rate_limit: { primary_window: { used_percent: 101 } } })
     );
@@ -317,7 +317,7 @@ describe("Codex provider", () => {
     ).rejects.toThrow("invalid Codex usage");
   });
 
-  test("keeps the original unauthorized error when fallback credentials are unavailable", async () => {
+  it("keeps the original unauthorized error when fallback credentials are unavailable", async () => {
     const authPath = path.join(
       tmpdir(),
       `oc-usage-limits-${crypto.randomUUID()}.json`
@@ -334,7 +334,7 @@ describe("Codex provider", () => {
     expect(fetchMock).toHaveBeenCalledOnce();
   });
 
-  test("builds authenticated requests and parses usage windows", async () => {
+  it("builds authenticated requests and parses usage windows", async () => {
     const fetchMock = installFetchMock(
       Response.json({
         plan_type: "team",
@@ -396,7 +396,7 @@ describe("Codex provider", () => {
     );
   });
 
-  test("rejects malformed Codex responses", async () => {
+  it("rejects malformed Codex responses", async () => {
     installFetchMock(Response.json([]));
 
     await expect(
@@ -408,7 +408,7 @@ describe("Codex provider", () => {
     ).rejects.toThrow("invalid Codex usage");
   });
 
-  test("does not use discovered OpenCode credentials for a custom host", async () => {
+  it("does not use discovered OpenCode credentials for a custom host", async () => {
     await expect(
       fetchCodexUsage(
         { baseUrl: "https://codex.example/" },
@@ -418,7 +418,7 @@ describe("Codex provider", () => {
     ).rejects.toThrow("missing Codex auth");
   });
 
-  test.each([
+  it.each([
     ["http://localhost:3000/", "http://localhost:3000/wham/usage"],
     ["http://127.0.0.1:4321", "http://127.0.0.1:4321/wham/usage"],
     ["http://[::1]:3000", "http://[::1]:3000/wham/usage"],
@@ -440,7 +440,7 @@ describe("Codex provider", () => {
     expect(fetchMock.mock.calls[0]?.[0]).toBe(expectedUrl);
   });
 
-  test.each([
+  it.each([
     ["http://evil.example", "https://chatgpt.com/backend-api/wham/usage"],
     ["ftp://example.com", "https://chatgpt.com/backend-api/wham/usage"],
     ["not a url", "https://chatgpt.com/backend-api/wham/usage"],
@@ -462,7 +462,7 @@ describe("Codex provider", () => {
   );
 
   describe("window variants", () => {
-    test("primary window only", async () => {
+    it("primary window only", async () => {
       installFetchMock(
         Response.json({
           plan_type: "team",
@@ -494,7 +494,7 @@ describe("Codex provider", () => {
       });
     });
 
-    test("primary + secondary windows", async () => {
+    it("primary + secondary windows", async () => {
       installFetchMock(
         Response.json({
           plan_type: "team",
@@ -535,7 +535,7 @@ describe("Codex provider", () => {
       });
     });
 
-    test("reset credits metadata", async () => {
+    it("reset credits metadata", async () => {
       installFetchMock(
         Response.json({
           plan_type: "team",
@@ -566,7 +566,7 @@ describe("Codex provider", () => {
       });
     });
 
-    test.each([-1, Number.NaN, Number.POSITIVE_INFINITY])(
+    it.each([-1, Number.NaN, Number.POSITIVE_INFINITY])(
       "rejects invalid required percentage %s",
       async (usedPercent) => {
         installFetchMock(
@@ -590,7 +590,7 @@ describe("Codex provider", () => {
       }
     );
 
-    test("plan type", async () => {
+    it("plan type", async () => {
       installFetchMock(
         Response.json({
           plan_type: "enterprise",

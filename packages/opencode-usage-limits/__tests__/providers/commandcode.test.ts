@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test, vi } from "vitest";
+import { afterEach, describe, expect, vi, it } from "vitest";
 
 import { fetchCommandCodeUsage } from "@/providers/commandcode.ts";
 import type { JsonObject, JsonValue } from "@/utils.ts";
@@ -55,7 +55,7 @@ const installResponses = (responses: readonly Response[]) => {
 describe("Command Code provider", () => {
   afterEach(resetFetchMock);
 
-  test("reads and scopes credit windows and derives monthly usage", async () => {
+  it("reads and scopes credit windows and derives monthly usage", async () => {
     const fetchMock = installResponses([
       whoami("org_fixture"),
       credits(),
@@ -85,7 +85,7 @@ describe("Command Code provider", () => {
     ]);
   });
 
-  test("omits organization scope for personal accounts", async () => {
+  it("omits organization scope for personal accounts", async () => {
     const fetchMock = installResponses([
       whoami(),
       credits(),
@@ -105,7 +105,7 @@ describe("Command Code provider", () => {
     ]);
   });
 
-  test("scopes requests to an organization nested under data", async () => {
+  it("scopes requests to an organization nested under data", async () => {
     const fetchMock = installResponses([
       Response.json({ data: { organization: { id: "org_nested" } } }),
       credits(),
@@ -121,7 +121,7 @@ describe("Command Code provider", () => {
     ]);
   });
 
-  test.each([
+  it.each([
     ["null", null],
     ["empty", {}],
     ["missing user", { success: true }],
@@ -139,7 +139,7 @@ describe("Command Code provider", () => {
     }
   );
 
-  test("fails when nested whoami reports an unsuccessful response", async () => {
+  it("fails when nested whoami reports an unsuccessful response", async () => {
     const fetchMock = installResponses([
       Response.json({ data: { success: false } }),
     ]);
@@ -150,7 +150,7 @@ describe("Command Code provider", () => {
     expect(fetchMock).toHaveBeenCalledOnce();
   });
 
-  test("keeps monthly quota unknown when its summary request fails", async () => {
+  it("keeps monthly quota unknown when its summary request fails", async () => {
     installResponses([
       whoami(),
       credits(),
@@ -169,7 +169,7 @@ describe("Command Code provider", () => {
     });
   });
 
-  test("keeps monthly quota unknown when summary usage is malformed", async () => {
+  it("keeps monthly quota unknown when summary usage is malformed", async () => {
     installResponses([
       whoami(),
       credits(),
@@ -188,7 +188,7 @@ describe("Command Code provider", () => {
     });
   });
 
-  test.each([
+  it.each([
     ["missing credits", null],
     [
       "invalid credit balances",
@@ -214,7 +214,7 @@ describe("Command Code provider", () => {
     expect(usage.windows).toHaveLength(2);
   });
 
-  test("omits unusable credit buckets but keeps valid windows", async () => {
+  it("omits unusable credit buckets but keeps valid windows", async () => {
     installResponses([
       whoami(),
       creditsWith(
@@ -239,7 +239,7 @@ describe("Command Code provider", () => {
     ]);
   });
 
-  test("rejects malformed billing responses and empty window sets", async () => {
+  it("rejects malformed billing responses and empty window sets", async () => {
     installResponses([whoami(), Response.json({ credits: {} })]);
     await expect(
       fetchCommandCodeUsage(
@@ -263,7 +263,7 @@ describe("Command Code provider", () => {
     ).rejects.toThrow("invalid Command Code usage");
   });
 
-  test("does not issue unscoped requests when whoami fails", async () => {
+  it("does not issue unscoped requests when whoami fails", async () => {
     const fetchMock = installResponses([new Response(null, { status: 500 })]);
 
     await expect(
@@ -276,7 +276,7 @@ describe("Command Code provider", () => {
     expect(fetchMock).toHaveBeenCalledOnce();
   });
 
-  test("supports explicit keys with custom base URL paths and queries", async () => {
+  it("supports explicit keys with custom base URL paths and queries", async () => {
     const fetchMock = installResponses([
       whoami(),
       credits(),
@@ -303,7 +303,7 @@ describe("Command Code provider", () => {
     });
   });
 
-  test("rejects missing credentials and explicit whoami failure bodies", async () => {
+  it("rejects missing credentials and explicit whoami failure bodies", async () => {
     await expect(fetchCommandCodeUsage(undefined, {}, 1000)).rejects.toThrow(
       "missing Command Code key"
     );

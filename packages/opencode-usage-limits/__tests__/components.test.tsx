@@ -2,7 +2,7 @@ import { RGBA } from "@opentui/core";
 import { testRender } from "@opentui/solid";
 import { Result } from "effect";
 /* @jsxImportSource @opentui/solid */
-import { describe, expect, test } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { BottomUsage, UsageLimitsPanel } from "@/components.tsx";
 import type {
@@ -74,7 +74,7 @@ const renderPanelText = async (
 };
 
 describe(UsageLimitsPanel, () => {
-  test("renders diagnostics without providers and returns null when fully empty", async () => {
+  it("renders diagnostics without providers and returns null when fully empty", async () => {
     const diagnosticSetup = await testRender(
       () => (
         <UsageLimitsPanel
@@ -117,7 +117,7 @@ describe(UsageLimitsPanel, () => {
     }
   });
 
-  test("renders loading providers and filters cached data with no matching windows", async () => {
+  it("renders loading providers and filters cached data with no matching windows", async () => {
     const text = await renderPanelText(
       [
         { id: "codex", label: "Loading", status: "loading" },
@@ -137,7 +137,7 @@ describe(UsageLimitsPanel, () => {
     expect(text).not.toContain("Cached");
   });
 
-  test("renders windows at warning and error quota percentages", async () => {
+  it("renders windows at warning and error quota percentages", async () => {
     const text = await renderPanelText(
       [
         {
@@ -170,7 +170,7 @@ describe(UsageLimitsPanel, () => {
     expect(text).toContain("90% used");
   });
 
-  test("renders ready provider windows", async () => {
+  it("renders ready provider windows", async () => {
     const text = await renderPanelText(
       [
         {
@@ -191,7 +191,7 @@ describe(UsageLimitsPanel, () => {
     expect(text).toContain("[█████░░░░░░░]");
   });
 
-  test("filters windows by the provider sidebar window", async () => {
+  it("filters windows by the provider sidebar window", async () => {
     const text = await renderPanelText(
       [
         {
@@ -223,7 +223,7 @@ describe(UsageLimitsPanel, () => {
     expect(text).not.toContain("5h");
   });
 
-  test("keeps sidebar provider text and percentage when its bar is hidden", async () => {
+  it("keeps sidebar provider text and percentage when its bar is hidden", async () => {
     const text = await renderPanelText(
       [
         {
@@ -251,7 +251,7 @@ describe(UsageLimitsPanel, () => {
     expect(text).not.toContain("[█████░░░░░░░]");
   });
 
-  test("renders previous windows and error text when errors are visible", async () => {
+  it("renders previous windows and error text when errors are visible", async () => {
     const text = await renderPanelText(
       [
         {
@@ -271,7 +271,7 @@ describe(UsageLimitsPanel, () => {
     expect(text).toContain("provider unavailable");
   });
 
-  test("renders previous windows without error text when errors are hidden", async () => {
+  it("renders previous windows without error text when errors are hidden", async () => {
     const text = await renderPanelText(
       [
         {
@@ -291,7 +291,7 @@ describe(UsageLimitsPanel, () => {
     expect(text).not.toContain("provider unavailable");
   });
 
-  test("hides error-only providers when errors are hidden", async () => {
+  it("hides error-only providers when errors are hidden", async () => {
     const text = await renderPanelText(
       [
         {
@@ -310,7 +310,7 @@ describe(UsageLimitsPanel, () => {
     expect(text).not.toContain("42%");
   });
 
-  test("hides missing credential providers without previous usage", async () => {
+  it("hides missing credential providers without previous usage", async () => {
     const text = await renderPanelText(
       [
         {
@@ -329,7 +329,7 @@ describe(UsageLimitsPanel, () => {
     expect(text).not.toContain("missing Synthetic key");
   });
 
-  test("renders tier badge when provider has tierName", async () => {
+  it("renders tier badge when provider has tierName", async () => {
     const text = await renderPanelText(
       [
         {
@@ -346,7 +346,7 @@ describe(UsageLimitsPanel, () => {
     expect(text).toContain("Codex [Pro]");
   });
 
-  test("renders a stale tiered provider", async () => {
+  it("renders a stale tiered provider", async () => {
     const text = await renderPanelText(
       [
         {
@@ -363,7 +363,7 @@ describe(UsageLimitsPanel, () => {
     expect(text).toContain("Codex [Pro] stale");
   });
 
-  test("renders cached tier badge from previous data on error state", async () => {
+  it("renders cached tier badge from previous data on error state", async () => {
     const text = await renderPanelText(
       [
         {
@@ -380,7 +380,7 @@ describe(UsageLimitsPanel, () => {
     expect(text).toContain("Codex [Pro]");
   });
 
-  test("renders updated timestamp when lastRefreshAt is provided", async () => {
+  it("renders updated timestamp when lastRefreshAt is provided", async () => {
     const text = await renderPanelText(
       [
         {
@@ -398,7 +398,7 @@ describe(UsageLimitsPanel, () => {
     expect(text).toContain("Updated 14:32");
   });
 
-  test("renders footer usage with legacy theme and an unknown quota", async () => {
+  it("renders footer usage with legacy theme and an unknown quota", async () => {
     const legacyTheme = {
       error: color,
       success: color,

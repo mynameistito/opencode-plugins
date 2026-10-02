@@ -2,7 +2,7 @@ import { rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { afterEach, describe, expect, test } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
 import { fetchZaiCodingPlanUsage } from "@/providers/zai-coding-plan.ts";
 import type { OpenCodeAuth } from "@/types.ts";
@@ -18,7 +18,7 @@ const authCases = [
 describe("ZAI provider", () => {
   afterEach(resetFetchMock);
 
-  test.each([
+  it.each([
     ["valid", JSON.stringify({ zai: { key: "file-key" } }), "file-key"],
     ["missing", undefined, "auth-key"],
     ["malformed", "{", "auth-key"],
@@ -56,7 +56,7 @@ describe("ZAI provider", () => {
     }
   );
 
-  test("prefers auth data, sends bearer tokens when configured, and infers Max tier", async () => {
+  it("prefers auth data, sends bearer tokens when configured, and infers Max tier", async () => {
     const nextResetTime = Date.now() + 90_000;
     const fetchMock = installFetchMock(
       Response.json({
@@ -129,7 +129,7 @@ describe("ZAI provider", () => {
     expect(usage.windows[0]?.resetsAt?.getTime()).toBeGreaterThan(Date.now());
   });
 
-  test("uses configured environment references when auth does not contain a key", async () => {
+  it("uses configured environment references when auth does not contain a key", async () => {
     process.env.OC_USAGE_LIMITS_ZAI_KEY = "env-key";
     const fetchMock = installFetchMock(
       Response.json({
@@ -150,7 +150,7 @@ describe("ZAI provider", () => {
     });
   });
 
-  test("ignores malformed optional fields while retaining valid token limits", async () => {
+  it("ignores malformed optional fields while retaining valid token limits", async () => {
     installFetchMock(
       Response.json({
         data: {
@@ -168,7 +168,7 @@ describe("ZAI provider", () => {
     expect(usage.tierName).toBeUndefined();
   });
 
-  test.each(authCases)(
+  it.each(authCases)(
     "accepts %s OpenCode auth",
     async (_name, openCodeAuth) => {
       const fetchMock = installFetchMock(
@@ -191,7 +191,7 @@ describe("ZAI provider", () => {
   );
 
   describe("tier inference", () => {
-    test.each([
+    it.each([
       [1400, "Max"],
       [1500, "Max"],
       [2000, "Max"],
@@ -216,7 +216,7 @@ describe("ZAI provider", () => {
       }
     );
 
-    test.each([
+    it.each([
       [300, "Pro"],
       [500, "Pro"],
       [1000, "Pro"],
@@ -241,7 +241,7 @@ describe("ZAI provider", () => {
       }
     );
 
-    test.each([
+    it.each([
       [1, "Lite"],
       [50, "Lite"],
       [100, "Lite"],
@@ -266,7 +266,7 @@ describe("ZAI provider", () => {
       }
     );
 
-    test("infers 0 total prompts as Unknown tier", async () => {
+    it("infers 0 total prompts as Unknown tier", async () => {
       installFetchMock(
         Response.json({
           data: {
@@ -283,7 +283,7 @@ describe("ZAI provider", () => {
       ).resolves.toSatisfy(({ tierName }) => tierName === undefined);
     });
 
-    test("infers missing usage total as Unknown tier", async () => {
+    it("infers missing usage total as Unknown tier", async () => {
       installFetchMock(
         Response.json({
           data: {
@@ -301,7 +301,7 @@ describe("ZAI provider", () => {
     });
   });
 
-  test("rejects missing keys and malformed responses", async () => {
+  it("rejects missing keys and malformed responses", async () => {
     await expect(fetchZaiCodingPlanUsage(undefined, {}, 1000)).rejects.toThrow(
       "missing ZAI key"
     );
@@ -312,7 +312,7 @@ describe("ZAI provider", () => {
     ).rejects.toThrow("invalid ZAI usage");
   });
 
-  test("ignores null limits but rejects a payload without a rolling limit", async () => {
+  it("ignores null limits but rejects a payload without a rolling limit", async () => {
     installFetchMock(
       Response.json({
         data: {
@@ -326,7 +326,7 @@ describe("ZAI provider", () => {
     ).rejects.toThrow("invalid ZAI usage");
   });
 
-  test.each([-1, Number.NaN, Number.POSITIVE_INFINITY])(
+  it.each([-1, Number.NaN, Number.POSITIVE_INFINITY])(
     "rejects invalid required token percentage %s",
     async (percentage) => {
       installFetchMock(
@@ -341,7 +341,7 @@ describe("ZAI provider", () => {
     }
   );
 
-  test("downgrades invalid optional counts to percentage usage", async () => {
+  it("downgrades invalid optional counts to percentage usage", async () => {
     installFetchMock(
       Response.json({
         data: {

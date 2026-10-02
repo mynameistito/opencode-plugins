@@ -1,17 +1,17 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { resolveHttpsBaseUrl } from "@/utils/url.ts";
 
 describe(resolveHttpsBaseUrl, () => {
   const fallback = "https://api.example.test/";
 
-  test("resolves direct HTTPS URLs without a trailing slash", () => {
+  it("resolves direct HTTPS URLs without a trailing slash", () => {
     expect(
       resolveHttpsBaseUrl(" https://usage.example.test/v1/ ", fallback)
     ).toBe("https://usage.example.test/v1");
   });
 
-  test.each([
+  it.each([
     ["http://localhost:8787/", "http://localhost:8787"],
     ["http://127.0.0.1:8787/", "http://127.0.0.1:8787"],
     ["http://[::1]:8787/", "http://[::1]:8787"],

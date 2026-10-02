@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import type { ProviderError } from "@/errors.ts";
 import {
@@ -23,7 +23,7 @@ import { ProviderTransportError } from "@/errors/transport.ts";
 const errorTag = (error: ProviderError): string => error._tag;
 
 describe("provider boundary errors", () => {
-  test("constructs config decode errors with their tagged operations", () => {
+  it("constructs config decode errors with their tagged operations", () => {
     const error = new ConfigDecodeError({
       cause: "schema",
       operation: "parse-config",
@@ -34,7 +34,7 @@ describe("provider boundary errors", () => {
     expect(error.cause).toBe("schema");
   });
 
-  test("exports the public error classes", () => {
+  it("exports the public error classes", () => {
     expect([
       ExportedConfigDecodeError,
       ExportedConfigReadError,
@@ -56,7 +56,7 @@ describe("provider boundary errors", () => {
     ]);
   });
 
-  test("carry stable provider and operation context", () => {
+  it("carry stable provider and operation context", () => {
     const errors: readonly ProviderError[] = [
       new ProviderTransportError({
         operation: "fetch-usage",
@@ -99,7 +99,7 @@ describe("provider boundary errors", () => {
     ]);
   });
 
-  test("stores only classified safe causes", () => {
+  it("stores only classified safe causes", () => {
     const error = new ProviderTransportError({
       cause: "network",
       operation: "fetch-usage",
@@ -110,7 +110,7 @@ describe("provider boundary errors", () => {
     expect(String(error)).not.toContain("responseBody");
   });
 
-  test("formats safe, actionable diagnostic messages", () => {
+  it("formats safe, actionable diagnostic messages", () => {
     const errors = [
       new ConfigDecodeError({ cause: "syntax", operation: "parse-jsonc" }),
       new ConfigReadError({

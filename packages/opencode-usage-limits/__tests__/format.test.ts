@@ -1,5 +1,5 @@
 import { Result } from "effect";
-import { describe, expect, test } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import {
   bottomWindowMainText,
@@ -35,20 +35,20 @@ const usageWindow = (overrides: Partial<UsageWindow> = {}): UsageWindow => ({
 });
 
 describe("format helpers", () => {
-  test("formats usage window main labels", () => {
+  it("formats usage window main labels", () => {
     expect(windowMainText(usageWindow())).toBe("5h: 42%");
     expect(bottomWindowMainText(usageWindow({ label: "daily" }))).toBe(
       "daily 42%"
     );
   });
 
-  test("uses a placeholder for unknown percentages", () => {
+  it("uses a placeholder for unknown percentages", () => {
     expect(windowMainText(usageWindow({ quota: percentage(null) }))).toBe(
       "5h: ?"
     );
   });
 
-  test("rounds percentages to the nearest integer", () => {
+  it("rounds percentages to the nearest integer", () => {
     expect(windowMainText(usageWindow({ quota: percentage(42.49) }))).toBe(
       "5h: 42%"
     );
@@ -57,7 +57,7 @@ describe("format helpers", () => {
     );
   });
 
-  test.each([
+  it.each([
     [null, ""],
     [0, " · now"],
     [1, " · 1m"],
@@ -72,7 +72,7 @@ describe("format helpers", () => {
     expect(windowResetText(usageWindow({ resetsAt }), NOW)).toBe(expected);
   });
 
-  test("maps known limit windows with tolerance", () => {
+  it("maps known limit windows with tolerance", () => {
     expect(limitLabelForWindow(5 * 60 * 60, "fallback")).toBe("5h");
     expect(
       limitLabelForWindow(Math.floor(24 * 60 * 60 * 0.96), "fallback")
@@ -82,7 +82,7 @@ describe("format helpers", () => {
     expect(limitLabelForWindow(42, "fallback")).toBe("fallback");
   });
 
-  test("renders percent bar with filled and empty blocks", () => {
+  it("renders percent bar with filled and empty blocks", () => {
     expect(percentBar(42, 12)).toBe("[█████░░░░░░░]");
     expect(percentBar(75, 8)).toBe("[██████░░]");
     expect(percentBar(null, 12)).toBe("[░░░░░░░░░░░░]");
@@ -90,11 +90,11 @@ describe("format helpers", () => {
     expect(percentBar(100, 12)).toBe("[████████████]");
   });
 
-  test("keeps a visible block for small positive usage", () => {
+  it("keeps a visible block for small positive usage", () => {
     expect(percentBar(1, 12)).toBe("[█░░░░░░░░░░░]");
   });
 
-  test.each([
+  it.each([
     [500, "500"],
     [1000, "1K"],
     [1500, "1.5K"],
@@ -106,13 +106,13 @@ describe("format helpers", () => {
     expect(formatTokenCount(tokens)).toBe(expected);
   });
 
-  test("formats timestamp as HH:MM", () => {
+  it("formats timestamp as HH:MM", () => {
     expect(formatTimestamp(new Date(2026, 5, 25, 14, 32))).toBe("14:32");
     expect(formatTimestamp(new Date(2026, 5, 25, 9, 5))).toBe("09:05");
     expect(formatTimestamp(new Date(2026, 5, 25, 0, 0))).toBe("00:00");
   });
 
-  test("renders token count text only for count quotas", () => {
+  it("renders token count text only for count quotas", () => {
     expect(
       tokenCountText(
         usageWindow({
@@ -127,7 +127,7 @@ describe("format helpers", () => {
     expect(tokenCountText(usageWindow())).toBe("");
   });
 
-  test("formats absolute reset time", () => {
+  it("formats absolute reset time", () => {
     expect(
       windowResetTime(usageWindow({ resetsAt: new Date(2026, 5, 23, 23, 59) }))
     ).toBe(" 23:59");

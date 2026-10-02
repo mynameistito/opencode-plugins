@@ -1,7 +1,7 @@
 import { setTimeout as delay } from "node:timers/promises";
 
 import { Deferred, Effect, Fiber, Result } from "effect";
-import { describe, expect, test } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { usageCoordinator } from "@/coordinator.ts";
 import type { CoordinatorSnapshot } from "@/coordinator.ts";
@@ -88,7 +88,7 @@ const dependencies = (
 const yieldToEventLoop = () => delay(0);
 
 describe("usage coordinator", () => {
-  test("propagates interruption while loading config", async () => {
+  it("propagates interruption while loading config", async () => {
     const harness = dependencies((id) => Effect.succeed(usage(id)));
     harness.dependencies.loadConfig = Effect.interrupt;
     const fiber = Effect.runFork(
@@ -100,7 +100,7 @@ describe("usage coordinator", () => {
     expect(harness.snapshots).toStrictEqual([]);
   });
 
-  test("propagates interruption while loading auth", async () => {
+  it("propagates interruption while loading auth", async () => {
     const harness = dependencies((id) => Effect.succeed(usage(id)));
     harness.dependencies.loadOpenCodeAuth = Effect.interrupt;
     const fiber = Effect.runFork(
@@ -112,7 +112,7 @@ describe("usage coordinator", () => {
     expect(harness.snapshots).toStrictEqual([["loading", "loading"]]);
   });
 
-  test.each([
+  it.each([
     [
       "decode",
       new ConfigDecodeError({ cause: "schema", operation: "parse-config" }),
@@ -148,7 +148,7 @@ describe("usage coordinator", () => {
     }
   );
 
-  test("labels missing provider credentials in the published state", async () => {
+  it("labels missing provider credentials in the published state", async () => {
     const harness = dependencies(() =>
       Effect.fail(
         new MissingProviderCredentialsError({
@@ -175,7 +175,7 @@ describe("usage coordinator", () => {
     await Effect.runPromise(Fiber.interrupt(fiber));
   });
 
-  test("publishes loading before concurrent providers reach terminal state", async () => {
+  it("publishes loading before concurrent providers reach terminal state", async () => {
     const gates = new Map<ProviderID, Deferred.Deferred<boolean>>();
     const harness = dependencies((id) =>
       Effect.gen(function* providerWork() {
@@ -210,7 +210,7 @@ describe("usage coordinator", () => {
     await Effect.runPromise(Fiber.interrupt(fiber));
   });
 
-  test("keeps completed data visible and updates staleness while refreshing", async () => {
+  it("keeps completed data visible and updates staleness while refreshing", async () => {
     const secondFetches = new Map<ProviderID, Deferred.Deferred<boolean>>();
     const gates = new Map<ProviderID, Deferred.Deferred<boolean>>();
     const fetchCounts = new Map<ProviderID, number>();
@@ -308,7 +308,7 @@ describe("usage coordinator", () => {
     await Effect.runPromise(Fiber.interrupt(fiber));
   });
 
-  test("shows loading again for providers that have never succeeded", async () => {
+  it("shows loading again for providers that have never succeeded", async () => {
     const gate = await Effect.runPromise(Deferred.make<boolean>());
     let fetches = 0;
     const noZaiConfig: ResolvedUsageLimitsConfig = {
@@ -352,7 +352,7 @@ describe("usage coordinator", () => {
     await Effect.runPromise(Fiber.interrupt(fiber));
   });
 
-  test("retains the previous success after an error on later refreshes", async () => {
+  it("retains the previous success after an error on later refreshes", async () => {
     const retryGate = await Effect.runPromise(Deferred.make<boolean>());
     let fetches = 0;
     const codexConfig: ResolvedUsageLimitsConfig = {
@@ -410,7 +410,7 @@ describe("usage coordinator", () => {
     await Effect.runPromise(Fiber.interrupt(fiber));
   });
 
-  test("clears cached state when a provider is disabled", async () => {
+  it("clears cached state when a provider is disabled", async () => {
     const disabledCodexConfig: ResolvedUsageLimitsConfig = {
       ...config,
       providers: {
@@ -487,7 +487,7 @@ describe("usage coordinator", () => {
     await Effect.runPromise(Fiber.interrupt(fiber));
   });
 
-  test("interrupts active provider work without publishing after disposal", async () => {
+  it("interrupts active provider work without publishing after disposal", async () => {
     const gate = await Effect.runPromise(Deferred.make<boolean>());
     const harness = dependencies((id) =>
       Deferred.await(gate).pipe(Effect.as(usage(id)))
@@ -504,7 +504,7 @@ describe("usage coordinator", () => {
     expect(harness.snapshots).toHaveLength(1);
   });
 
-  test("does not fetch disabled providers while fetching enabled providers", async () => {
+  it("does not fetch disabled providers while fetching enabled providers", async () => {
     const harness = dependencies((id) => Effect.succeed(usage(id)), {
       ...config,
       providers: {
@@ -522,7 +522,7 @@ describe("usage coordinator", () => {
     await Effect.runPromise(Fiber.interrupt(fiber));
   });
 
-  test("keeps refreshing after an unexpected provider defect", async () => {
+  it("keeps refreshing after an unexpected provider defect", async () => {
     let attempts = 0;
     const harness = dependencies(
       (id) => {
@@ -554,7 +554,7 @@ describe("usage coordinator", () => {
     await Effect.runPromise(Fiber.interrupt(fiber));
   });
 
-  test("keeps refreshing after a direct publish throw", async () => {
+  it("keeps refreshing after a direct publish throw", async () => {
     const harness = dependencies((id) => Effect.succeed(usage(id)), {
       ...config,
       providers: { codex: { enabled: true }, zai: { enabled: false } },
@@ -584,7 +584,7 @@ describe("usage coordinator", () => {
     await Effect.runPromise(Fiber.interrupt(fiber));
   });
 
-  test("keeps refreshing when a runtime loader defects", async () => {
+  it("keeps refreshing when a runtime loader defects", async () => {
     let loads = 0;
     const harness = dependencies((id) => Effect.succeed(usage(id)), {
       ...config,
@@ -616,7 +616,7 @@ describe("usage coordinator", () => {
     await Effect.runPromise(Fiber.interrupt(fiber));
   });
 
-  test("reports an auth loader defect and fetches with empty auth", async () => {
+  it("reports an auth loader defect and fetches with empty auth", async () => {
     const harness = dependencies((id) => Effect.succeed(usage(id)), {
       ...config,
       providers: { codex: { enabled: true }, zai: { enabled: false } },

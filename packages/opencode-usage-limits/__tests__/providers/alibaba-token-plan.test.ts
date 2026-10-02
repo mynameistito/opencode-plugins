@@ -1,5 +1,5 @@
 import { Effect, Exit, Layer, Result } from "effect";
-import { describe, expect, test } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { parseUsageLimitsConfig } from "@/config-schema.ts";
 import { ProviderCommandError, ProviderTimeoutError } from "@/errors.ts";
@@ -34,7 +34,7 @@ const run = (
 };
 
 describe("Alibaba Token Plan", () => {
-  test("normalizes fractions, millisecond resets and both quota windows", async () => {
+  it("normalizes fractions, millisecond resets and both quota windows", async () => {
     const reset = Date.parse("2026-09-10T12:00:00Z");
     const { effect, calls } = run(
       JSON.stringify({
@@ -86,7 +86,7 @@ describe("Alibaba Token Plan", () => {
     ]);
   });
 
-  test("supports China, labels, zero usage and a missing window", async () => {
+  it("supports China, labels, zero usage and a missing window", async () => {
     const { effect, calls } = run('{"per1WeekPercentage":0}', {
       label: "Solo",
       region: "china",
@@ -103,7 +103,7 @@ describe("Alibaba Token Plan", () => {
     expect(calls[1]?.args).toContain("domestic");
   });
 
-  test.each([null, false, "2026-09-10", -1, 0, 1e30])(
+  it.each([null, false, "2026-09-10", -1, 0, 1e30])(
     "does not invent a reset from %s",
     async (reset) => {
       const { effect } = run(
@@ -118,7 +118,7 @@ describe("Alibaba Token Plan", () => {
     }
   );
 
-  test.each([
+  it.each([
     "not JSON",
     "null",
     "[]",
@@ -135,7 +135,7 @@ describe("Alibaba Token Plan", () => {
     expect(JSON.stringify(result)).toContain("ProviderResponseDecodeError");
   });
 
-  test("preserves bounded runtime command errors and timeouts", async () => {
+  it("preserves bounded runtime command errors and timeouts", async () => {
     await Promise.all(
       [
         new ProviderCommandError({
@@ -157,7 +157,7 @@ describe("Alibaba Token Plan", () => {
     );
   });
 
-  test("rejects an unsupported Bailian CLI version with an upgrade diagnostic", async () => {
+  it("rejects an unsupported Bailian CLI version with an upgrade diagnostic", async () => {
     await expect(
       Effect.runPromise(
         run('{"per1WeekPercentage":0}', undefined, "bl version 1.14.3").effect
@@ -165,7 +165,7 @@ describe("Alibaba Token Plan", () => {
     ).rejects.toThrow("Bailian CLI >= 1.15.0 is required");
   });
 
-  test("checks the Bailian version instead of an unrelated runtime version", async () => {
+  it("checks the Bailian version instead of an unrelated runtime version", async () => {
     const result = await Effect.runPromiseExit(
       run(
         '{"per1WeekPercentage":0}',
@@ -177,7 +177,7 @@ describe("Alibaba Token Plan", () => {
     expect(JSON.stringify(result)).toContain('"cause":"unsupported"');
   });
 
-  test("supports the scoped package version banner", async () => {
+  it("supports the scoped package version banner", async () => {
     const { effect, calls } = run(
       '{"per1WeekPercentage":0}',
       undefined,
@@ -188,7 +188,7 @@ describe("Alibaba Token Plan", () => {
     expect(calls).toHaveLength(2);
   });
 
-  test("reports an unparseable Bailian version separately", async () => {
+  it("reports an unparseable Bailian version separately", async () => {
     const result = await Effect.runPromiseExit(
       run('{"per1WeekPercentage":0}', undefined, "Bailian CLI").effect
     );
@@ -196,7 +196,7 @@ describe("Alibaba Token Plan", () => {
     expect(JSON.stringify(result)).toContain('"cause":"invalid-version"');
   });
 
-  test("validates configuration and registers footer provider aliases", () => {
+  it("validates configuration and registers footer provider aliases", () => {
     expect(
       Result.isSuccess(
         parseUsageLimitsConfig({
