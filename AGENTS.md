@@ -19,7 +19,7 @@
 
 ## Changesets
 
-Create Changesets at the root with `bun run changeset-add -- force-input|usage-limits patch|minor|major "summary"`. Meaningful plugin changes and documentation-site content changes require a matching Changeset. Tests, package-local scripts, and listed development-only metadata/configuration changes are exempt. Apply `skip-changeset` only for a justified non-release change and with maintainer agreement.
+Create Changesets at the root with `bun run changeset-add -- docs|force-input|usage-limits patch|minor|major "summary"`. Meaningful plugin changes and documentation-site content changes require a matching Changeset. Tests, package-local scripts, and listed development-only metadata/configuration changes are exempt. Apply `skip-changeset` only for a justified non-release change and with maintainer agreement.
 
 ## Pull request automation
 

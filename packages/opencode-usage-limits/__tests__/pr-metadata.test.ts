@@ -3,8 +3,11 @@ import { describe, expect, it } from "vitest";
 import {
   getComponentLabels,
   getMissingChangesets,
+  getPullRequestFilePageCount,
   getRequiredChangesets,
   getSizeLabel,
+  isChangesetReleasePR,
+  isDuplicateLabelError,
   parseChangesetEntries,
   reconcileLabels,
 } from "../../../scripts/pr-metadata-helpers.ts";
@@ -84,6 +87,42 @@ describe("PR metadata helpers", () => {
     expect(
       getMissingChangesets(new Set([forceInput]), new Set([forceInput]))
     ).toStrictEqual([]);
+  });
+
+  it("paginates all pull request files up to the API limit", () => {
+    expect(getPullRequestFilePageCount(0)).toBe(0);
+    expect(getPullRequestFilePageCount(301)).toBe(4);
+    expect(getPullRequestFilePageCount(3000)).toBe(30);
+    expect(() => getPullRequestFilePageCount(3001)).toThrow(
+      "more than 3000 changed files"
+    );
+  });
+
+  it("exempts generated Changesets release pull requests", () => {
+    expect(isChangesetReleasePR("changeset-release/main")).toBeTruthy();
+    expect(isChangesetReleasePR("feature/update-plugin")).toBeFalsy();
+  });
+
+  it("recognizes only GitHub's duplicate-label validation response", () => {
+    expect(
+      isDuplicateLabelError(
+        422,
+        JSON.stringify({ errors: [{ code: "already_exists" }] })
+      )
+    ).toBeTruthy();
+    expect(
+      isDuplicateLabelError(
+        422,
+        JSON.stringify({ errors: [{ code: "invalid" }] })
+      )
+    ).toBeFalsy();
+    expect(isDuplicateLabelError(422, "not JSON")).toBeFalsy();
+    expect(
+      isDuplicateLabelError(
+        500,
+        JSON.stringify({ errors: [{ code: "already_exists" }] })
+      )
+    ).toBeFalsy();
   });
 
   it("removes stale managed labels but preserves unrelated labels", () => {

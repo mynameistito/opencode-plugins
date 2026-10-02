@@ -21,7 +21,6 @@ permissions:
 jobs:
   actionlint:
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
     permissions:
       contents: read
       checks: write
@@ -34,7 +33,7 @@ jobs:
         uses: reviewdog/action-actionlint@a5524e1c19e62881d79c1f1b9b6f09f16356e281 # v1.65.2
         with:
           fail_level: error
-          reporter: github-pr-check
+          reporter: ${{ github.event_name == 'pull_request' && 'github-pr-check' || 'github-check' }}
 
   zizmor:
     runs-on: ubuntu-latest
@@ -55,11 +54,16 @@ jobs:
       - name: Select trusted zizmor configuration
         id: zizmor-config
         shell: bash
+        env:
+          IS_FORK_PR: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
         run: |
           if [[ -f trusted/.github/zizmor.yml ]]; then
             echo "path=trusted/.github/zizmor.yml" >> "$GITHUB_OUTPUT"
+          elif [[ "$IS_FORK_PR" == "true" ]]; then
+            echo "::error::The trusted default branch has no zizmor configuration; refusing to use fork-provided configuration."
+            exit 1
           else
-            echo "::warning::The trusted branch has no zizmor configuration yet; using the PR config for this bootstrap run."
+            echo "::warning::The trusted branch has no zizmor configuration yet; using same-repository configuration for this bootstrap run."
             echo "path=source/.github/zizmor.yml" >> "$GITHUB_OUTPUT"
           fi
       - name: zizmor

@@ -69,6 +69,57 @@ export const getComponentLabels = (
   return labels;
 };
 
+const pullRequestFilesPerPage = 100;
+const pullRequestFilesLimit = 3000;
+
+/**
+ * Get the number of GitHub API pages needed to inspect all changed files.
+ *
+ * @param changedFiles - The changed-file count reported by the pull request.
+ * @returns The number of pages at 100 files per page.
+ */
+export const getPullRequestFilePageCount = (changedFiles: number): number => {
+  if (changedFiles > pullRequestFilesLimit) {
+    throw new Error(
+      `Pull requests with more than ${pullRequestFilesLimit} changed files cannot be fully inspected by the GitHub API.`
+    );
+  }
+  return Math.ceil(changedFiles / pullRequestFilesPerPage);
+};
+
+/**
+ * Identify the release PR branch created by Changesets.
+ *
+ * @param headRef - The pull request head branch name.
+ * @returns Whether the branch uses Changesets' release PR prefix.
+ */
+export const isChangesetReleasePR = (headRef: string): boolean =>
+  headRef.startsWith("changeset-release/");
+
+/**
+ * Check whether a GitHub API validation response is specifically a duplicate label.
+ *
+ * @param status - The HTTP status returned by GitHub.
+ * @param responseBody - The response body returned by GitHub.
+ * @returns Whether the response identifies an existing label by name.
+ */
+export const isDuplicateLabelError = (
+  status: number,
+  responseBody: string
+): boolean => {
+  if (status !== 422) {
+    return false;
+  }
+  try {
+    const payload: { errors?: { code?: string }[] } = JSON.parse(responseBody);
+    return (
+      payload.errors?.some(({ code }) => code === "already_exists") ?? false
+    );
+  } catch {
+    return false;
+  }
+};
+
 interface ChangedFile {
   filename: string;
   additions: number;

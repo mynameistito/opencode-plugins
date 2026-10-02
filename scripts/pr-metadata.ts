@@ -1,8 +1,11 @@
 import {
   getComponentLabels,
   getMissingChangesets,
+  getPullRequestFilePageCount,
   getRequiredChangesets,
   getSizeLabel,
+  isChangesetReleasePR,
+  isDuplicateLabelError,
   packageLabels,
   parseChangesetEntries,
   reconcileLabels,
@@ -20,18 +23,35 @@ if (!owner || !repository || !token || !Number.isInteger(pullRequestNumber)) {
   );
 }
 
+class GitHubApiError extends Error {
+  override readonly name = "GitHubApiError";
+  readonly status: number;
+  readonly responseBody: string;
+
+  constructor(status: number, responseBody: string) {
+    super(`GitHub API ${status}: ${responseBody}`);
+    this.status = status;
+    this.responseBody = responseBody;
+  }
+}
+
 const api = async <T>(endpoint: string, init?: RequestInit): Promise<T> => {
   const response = await fetch(`https://api.github.com${endpoint}`, {
     ...init,
     headers: {
       Accept: "application/vnd.github+json",
       Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
       "X-GitHub-Api-Version": "2022-11-28",
       ...init?.headers,
     },
   });
   if (!response.ok) {
-    throw new Error(`GitHub API ${response.status}: ${await response.text()}`);
+    throw new GitHubApiError(response.status, await response.text());
+  }
+  if (response.status === 204) {
+    // SAFETY: The DELETE label endpoint returns no response body.
+    return undefined as T;
   }
   // SAFETY: Each caller pairs this response with the schema for the requested GitHub API endpoint.
   return (await response.json()) as T;
@@ -44,7 +64,11 @@ interface PullRequestFile {
 }
 
 interface PullRequest {
-  head: { sha: string; repo?: { full_name?: string } | null };
+  head: {
+    ref: string;
+    sha: string;
+    repo?: { full_name?: string } | null;
+  };
   labels: { name: string }[];
   changed_files: number;
 }
@@ -58,7 +82,7 @@ if (headSha && pullRequest.head.sha !== headSha) {
   );
   process.exit(0);
 }
-const pageCount = Math.ceil(Math.min(pullRequest.changed_files, 300) / 100);
+const pageCount = getPullRequestFilePageCount(pullRequest.changed_files);
 const filePages = await Promise.all(
   Array.from({ length: pageCount }, (_, index) =>
     api<PullRequestFile[]>(
@@ -151,22 +175,31 @@ const getLabelColor = (name: string): string => {
 };
 await Promise.all(
   [...ensureLabels].map(async (name) => {
+    const color = getLabelColor(name);
+    const description =
+      name === skipChangesetLabel
+        ? "Use only for justified changes that do not require a release."
+        : "Automatically managed pull request metadata";
     try {
       await api(labelsEndpoint, {
         body: JSON.stringify({
-          color: getLabelColor(name),
-          description:
-            name === skipChangesetLabel
-              ? "Use only for justified changes that do not require a release."
-              : "Automatically managed pull request metadata",
+          color,
+          description,
           name,
         }),
         method: "POST",
       });
     } catch (error) {
-      if (!String(error).includes("422")) {
+      if (
+        !(error instanceof GitHubApiError) ||
+        !isDuplicateLabelError(error.status, error.responseBody)
+      ) {
         throw error;
       }
+      await api(`${labelsEndpoint}/${encodeURIComponent(name)}`, {
+        body: JSON.stringify({ color, description, name }),
+        method: "PATCH",
+      });
     }
   })
 );
@@ -197,9 +230,10 @@ if (labelsToRemove.length > 0) {
 }
 
 const skipChangeset = currentLabels.includes(skipChangesetLabel);
-const requiredPackages = skipChangeset
-  ? new Set<string>()
-  : getRequiredChangesets(files.map(({ filename }) => filename));
+const requiredPackages =
+  skipChangeset || isChangesetReleasePR(pullRequest.head.ref)
+    ? new Set<string>()
+    : getRequiredChangesets(files.map(({ filename }) => filename));
 
 const missingPackages = getMissingChangesets(requiredPackages, changesetNames);
 if (missingPackages.length > 0) {
