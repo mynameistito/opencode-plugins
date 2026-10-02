@@ -1,5 +1,6 @@
 import { defineConfig } from "blume";
 import type { BlumeConfig } from "blume";
+import { filesystem, githubReleases } from "blume/sources";
 
 const reactGrab = {
   hooks: {
@@ -24,7 +25,16 @@ export default defineConfig({
       enabled: true,
     },
   },
-  content: { root: "docs" },
+  content: {
+    sources: [
+      filesystem({ root: "docs" }),
+      githubReleases({
+        owner: "mynameistito",
+        prefix: "changelog",
+        repo: "opencode-plugins",
+      }),
+    ],
+  },
   deployment: {
     site: "https://opencode-plugins.mynameistito.com",
   },
@@ -38,6 +48,9 @@ export default defineConfig({
   integrations: [reactGrab],
   lastModified: "git",
   logo: { href: "/", text: "mynameistito / plugins" },
+  navigation: {
+    tabs: [{ label: "Changelog", path: "/changelog" }],
+  },
   seo: {
     og: {
       enabled: true,
