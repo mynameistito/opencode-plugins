@@ -1,5 +1,11 @@
 # @mynameistito/opencode-plugins-docs
 
+## 0.0.9
+
+### Patch Changes
+
+- 6e8d483: Keep individual GitHub releases out of the sidebar and link to the changelog index.
+
 ## 0.0.8
 
 ### Patch Changes
