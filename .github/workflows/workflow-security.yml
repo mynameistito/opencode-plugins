@@ -31,7 +31,7 @@ jobs:
         with:
           version: 1.7.11
           cache: false
-          shellcheck: false
+          shellcheck: true
           pyflakes: false
 
   zizmor:
