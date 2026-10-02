@@ -27,7 +27,7 @@ export default Stack(
       },
       name:
         stage === "prod"
-          ? "opencode-plugins-docs"
+          ? "opencode-plugins-docs-prod"
           : `opencode-plugins-docs-${stage}`,
       outdir: "dist",
     });
