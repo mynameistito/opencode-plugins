@@ -48,6 +48,18 @@ export default defineConfig({
   integrations: [reactGrab],
   lastModified: "git",
   logo: { href: "/", text: "mynameistito / plugins" },
+  navigation: {
+    sidebar: [
+      "/",
+      "/force-input",
+      "/usage-limits",
+      "/development",
+      {
+        href: "https://opencode-plugins.mynameistito.com/changelog",
+        label: "Changelog",
+      },
+    ],
+  },
   seo: {
     og: {
       enabled: true,
