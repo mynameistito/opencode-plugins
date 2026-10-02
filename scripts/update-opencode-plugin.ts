@@ -1,15 +1,6 @@
 import { appendFile, readFile, writeFile } from "node:fs/promises";
 
-const serializedVersionPattern =
-  /^"\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?"$/u;
-
-const parseVersion = (serialized: string, source: string): string => {
-  if (!serializedVersionPattern.test(serialized)) {
-    throw new TypeError(`${source} did not contain a valid package version`);
-  }
-
-  return serialized.slice(1, -1);
-};
+import { isNewerSemVer, parseSerializedSemVer } from "./semver";
 
 const packageJsonPath = new URL("../package.json", import.meta.url);
 const packageJson: unknown = JSON.parse(
@@ -34,7 +25,7 @@ if (
   throw new TypeError("Root package.json must define a catalog object");
 }
 
-const currentVersion = parseVersion(
+const currentVersion = parseSerializedSemVer(
   JSON.stringify(catalog["@opencode/plugin"]) ?? "",
   "Root package catalog"
 );
@@ -59,15 +50,15 @@ if (
   throw new TypeError("npm registry response must contain package metadata");
 }
 
-const latestVersion = parseVersion(
+const latestVersion = parseSerializedSemVer(
   JSON.stringify(metadata.version) ?? "",
   "npm registry response"
 );
 
-const changed = currentVersion !== latestVersion;
+const changed = isNewerSemVer(latestVersion.value, currentVersion.value);
 
 if (changed) {
-  Reflect.set(catalog, "@opencode/plugin", latestVersion);
+  Reflect.set(catalog, "@opencode/plugin", latestVersion.value);
   await writeFile(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`);
 }
 
@@ -76,12 +67,12 @@ const outputPath = process.env.GITHUB_OUTPUT;
 if (outputPath) {
   await appendFile(
     outputPath,
-    `changed=${changed}\nversion=${latestVersion}\n`
+    `changed=${changed}\nversion=${latestVersion.value}\n`
   );
 }
 
 console.log(
   changed
-    ? `Updated @opencode/plugin from ${currentVersion} to ${latestVersion}`
-    : `@opencode/plugin is already current at ${currentVersion}`
+    ? `Updated @opencode/plugin from ${currentVersion.value} to ${latestVersion.value}`
+    : `@opencode/plugin is already current at ${currentVersion.value}`
 );

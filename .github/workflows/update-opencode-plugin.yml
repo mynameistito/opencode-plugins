@@ -19,6 +19,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: main
+          persist-credentials: false
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
@@ -26,15 +27,20 @@ jobs:
           bun-version: 1.4.2
 
       - name: Prepare update branch
+        id: branch
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          if git ls-remote --exit-code --heads origin update-opencode-plugin; then
+          set -euo pipefail
+          gh auth setup-git
+          branch_sha=$(git ls-remote --heads origin refs/heads/update-opencode-plugin | cut -f1)
+          if [ -n "$branch_sha" ]; then
             git fetch origin update-opencode-plugin
-            git checkout -B update-opencode-plugin origin/update-opencode-plugin
-          else
-            git checkout -b update-opencode-plugin
           fi
+          git checkout -B update-opencode-plugin main
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          echo "branch_sha=$branch_sha" >> "$GITHUB_OUTPUT"
 
       - name: Check npm for the latest version
         id: latest
@@ -55,11 +61,18 @@ jobs:
       - name: Commit and push update
         if: steps.latest.outputs.changed == 'true'
         env:
+          BRANCH_SHA: ${{ steps.branch.outputs.branch_sha }}
+          GH_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.latest.outputs.version }}
         run: |
+          gh auth setup-git
           git add package.json bun.lock .changeset
           git commit -m "chore(deps): update @opencode/plugin to $VERSION"
-          git push --set-upstream origin update-opencode-plugin
+          if [ -n "$BRANCH_SHA" ]; then
+            git push --force-with-lease="refs/heads/update-opencode-plugin:$BRANCH_SHA" origin update-opencode-plugin
+          else
+            git push --set-upstream origin update-opencode-plugin
+          fi
 
       - name: Open or update pull request
         if: steps.latest.outputs.changed == 'true'
