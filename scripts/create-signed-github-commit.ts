@@ -1,6 +1,8 @@
 import { readFile, readdir } from "node:fs/promises";
 
 interface ApiResponse {
+  data?: unknown;
+  errors?: unknown;
   message?: string;
   node_id?: string;
   sha?: string;
@@ -27,32 +29,17 @@ interface CreateCommitRequest {
 
 type ApiRequestBody = CreateTreeRequest | CreateCommitRequest;
 
-interface GraphQLResponse {
-  data?: { updateRefs?: { clientMutationId: string | null } };
-  errors?: unknown;
-}
-
 const isApiResponse = (value: unknown): value is ApiResponse =>
   value instanceof Object && !Array.isArray(value);
 
-const isGraphQLResponse = (value: unknown): value is GraphQLResponse => {
-  if (!(value instanceof Object) || Array.isArray(value)) {
+const hasUpdateRefs = (response: ApiResponse | undefined): boolean => {
+  const { data } = response ?? {};
+
+  if (!(data instanceof Object) || Array.isArray(data)) {
     return false;
   }
 
-  if (
-    !("data" in value) ||
-    !(value.data instanceof Object) ||
-    Array.isArray(value.data) ||
-    !("updateRefs" in value.data)
-  ) {
-    return false;
-  }
-
-  return !(
-    "errors" in value &&
-    (!Array.isArray(value.errors) || value.errors.length > 0)
-  );
+  return "updateRefs" in data && Boolean(data.updateRefs);
 };
 
 const token = process.env.GH_TOKEN;
@@ -197,7 +184,7 @@ const refUpdateResponse = await fetch("https://api.github.com/graphql", {
 });
 const refUpdateResult: unknown = await refUpdateResponse.json();
 
-const graphQLResult = isGraphQLResponse(refUpdateResult)
+const graphQLResult = isApiResponse(refUpdateResult)
   ? refUpdateResult
   : undefined;
 const hasGraphQLErrors = Array.isArray(graphQLResult?.errors)
@@ -207,7 +194,7 @@ const hasGraphQLErrors = Array.isArray(graphQLResult?.errors)
 if (
   !refUpdateResponse.ok ||
   hasGraphQLErrors ||
-  !graphQLResult?.data?.updateRefs
+  !hasUpdateRefs(graphQLResult)
 ) {
   throw new Error(
     `GitHub API failed to update the update branch: ${JSON.stringify(graphQLResult?.errors ?? refUpdateResponse.statusText)}`
