@@ -27,7 +27,7 @@
     },
     "apps/web": {
       "name": "@mynameistito/opencode-plugins-docs",
-      "version": "0.0.7",
+      "version": "0.0.8",
       "dependencies": {
         "@effect/platform-bun": "catalog:",
         "@effect/platform-node": "catalog:",
@@ -36,15 +36,15 @@
       "devDependencies": {
         "@types/node": "catalog:",
         "@typescript/native": "catalog:",
-        "alchemy": "2.0.0-beta.79",
-        "blume": "2.0.3",
-        "react-grab": "^0.2.0",
+        "alchemy": "catalog:",
+        "blume": "catalog:",
+        "react-grab": "catalog:",
         "typescript": "catalog:",
       },
     },
     "packages/opencode-force-input": {
       "name": "@mynameistito/opencode-force-input",
-      "version": "1.1.8",
+      "version": "1.1.9",
       "dependencies": {
         "@opencode/plugin": "catalog:",
       },
@@ -62,7 +62,7 @@
     },
     "packages/opencode-usage-limits": {
       "name": "@mynameistito/opencode-usage-limits",
-      "version": "1.2.0",
+      "version": "1.2.1",
       "dependencies": {
         "@opencode/plugin": "catalog:",
         "effect": "catalog:",
@@ -145,7 +145,10 @@
     "@opentui/solid": "0.5.12",
     "@types/node": "26.6.3",
     "@typescript/native": "npm:typescript@^7.0.2",
+    "alchemy": "2.0.0-beta.79",
+    "blume": "2.0.3",
     "effect": "4.0.0-rc.115",
+    "react-grab": "^0.2.0",
     "solid-js": "1.9.12",
     "typescript": "npm:@typescript/typescript6@^6.0.2",
   },
