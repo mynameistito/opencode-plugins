@@ -9,6 +9,13 @@ describe("package tarball paths", () => {
     expect(isUnexpectedPackagePath("scripts/test-package.ts")).toBeTruthy();
   });
 
+  it("rejects root-level test and build directories", () => {
+    expect(isUnexpectedPackagePath("test/fixtures/sample.ts")).toBeTruthy();
+    expect(isUnexpectedPackagePath("tests/fixtures/sample.ts")).toBeTruthy();
+    expect(isUnexpectedPackagePath("spec/plugin.spec.ts")).toBeTruthy();
+    expect(isUnexpectedPackagePath("build/output.js")).toBeTruthy();
+  });
+
   it("rejects root-level test and build scripts", () => {
     expect(isUnexpectedPackagePath("test-package.ts")).toBeTruthy();
     expect(isUnexpectedPackagePath("build.ts")).toBeTruthy();

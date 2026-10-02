@@ -18,5 +18,6 @@ const isUnexpectedRootFile = (filePath: string): boolean => {
  * @returns Whether the path belongs to an excluded source directory or is a root-level test/script file.
  */
 export const isUnexpectedPackagePath = (filePath: string): boolean =>
-  /^(?:src|__tests__|scripts|coverage|node_modules)\//u.test(filePath) ||
-  isUnexpectedRootFile(filePath);
+  /^(?:src|__tests__|scripts|coverage|node_modules|test|tests|spec|build)\//u.test(
+    filePath
+  ) || isUnexpectedRootFile(filePath);
