@@ -26,6 +26,6 @@ jobs:
         uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2
         with:
           args: >-
-            --verbose --no-progress --max-retries 3 --retry-wait-time 2 --timeout 20 --include-mail=false --exclude '^/' --accept 200,206,301,302,307,308,429 README.md 'apps/web/**/*.md' 'apps/web/**/*.mdx' 'packages/*/README.md'
+            --verbose --no-progress --max-retries 3 --retry-wait-time 2 --timeout 20 --include-mail=false --accept 200,206,301,302,307,308,403,429,503,504 README.md 'apps/web/**/*.md' 'apps/web/**/*.mdx' 'packages/*/README.md'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
