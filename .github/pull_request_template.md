@@ -31,4 +31,5 @@
 ## Release
 
 - [ ] A root Changeset is included when the change affects a published package.
+- [ ] If a package change intentionally needs no release, the `skip-changeset` label is applied with maintainer agreement.
 - [ ] No package-specific release workflow or prerelease metadata was added.

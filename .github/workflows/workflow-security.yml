@@ -1,0 +1,75 @@
+name: Workflow security
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/**
+      - .github/actions/**
+      - .github/dependabot.yml
+      - .github/zizmor.yml
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/**
+      - .github/actions/**
+      - .github/dependabot.yml
+      - .github/zizmor.yml
+
+permissions:
+  contents: read
+
+jobs:
+  actionlint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: actionlint
+        uses: raven-actions/actionlint@3d39aea434753780c3b3d4a1a31c854b4dbf49d7 # v2
+        with:
+          version: 1.7.11
+          cache: false
+          shellcheck: true
+          pyflakes: false
+
+  zizmor:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout trusted security configuration
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          path: trusted
+          persist-credentials: false
+      - name: Checkout workflow changes for analysis
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          path: source
+          persist-credentials: false
+      - name: Select trusted zizmor configuration
+        id: zizmor-config
+        shell: bash
+        env:
+          IS_FORK_PR: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
+        run: |
+          if [[ -f trusted/.github/zizmor.yml ]]; then
+            echo "path=trusted/.github/zizmor.yml" >> "$GITHUB_OUTPUT"
+          elif [[ "$IS_FORK_PR" == "true" ]]; then
+            echo "::error::The trusted default branch has no zizmor configuration; refusing to use fork-provided configuration."
+            exit 1
+          else
+            echo "::warning::The trusted branch has no zizmor configuration yet; using same-repository configuration for this bootstrap run."
+            echo "path=source/.github/zizmor.yml" >> "$GITHUB_OUTPUT"
+          fi
+      - name: zizmor
+        uses: zizmorcore/zizmor-action@cc914d7f3750a2d13d75c7f184a1060aa0e9d482 # v0.6.4
+        with:
+          advanced-security: false
+          annotations: true
+          config: ${{ steps.zizmor-config.outputs.path }}
+          inputs: source/.github
+          version: 1.30.1
