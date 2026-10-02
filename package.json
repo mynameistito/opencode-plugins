@@ -16,7 +16,7 @@
     "release:tag": "bun scripts/git-tag.ts",
     "release:stage": "bun scripts/stage-packages.ts",
     "version-pr-title": "bun scripts/version-pr-title.ts",
-    "test": "bun run scripts/run-workspaces.ts test",
+    "test": "bun run scripts/run-workspaces.ts test && bun node_modules/vitest/vitest.mjs run scripts/__tests__",
     "test:package": "bun run scripts/run-workspaces.ts test:package",
     "typecheck": "tsc --noEmit && bun run --filter '*' typecheck",
     "changeset": "changeset",
