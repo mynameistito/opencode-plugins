@@ -4,7 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { Redacted, Result } from "effect";
-import { afterEach, describe, expect, test, vi } from "vitest";
+import { afterEach, describe, expect, vi, it } from "vitest";
 
 import {
   credentialValue,
@@ -80,7 +80,7 @@ const publishedSchema: PublishedSchema = JSON.parse(
 );
 
 describe("configuration parsing", () => {
-  test("published schema matches provider-specific runtime fields", () => {
+  it("published schema matches provider-specific runtime fields", () => {
     const commonFields = Object.keys(
       publishedSchema.$defs.commonDisplayFields.properties
     ).toSorted();
@@ -147,7 +147,7 @@ describe("configuration parsing", () => {
     }
   });
 
-  test("defaults only omitted top-level fields and accepts $schema", () => {
+  it("defaults only omitted top-level fields and accepts $schema", () => {
     const result = parseUsageLimitsConfig({
       $schema: "https://example.com/usage-limits.schema.json",
       providers: {},
@@ -167,7 +167,7 @@ describe("configuration parsing", () => {
     });
   });
 
-  test("parses every provider field and redacts API keys", () => {
+  it("parses every provider field and redacts API keys", () => {
     const result = parseUsageLimitsConfig({
       providers: {
         codex: {
@@ -220,7 +220,7 @@ describe("configuration parsing", () => {
     });
   });
 
-  test.each([
+  it.each([
     [{ enabled: "yes" }, "wrong boolean type"],
     [{ refreshIntervalSeconds: 14 }, "refresh minimum"],
     [{ refreshIntervalSeconds: Number.NaN }, "finite refresh"],
@@ -239,7 +239,7 @@ describe("configuration parsing", () => {
     expect(failure).toBeInstanceOf(ConfigDecodeError);
   });
 
-  test("redacts malformed credential values from diagnostics", () => {
+  it("redacts malformed credential values from diagnostics", () => {
     const credential = { secret: "never-render-this" };
     const result = parseUsageLimitsConfig({
       providers: { synthetic: { apiKey: credential } },
@@ -256,7 +256,7 @@ describe("configuration loading", () => {
     readJsonFile.mockReset();
   });
 
-  test.each([
+  it.each([
     ["unset", undefined],
     ["empty", ""],
     ["relative", "config/opencode"],
@@ -266,7 +266,7 @@ describe("configuration loading", () => {
     expect(resolveXdgPath(value, fallback)).toBe(fallback);
   });
 
-  test("accepts an absolute XDG path", () => {
+  it("accepts an absolute XDG path", () => {
     const absolute = path.join(homedir(), ".xdg");
 
     expect(resolveXdgPath(absolute, path.join(homedir(), ".fallback"))).toBe(
@@ -274,7 +274,7 @@ describe("configuration loading", () => {
     );
   });
 
-  test("resolves platform-specific default OpenCode auth locations", () => {
+  it("resolves platform-specific default OpenCode auth locations", () => {
     const home = path.join(path.sep, "users", "test");
 
     expect(
@@ -292,7 +292,7 @@ describe("configuration loading", () => {
     );
   });
 
-  test("returns defaults when no user config exists", async () => {
+  it("returns defaults when no user config exists", async () => {
     readJsonFile.mockRejectedValueOnce(
       Object.assign(new Error("missing"), { code: "ENOENT" })
     );
@@ -306,7 +306,7 @@ describe("configuration loading", () => {
     );
   });
 
-  test("returns typed read and JSONC decode failures", async () => {
+  it("returns typed read and JSONC decode failures", async () => {
     readJsonFile.mockRejectedValueOnce(new Error("permission denied"));
     const readResult = await loadConfig(readJsonFile);
     const readFailure = Result.isFailure(readResult)
@@ -324,7 +324,7 @@ describe("configuration loading", () => {
     expect(decodeFailure).toBeInstanceOf(ConfigDecodeError);
   });
 
-  test("classifies non-Error loader failures as read errors", async () => {
+  it("classifies non-Error loader failures as read errors", async () => {
     readJsonFile.mockRejectedValueOnce("unexpected config failure");
     const result = await loadConfig(readJsonFile);
     expect(Result.isFailure(result)).toBeTruthy();
@@ -333,7 +333,7 @@ describe("configuration loading", () => {
     ).toBeInstanceOf(ConfigReadError);
   });
 
-  test("loads recognized auth fields as redacted values", async () => {
+  it("loads recognized auth fields as redacted values", async () => {
     readJsonFile.mockResolvedValueOnce({
       ignored: { value: true },
       openai: { access: "token", accountId: "account" },
@@ -348,7 +348,7 @@ describe("configuration loading", () => {
     );
   });
 
-  test("treats absent or malformed auth as empty", async () => {
+  it("treats absent or malformed auth as empty", async () => {
     readJsonFile.mockRejectedValueOnce(new Error("missing"));
     await expect(loadOpenCodeAuth(readJsonFile)).resolves.toMatchObject({
       auth: {},
@@ -356,7 +356,7 @@ describe("configuration loading", () => {
     });
   });
 
-  test.each([
+  it.each([
     [null, "OpenCode auth has an unsupported format"],
     [[], "OpenCode auth has an unsupported format"],
     [{ minimax: null }, "Some OpenCode auth fields could not be read"],
@@ -373,7 +373,7 @@ describe("configuration loading", () => {
     }
   );
 
-  test("classifies auth parse and filesystem read errors separately", async () => {
+  it("classifies auth parse and filesystem read errors separately", async () => {
     readJsonFile.mockRejectedValueOnce(new SyntaxError("malformed"));
     await expect(loadOpenCodeAuth(readJsonFile)).resolves.toMatchObject({
       auth: {},
@@ -402,7 +402,7 @@ describe("configuration loading", () => {
     });
   });
 
-  test("classifies absent and malformed auth without exposing values", async () => {
+  it("classifies absent and malformed auth without exposing values", async () => {
     readJsonFile.mockRejectedValueOnce(
       Object.assign(new Error("missing"), { code: "ENOENT" })
     );
@@ -424,7 +424,7 @@ describe("configuration loading", () => {
     expect(parseOpenCodeAuth({ openai: { access: 42 } })).toStrictEqual({});
   });
 
-  test.each(["key", "apiKey"] as const)(
+  it.each(["key", "apiKey"] as const)(
     "reports malformed direct auth field %s",
     async (field) => {
       readJsonFile.mockResolvedValueOnce({
@@ -442,7 +442,7 @@ describe("configuration loading", () => {
     }
   );
 
-  test("keeps direct legacy auth credentials", () => {
+  it("keeps direct legacy auth credentials", () => {
     const auth = parseOpenCodeAuth({
       apiKey: "direct-api-key",
       key: "direct-key",
@@ -452,7 +452,7 @@ describe("configuration loading", () => {
     expect(credentialValue(auth.key)).toBe("direct-key");
   });
 
-  test("keeps valid auth entries when another recognized entry is malformed", () => {
+  it("keeps valid auth entries when another recognized entry is malformed", () => {
     const auth = parseOpenCodeAuth({
       minimax: { key: "valid-minimax" },
       openai: { access: "valid-openai", accountId: "valid-account" },
@@ -466,7 +466,7 @@ describe("configuration loading", () => {
     expect(auth.synthetic).toBeUndefined();
   });
 
-  test("keeps valid credential fields beside malformed sibling fields", () => {
+  it("keeps valid credential fields beside malformed sibling fields", () => {
     const auth = parseOpenCodeAuth({
       minimax: { apiKey: 42, ignored: "value", key: "valid-key" },
       openai: {
@@ -482,7 +482,7 @@ describe("configuration loading", () => {
     expect(auth.openai?.accountId).toBeUndefined();
   });
 
-  test("parses every recognized auth entry and ignores non-object input", () => {
+  it("parses every recognized auth entry and ignores non-object input", () => {
     const auth = parseOpenCodeAuth({
       commandcode: { key: "commandcode" },
       minimax: { key: "minimax" },
@@ -522,7 +522,7 @@ describe("configuration loading", () => {
     expect(parseOpenCodeAuth(null)).toStrictEqual({});
   });
 
-  test("rejects invalid and blank credentials at the adapter boundary", () => {
+  it("rejects invalid and blank credentials at the adapter boundary", () => {
     expect(credentialValue(null)).toBeUndefined();
     expect(credentialValue(42)).toBeUndefined();
     expect(credentialValue("  \t ")).toBeUndefined();

@@ -2,7 +2,7 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { homedir, tmpdir } from "node:os";
 import path from "node:path";
 
-import { describe, expect, test } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import {
   clampPercent,
@@ -12,7 +12,7 @@ import {
 } from "@/utils.ts";
 
 describe("utility helpers", () => {
-  test.each([
+  it.each([
     [-1, 0],
     [0, 0],
     [42.5, 42.5],
@@ -23,7 +23,7 @@ describe("utility helpers", () => {
     expect(clampPercent(input)).toBe(expected);
   });
 
-  test("detects plain records", () => {
+  it("detects plain records", () => {
     expect(isRecord({})).toBeTruthy();
     expect(isRecord({ nested: true })).toBeTruthy();
     expect(isRecord([])).toBeFalsy();
@@ -31,18 +31,18 @@ describe("utility helpers", () => {
     expect(isRecord("object")).toBeFalsy();
   });
 
-  test("rejects parsed non-finite numbers", () => {
+  it("rejects parsed non-finite numbers", () => {
     expect(() => parseJsonValue("1e400")).toThrow(SyntaxError);
   });
 
-  test("parses null and escaped JSON string values", () => {
+  it("parses null and escaped JSON string values", () => {
     expect(parseJsonValue("null")).toBeNull();
     expect(parseJsonValue(String.raw`"quote: \" and slash: \\"`)).toBe(
       'quote: " and slash: \\'
     );
   });
 
-  test("reads JSONC with line comments, block comments, quoted slashes, and trailing commas", async () => {
+  it("reads JSONC with line comments, block comments, quoted slashes, and trailing commas", async () => {
     const directory = await mkdtemp(path.join(tmpdir(), "oc-usage-limits-"));
     const filePath = path.join(directory, "config.jsonc");
 
@@ -77,7 +77,7 @@ describe("utility helpers", () => {
     }
   });
 
-  test("reads BOM-prefixed JSONC", async () => {
+  it("reads BOM-prefixed JSONC", async () => {
     const directory = await mkdtemp(path.join(tmpdir(), "oc-usage-limits-"));
     const filePath = path.join(directory, "config.jsonc");
 
@@ -96,11 +96,11 @@ describe("utility helpers", () => {
     }
   });
 
-  test("expands the bare home prefix to the home directory", async () => {
+  it("expands the bare home prefix to the home directory", async () => {
     await expect(readJsonFile("~")).rejects.toMatchObject({ code: "EISDIR" });
   });
 
-  test.each(["~/no-usage-limits-file.json", "~\\no-usage-limits-file.json"])(
+  it.each(["~/no-usage-limits-file.json", "~\\no-usage-limits-file.json"])(
     "expands the home prefix in %s paths",
     async (filePath) => {
       await expect(readJsonFile(filePath)).rejects.toMatchObject({
@@ -109,7 +109,7 @@ describe("utility helpers", () => {
     }
   );
 
-  test.each([
+  it.each([
     ['{"value":"unterminated}', "unterminated string"],
     ['{"value":1} /* unterminated', "unterminated block comment"],
   ])("rejects malformed JSONC with an %s", async (input) => {

@@ -2,7 +2,7 @@ import { rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { afterEach, describe, expect, test } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
 import { fetchSyntheticUsage } from "@/providers/synthetic.ts";
 import type { OpenCodeAuth } from "@/types.ts";
@@ -28,7 +28,7 @@ describe("Synthetic provider", () => {
     Date.now() + 3 * 24 * 60 * 60 * 1000
   ).toISOString();
 
-  test.each([
+  it.each([
     ["valid", JSON.stringify({ synthetic: { key: "file-key" } }), "file-key"],
     ["missing", undefined, "auth-key"],
     ["malformed", "{", "auth-key"],
@@ -62,7 +62,7 @@ describe("Synthetic provider", () => {
     }
   );
 
-  test("parses v3 rolling and weekly windows and sends a bearer header", async () => {
+  it("parses v3 rolling and weekly windows and sends a bearer header", async () => {
     const fetchMock = installFetchMock(
       Response.json({
         rollingFiveHourLimit: {
@@ -138,7 +138,7 @@ describe("Synthetic provider", () => {
     );
   });
 
-  test("accepts apiKey under the synthetic block in OpenCode auth", async () => {
+  it("accepts apiKey under the synthetic block in OpenCode auth", async () => {
     const fetchMock = installFetchMock(
       Response.json({ subscription: { limit: 1, requests: 0 } })
     );
@@ -156,7 +156,7 @@ describe("Synthetic provider", () => {
     expect(usage.windows).toHaveLength(1);
   });
 
-  test.each(authCases)(
+  it.each(authCases)(
     "accepts %s OpenCode auth",
     async (_name, openCodeAuth, expectedKey) => {
       const fetchMock = installFetchMock(
@@ -171,7 +171,7 @@ describe("Synthetic provider", () => {
     }
   );
 
-  test("falls back to the legacy subscription bucket when v3 fields are missing", async () => {
+  it("falls back to the legacy subscription bucket when v3 fields are missing", async () => {
     const renewsAt = new Date(Date.now() + 45 * 60 * 1000).toISOString();
     installFetchMock(
       Response.json({
@@ -198,7 +198,7 @@ describe("Synthetic provider", () => {
     expect(usage.windows[0]?.resetsAt?.toISOString()).toBe(renewsAt);
   });
 
-  test("prefers the v3 rollingFiveHourLimit over the legacy subscription bucket", async () => {
+  it("prefers the v3 rollingFiveHourLimit over the legacy subscription bucket", async () => {
     const renewsAt = new Date(Date.now() + 45 * 60 * 1000).toISOString();
     installFetchMock(
       Response.json({
@@ -240,7 +240,7 @@ describe("Synthetic provider", () => {
     });
   });
 
-  test("tolerates the legacy toolCallDiscounts alias and emits v3 windows", async () => {
+  it("tolerates the legacy toolCallDiscounts alias and emits v3 windows", async () => {
     installFetchMock(
       Response.json({
         rollingFiveHourLimit: {
@@ -275,7 +275,7 @@ describe("Synthetic provider", () => {
     });
   });
 
-  test("resolves environment references when no other credential is available", async () => {
+  it("resolves environment references when no other credential is available", async () => {
     process.env.OC_USAGE_LIMITS_SYNTHETIC_KEY = "env-syn-key";
     const fetchMock = installFetchMock(
       Response.json({
@@ -301,7 +301,7 @@ describe("Synthetic provider", () => {
     expect(usage.windows).toHaveLength(1);
   });
 
-  test("rejects missing keys and malformed responses", async () => {
+  it("rejects missing keys and malformed responses", async () => {
     await expect(fetchSyntheticUsage(undefined, {}, 1000)).rejects.toThrow(
       "missing Synthetic key"
     );
@@ -317,7 +317,7 @@ describe("Synthetic provider", () => {
     ).rejects.toThrow("invalid Synthetic usage");
   });
 
-  test("ignores non-object quota buckets and malformed optional fields", async () => {
+  it("ignores non-object quota buckets and malformed optional fields", async () => {
     installFetchMock(
       Response.json({
         rollingFiveHourLimit: [],
@@ -345,7 +345,7 @@ describe("Synthetic provider", () => {
     ).rejects.toThrow("invalid Synthetic usage");
   });
 
-  test("uses percentage quotas for fractional rolling counts", async () => {
+  it("uses percentage quotas for fractional rolling counts", async () => {
     installFetchMock(
       Response.json({ rollingFiveHourLimit: { max: 2, remaining: 0.5 } })
     );
@@ -358,7 +358,7 @@ describe("Synthetic provider", () => {
     });
   });
 
-  test.each([
+  it.each([
     { max: Number.POSITIVE_INFINITY, remaining: 10 },
     { max: 100, remaining: Number.NaN },
     { max: 100, remaining: -1 },
@@ -370,7 +370,7 @@ describe("Synthetic provider", () => {
     ).rejects.toThrow("invalid Synthetic usage");
   });
 
-  test("omits an invalid weekly limit while retaining the rolling window", async () => {
+  it("omits an invalid weekly limit while retaining the rolling window", async () => {
     installFetchMock(
       Response.json({
         rollingFiveHourLimit: { max: 100, remaining: 50 },
@@ -384,7 +384,7 @@ describe("Synthetic provider", () => {
     expect(usage.windows[0]).toMatchObject({ label: "5h" });
   });
 
-  test("rejects invalid legacy subscription limits", async () => {
+  it("rejects invalid legacy subscription limits", async () => {
     installFetchMock(
       Response.json({ subscription: { limit: 10, requests: 11 } })
     );
@@ -395,7 +395,7 @@ describe("Synthetic provider", () => {
   });
 
   describe("window variants", () => {
-    test("v3 rollingFiveHourLimit only (no weeklyTokenLimit)", async () => {
+    it("v3 rollingFiveHourLimit only (no weeklyTokenLimit)", async () => {
       installFetchMock(
         Response.json({
           rollingFiveHourLimit: {
@@ -417,7 +417,7 @@ describe("Synthetic provider", () => {
       });
     });
 
-    test("v3 with weeklyTokenLimit", async () => {
+    it("v3 with weeklyTokenLimit", async () => {
       installFetchMock(
         Response.json({
           rollingFiveHourLimit: {
@@ -447,7 +447,7 @@ describe("Synthetic provider", () => {
       });
     });
 
-    test("Legacy subscription only (no v3 fields)", async () => {
+    it("Legacy subscription only (no v3 fields)", async () => {
       const renewsAt = new Date(Date.now() + 45 * 60 * 1000).toISOString();
       installFetchMock(
         Response.json({
@@ -468,7 +468,7 @@ describe("Synthetic provider", () => {
       });
     });
 
-    test("v3 + legacy both present (v3 takes precedence)", async () => {
+    it("v3 + legacy both present (v3 takes precedence)", async () => {
       const renewsAt = new Date(Date.now() + 45 * 60 * 1000).toISOString();
       installFetchMock(
         Response.json({
@@ -506,7 +506,7 @@ describe("Synthetic provider", () => {
       expect(usage.windows[0]?.resetsAt?.toISOString()).toBe(nextTickAt);
     });
 
-    test("Zero remaining (remaining=0)", async () => {
+    it("Zero remaining (remaining=0)", async () => {
       installFetchMock(
         Response.json({
           rollingFiveHourLimit: {
@@ -533,7 +533,7 @@ describe("Synthetic provider", () => {
       });
     });
 
-    test("current/total population (v3 path)", async () => {
+    it("current/total population (v3 path)", async () => {
       installFetchMock(
         Response.json({
           rollingFiveHourLimit: {
@@ -560,7 +560,7 @@ describe("Synthetic provider", () => {
       });
     });
 
-    test("keeps fractional counts as accurate percentage-only usage", async () => {
+    it("keeps fractional counts as accurate percentage-only usage", async () => {
       installFetchMock(
         Response.json({
           rollingFiveHourLimit: {

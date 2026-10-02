@@ -1,7 +1,7 @@
 import type { KeymapLayer, SlotClaim } from "@opencode/plugin/tui/context";
 import { RGBA } from "@opentui/core";
 import { testRender } from "@opentui/solid";
-import { describe, expect, test } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { forceSubmit, registerForceSubmitLayer, setup } from "../src/index";
 import type { ForceSubmitContext } from "../src/index";
@@ -15,7 +15,7 @@ const theme = {
 } as const;
 
 describe("force submit", () => {
-  test("interrupts three times before submitting", () => {
+  it("interrupts three times before submitting", () => {
     const commands: string[] = [];
 
     forceSubmit((command) => commands.push(command));
@@ -28,7 +28,7 @@ describe("force submit", () => {
     ]);
   });
 
-  test("registers both terminal Ctrl+Enter bindings", () => {
+  it("registers both terminal Ctrl+Enter bindings", () => {
     const layers: (() => KeymapLayer)[] = [];
     const keymap = {
       dispatch: () => {},
@@ -52,7 +52,7 @@ describe("force submit", () => {
     ]);
   });
 
-  test("mounts a layer for each prompt footer render and dispatches force-submit", async () => {
+  it("mounts a layer for each prompt footer render and dispatches force-submit", async () => {
     const claims: SlotClaim[] = [];
     const layers: (() => KeymapLayer)[] = [];
     const dispatched: string[] = [];

@@ -3,7 +3,7 @@ import type { TestRendererSetup } from "@opentui/core/testing";
 import { testRender } from "@opentui/solid";
 import { createSignal } from "solid-js";
 /* @jsxImportSource @opentui/solid */
-import { afterEach, describe, expect, test } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
 import { ForceHint } from "../src/force-hint.tsx";
 import { hintEnabled, resolveHintColors } from "../src/hint.ts";
@@ -114,13 +114,13 @@ const idleInfoAfterExecutionEvent = async (
 };
 
 describe("hint options and colors", () => {
-  test("defaults on and can be disabled", () => {
+  it("defaults on and can be disabled", () => {
     expect(hintEnabled({})).toBeTruthy();
     expect(hintEnabled({ hint: true })).toBeTruthy();
     expect(hintEnabled({ hint: false })).toBeFalsy();
   });
 
-  test("resolves structured and legacy theme colors", () => {
+  it("resolves structured and legacy theme colors", () => {
     const structured = resolveHintColors(v2Theme);
     expect(structured.key).toBe(v2Theme.text.default);
     expect(structured.label).toBe(v2Theme.text.subdued);
@@ -158,7 +158,7 @@ describe("hint rendering", () => {
     }
   });
 
-  test("shows the idle send hint on the composer info row", async () => {
+  it("shows the idle send hint on the composer info row", async () => {
     const { setup } = await mountHint({});
     mounted.push(setup);
     const frame = setup.captureCharFrame();
@@ -166,7 +166,7 @@ describe("hint rendering", () => {
     expect(frame).not.toContain("steer");
   });
 
-  test("shows the steer hint while an execution is running", async () => {
+  it("shows the steer hint while an execution is running", async () => {
     const { fire, setup } = await mountHint({});
     mounted.push(setup);
 
@@ -178,7 +178,7 @@ describe("hint rendering", () => {
     expect(setup.captureCharFrame()).not.toContain("⏎ send");
   });
 
-  test("keeps the steer hint during retries and returns to idle after success", async () => {
+  it("keeps the steer hint during retries and returns to idle after success", async () => {
     const { fire, setup } = await mountHint({});
     mounted.push(setup);
 
@@ -195,7 +195,7 @@ describe("hint rendering", () => {
     expect(setup.captureCharFrame()).not.toContain("steer");
   });
 
-  test("returns to idle after failed and interrupted runs", async () => {
+  it("returns to idle after failed and interrupted runs", async () => {
     const failed = await idleInfoAfterExecutionEvent(
       "session.execution.failed"
     );
@@ -206,7 +206,7 @@ describe("hint rendering", () => {
     expect(interrupted).toContain("⏎ send");
   });
 
-  test("hides in shell mode, without a session, and when disabled", async () => {
+  it("hides in shell mode, without a session, and when disabled", async () => {
     const shell = await mountHint({ mode: "shell" });
     mounted.push(shell.setup);
     expect(shell.setup.captureCharFrame()).not.toContain("send");

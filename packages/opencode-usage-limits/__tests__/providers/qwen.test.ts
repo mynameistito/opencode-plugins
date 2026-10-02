@@ -1,5 +1,5 @@
 import { Clock, Effect, Exit, Layer } from "effect";
-import { describe, expect, test } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { ProviderCommandError, ProviderTimeoutError } from "@/errors.ts";
 import { qwenProvider } from "@/providers/qwen.ts";
@@ -80,7 +80,7 @@ const expectFailure = <ErrorTag extends string>(
 };
 
 describe("Qwen provider", () => {
-  test("fetches authenticated usage through the runtime services", async () => {
+  it("fetches authenticated usage through the runtime services", async () => {
     const { calls, runtime } = createRuntime(
       authenticated,
       JSON.stringify({
@@ -133,7 +133,7 @@ describe("Qwen provider", () => {
     );
   });
 
-  test("accepts exit code 2 auth JSON and reports missing credentials", async () => {
+  it("accepts exit code 2 auth JSON and reports missing credentials", async () => {
     const { calls, runtime } = createRuntime(
       JSON.stringify({ authenticated: false })
     );
@@ -146,7 +146,7 @@ describe("Qwen provider", () => {
     expect(serialized).toContain('"providerID":"qwen"');
   });
 
-  test.each([
+  it.each([
     ["auth", "{", "decode"],
     ["usage", authenticated, "decode"],
     ["auth", "[]", "decode"],
@@ -164,7 +164,7 @@ describe("Qwen provider", () => {
     }
   );
 
-  test("classifies a missing subscription as a safe schema error", async () => {
+  it("classifies a missing subscription as a safe schema error", async () => {
     const { runtime } = createRuntime(
       authenticated,
       JSON.stringify({ token_plan: { subscribed: false } })
@@ -176,7 +176,7 @@ describe("Qwen provider", () => {
     expect(serialized).toContain('"cause":"schema"');
   });
 
-  test.each([
+  it.each([
     ["unwrapped payload", "[]", "decode"],
     ["missing token plan", "{}", "schema"],
     [
@@ -194,7 +194,7 @@ describe("Qwen provider", () => {
     expect(serialized).toContain(`"cause":"${cause}"`);
   });
 
-  test("omits an invalid reset timestamp", async () => {
+  it("omits an invalid reset timestamp", async () => {
     const { runtime } = createRuntime(
       authenticated,
       JSON.stringify({
@@ -211,7 +211,7 @@ describe("Qwen provider", () => {
     expect(usage.windows[0]?.resetsAt).toBeNull();
   });
 
-  test("accepts a token plan without optional string or count fields", async () => {
+  it("accepts a token plan without optional string or count fields", async () => {
     const { runtime } = createRuntime(
       authenticated,
       JSON.stringify({ token_plan: { subscribed: true, usedPct: 15 } })
@@ -223,7 +223,7 @@ describe("Qwen provider", () => {
     expect(usage.label).toBe("Qwen Token Plan");
   });
 
-  test.each([
+  it.each([
     [
       "command failure",
       new ProviderCommandError({
@@ -254,7 +254,7 @@ describe("Qwen provider", () => {
     expect(serialized).toContain('"providerID":"qwen"');
   });
 
-  test("uses a configured provider label", async () => {
+  it("uses a configured provider label", async () => {
     const { runtime } = createRuntime(
       authenticated,
       JSON.stringify({

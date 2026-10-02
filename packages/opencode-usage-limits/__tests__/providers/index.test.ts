@@ -1,5 +1,5 @@
 import { Effect } from "effect";
-import { afterEach, describe, expect, test } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
 import {
   fetchProvider,
@@ -23,14 +23,14 @@ import { installFetchMock, resetFetchMock } from "./helpers.ts";
 describe("provider manifest", () => {
   afterEach(resetFetchMock);
 
-  test("binds each fetch result to its definition ID", () => {
+  it("binds each fetch result to its definition ID", () => {
     const definition: ProviderDefinition<"codex"> = codexProvider;
     const fetch: typeof definition.fetch = definition.fetch;
 
     expect(fetch).toBe(codexProvider.fetch);
   });
 
-  test("defines every provider in display order", () => {
+  it("defines every provider in display order", () => {
     expect(PROVIDERS.map((provider) => provider.id)).toStrictEqual([
       ...PROVIDER_ORDER,
     ]);
@@ -43,7 +43,7 @@ describe("provider manifest", () => {
     }
   });
 
-  test("maps OpenCode session providers to plugin providers", () => {
+  it("maps OpenCode session providers to plugin providers", () => {
     expect([
       ["openai", pluginProviderForOpenCode("openai")],
       ["zai-coding-plan", pluginProviderForOpenCode("zai-coding-plan")],
@@ -70,7 +70,7 @@ describe("provider manifest", () => {
     ]);
   });
 
-  test("returns enabled providers in display order", () => {
+  it("returns enabled providers in display order", () => {
     expect(
       getProviderConfigs({
         enabled: true,
@@ -93,7 +93,7 @@ describe("provider manifest", () => {
     ]);
   });
 
-  test("dispatches provider fetches by id", async () => {
+  it("dispatches provider fetches by id", async () => {
     installFetchMock(
       Response.json({
         plan_type: "plus",
@@ -113,7 +113,7 @@ describe("provider manifest", () => {
     await expect(result).resolves.toMatchObject({ id: "codex" });
   });
 
-  test("rejects unknown provider ids asynchronously", async () => {
+  it("rejects unknown provider ids asynchronously", async () => {
     const unknownEffect = fetchProviderEffect("unknown", undefined, {}, 1000);
     expect(unknownEffect).toBeDefined();
     await expect(

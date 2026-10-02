@@ -4,7 +4,7 @@ import path from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 
 import { Effect, Exit, Redacted } from "effect";
-import { afterEach, describe, expect, test } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
 import {
   ProviderCommandExecutor,
@@ -62,7 +62,7 @@ describe("provider runtime services", () => {
     );
   });
 
-  test("normalizes redacted, blank, and environment-backed credentials", async () => {
+  it("normalizes redacted, blank, and environment-backed credentials", async () => {
     const variable = "OC_USAGE_LIMITS_RUNTIME_TEST_KEY";
     const original = process.env[variable];
     process.env[variable] = "  environment secret  ";
@@ -96,7 +96,7 @@ describe("provider runtime services", () => {
     }
   });
 
-  test("rejects oversized provider auth files before reading their contents", async () => {
+  it("rejects oversized provider auth files before reading their contents", async () => {
     const file = path.join(
       tmpdir(),
       `oc-usage-limits-${crypto.randomUUID()}.json`
@@ -120,7 +120,7 @@ describe("provider runtime services", () => {
     expect(serializedCause).toContain('"operation":"read-auth"');
   });
 
-  test("reads the complete contents of a bounded provider auth file", async () => {
+  it("reads the complete contents of a bounded provider auth file", async () => {
     const file = path.join(
       tmpdir(),
       `oc-usage-limits-${crypto.randomUUID()}.json`
@@ -142,7 +142,7 @@ describe("provider runtime services", () => {
     expect(result).toBe(content);
   });
 
-  test("stops reading at the maximum auth-file buffer size", async () => {
+  it("stops reading at the maximum auth-file buffer size", async () => {
     const file = path.join(
       tmpdir(),
       `oc-usage-limits-${crypto.randomUUID()}.json`
@@ -161,7 +161,7 @@ describe("provider runtime services", () => {
     expect(result).toHaveLength(1024 * 1024);
   });
 
-  test("decodes bounded HTTP JSON and classifies malformed bodies", async () => {
+  it("decodes bounded HTTP JSON and classifies malformed bodies", async () => {
     const layer = makeProviderHttpClient(() =>
       Promise.resolve(new Response("not-json", { status: 200 }))
     );
@@ -184,7 +184,7 @@ describe("provider runtime services", () => {
     expect(cause).toBeDefined();
   });
 
-  test("handles a successful response without a body", async () => {
+  it("handles a successful response without a body", async () => {
     const layer = makeProviderHttpClient(() =>
       Promise.resolve(new Response(null, { status: 200 }))
     );
@@ -204,7 +204,7 @@ describe("provider runtime services", () => {
     expect(Exit.isFailure(result)).toBeTruthy();
   });
 
-  test("cancels a response rejected by its declared size", async () => {
+  it("cancels a response rejected by its declared size", async () => {
     let cancelled = false;
     const body = new ReadableStream<Uint8Array>({
       cancel: () => {
@@ -237,7 +237,7 @@ describe("provider runtime services", () => {
     expect(cancelled).toBeTruthy();
   });
 
-  test("cancels a rate-limited response body", async () => {
+  it("cancels a rate-limited response body", async () => {
     let cancelled = false;
     const body = new ReadableStream<Uint8Array>({
       cancel: () => {
@@ -265,7 +265,7 @@ describe("provider runtime services", () => {
     expect(cancelled).toBeTruthy();
   });
 
-  test("ignores malformed Retry-After values on rate-limited responses", async () => {
+  it("ignores malformed Retry-After values on rate-limited responses", async () => {
     const layer = makeProviderHttpClient(() =>
       Promise.resolve(
         new Response(new ReadableStream<Uint8Array>(), {
@@ -295,7 +295,7 @@ describe("provider runtime services", () => {
     expect(cause).not.toContain("retryAfterMs");
   });
 
-  test("converts valid Retry-After seconds to milliseconds", async () => {
+  it("converts valid Retry-After seconds to milliseconds", async () => {
     const layer = makeProviderHttpClient(() =>
       Promise.resolve(
         new Response("", {
@@ -324,7 +324,7 @@ describe("provider runtime services", () => {
     expect(cause).toContain('"retryAfterMs":2500');
   });
 
-  test("cancels a non-success response body", async () => {
+  it("cancels a non-success response body", async () => {
     let cancelled = false;
     const body = new ReadableStream<Uint8Array>({
       cancel: () => {
@@ -352,7 +352,7 @@ describe("provider runtime services", () => {
     expect(cancelled).toBeTruthy();
   });
 
-  test("decodes JSON split across response chunks", async () => {
+  it("decodes JSON split across response chunks", async () => {
     const body = new ReadableStream<Uint8Array>({
       start: (controller) => {
         const encoder = new TextEncoder();
@@ -382,7 +382,7 @@ describe("provider runtime services", () => {
     expect(result).toStrictEqual({ plan: "pro" });
   });
 
-  test("reads a response with many small chunks", async () => {
+  it("reads a response with many small chunks", async () => {
     const whitespace = new Uint8Array([32]);
     const body = new ReadableStream<Uint8Array>({
       start: (controller) => {
@@ -413,7 +413,7 @@ describe("provider runtime services", () => {
     expect(result).toBeNull();
   });
 
-  test("classifies commands that cannot be spawned", async () => {
+  it("classifies commands that cannot be spawned", async () => {
     const result = await Effect.runPromiseExit(
       Effect.gen(function* execute() {
         const commands = yield* ProviderCommandExecutor;
@@ -433,7 +433,7 @@ describe("provider runtime services", () => {
     expect(serializedCause).toContain('"cause":"command"');
   });
 
-  test("executes a controlled command and returns trimmed stdout", async () => {
+  it("executes a controlled command and returns trimmed stdout", async () => {
     const output = await executeCommand([
       "-e",
       'process.stdout.write(" usage output \\n")',
@@ -442,7 +442,7 @@ describe("provider runtime services", () => {
     expect(output).toBe("usage output");
   });
 
-  test("rejects unaccepted exits and accepts configured exit codes", async () => {
+  it("rejects unaccepted exits and accepts configured exit codes", async () => {
     const args = ["-e", 'process.stdout.write("status"); process.exit(2)'];
 
     const rejected = await executeCommandExit(args);
@@ -457,7 +457,7 @@ describe("provider runtime services", () => {
     expect(accepted).toStrictEqual(Exit.succeed("status"));
   });
 
-  test.each([
+  it.each([
     ["stdout", 'process.stdout.write("x".repeat(2 * 1024 * 1024 + 1))'],
     ["stderr", 'process.stderr.write("x".repeat(2 * 1024 * 1024 + 1))'],
   ])("caps oversized command %s output", async (_stream, script) => {
@@ -470,7 +470,7 @@ describe("provider runtime services", () => {
     expect(serializedCause).toContain('"cause":"output-limit"');
   });
 
-  test("kills a timed-out command", async () => {
+  it("kills a timed-out command", async () => {
     const file = path.join(
       tmpdir(),
       `oc-usage-limits-command-${crypto.randomUUID()}.txt`
@@ -508,7 +508,7 @@ describe("provider runtime services", () => {
     expect(after.mtimeMs).toBe(before.mtimeMs);
   });
 
-  test("classifies an interrupted HTTP request as a timeout", async () => {
+  it("classifies an interrupted HTTP request as a timeout", async () => {
     const layer = makeProviderHttpClient(() => Effect.runPromise(Effect.never));
     const result = await Effect.runPromise(
       Effect.gen(function* result() {
@@ -528,7 +528,7 @@ describe("provider runtime services", () => {
     expect(cause).toBeDefined();
   });
 
-  test("cancels an in-flight response reader when its request times out", async () => {
+  it("cancels an in-flight response reader when its request times out", async () => {
     let cancelled = false;
     const layer = makeProviderHttpClient(() =>
       Promise.resolve(
@@ -560,7 +560,7 @@ describe("provider runtime services", () => {
     expect(cancelled).toBeTruthy();
   });
 
-  test.each([
+  it.each([
     [401, "unauthorized"],
     [403, "forbidden"],
     [500, "http"],
@@ -588,7 +588,7 @@ describe("provider runtime services", () => {
     expect(serializedCause).toContain(`"cause":"${cause}"`);
   });
 
-  test("caps streamed HTTP bodies and classifies network failures", async () => {
+  it("caps streamed HTTP bodies and classifies network failures", async () => {
     let cancelled = false;
     const layer = makeProviderHttpClient(() =>
       Promise.resolve(

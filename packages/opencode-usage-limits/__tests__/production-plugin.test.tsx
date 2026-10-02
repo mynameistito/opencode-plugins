@@ -2,7 +2,7 @@ import { setTimeout as delay } from "node:timers/promises";
 
 import { RGBA } from "@opentui/core";
 import { Result } from "effect";
-import { describe, expect, test } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import type { UsageTheme } from "@/components.tsx";
 import {
@@ -26,7 +26,7 @@ const theme: UsageTheme = {
 };
 
 describe("production plugin dependencies", () => {
-  test("loads config and auth and runs the real provider runtime adapter", async () => {
+  it("loads config and auth and runs the real provider runtime adapter", async () => {
     const config: ResolvedUsageLimitsConfig = {
       enabled: true,
       providers: { synthetic: { enabled: true } },

@@ -2,7 +2,7 @@ import { rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { afterEach, describe, expect, test } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
 import { fetchMiniMaxTokenPlanUsage } from "@/providers/minimax.ts";
 import type { OpenCodeAuth } from "@/types.ts";
@@ -26,7 +26,7 @@ describe("MiniMax provider", () => {
   const fiveHourRemains = 90 * 60 * 1000;
   const weeklyRemains = 3 * 24 * 60 * 60 * 1000;
 
-  test.each([
+  it.each([
     ["valid", JSON.stringify({ minimax: { key: "file-key" } }), "file-key"],
     ["root key", JSON.stringify({ key: "file-key" }), "file-key"],
     ["root apiKey", JSON.stringify({ apiKey: "file-key" }), "file-key"],
@@ -70,7 +70,7 @@ describe("MiniMax provider", () => {
     }
   );
 
-  test("parses the general entry and reports both 5h and weekly windows", async () => {
+  it("parses the general entry and reports both 5h and weekly windows", async () => {
     const fetchMock = installFetchMock(
       Response.json(
         successEnvelope([
@@ -145,7 +145,7 @@ describe("MiniMax provider", () => {
     expect(resetTimes[1]).toBeGreaterThan(Date.now() + weeklyRemains - 5000);
   });
 
-  test("honours a baseUrl override for the China region", async () => {
+  it("honours a baseUrl override for the China region", async () => {
     const fetchMock = installFetchMock(
       Response.json(
         successEnvelope([
@@ -171,7 +171,7 @@ describe("MiniMax provider", () => {
     );
   });
 
-  test("looks up the subscription key under both minimax and minimax-token-plan keys", async () => {
+  it("looks up the subscription key under both minimax and minimax-token-plan keys", async () => {
     const fetchMock = installFetchMock(
       Response.json(
         successEnvelope([
@@ -195,7 +195,7 @@ describe("MiniMax provider", () => {
     });
   });
 
-  test("accepts the minimax-coding-plan provider id in OpenCode auth", async () => {
+  it("accepts the minimax-coding-plan provider id in OpenCode auth", async () => {
     const fetchMock = installFetchMock(
       Response.json(
         successEnvelope([
@@ -223,7 +223,7 @@ describe("MiniMax provider", () => {
     expect(usage).toMatchObject({ id: "minimax" });
   });
 
-  test.each([
+  it.each([
     ["direct key", { key: "direct-key" }, "direct-key"],
     ["direct apiKey", { apiKey: "direct-api-key" }, "direct-api-key"],
     ["minimax", { minimax: { apiKey: "nested-api-key" } }, "nested-api-key"],
@@ -253,7 +253,7 @@ describe("MiniMax provider", () => {
     });
   });
 
-  test.each(missingAuthCases)(
+  it.each(missingAuthCases)(
     "rejects missing %s auth layouts",
     async (_name, openCodeAuth) => {
       await expect(
@@ -262,7 +262,7 @@ describe("MiniMax provider", () => {
     }
   );
 
-  test("handles present MiniMax auth namespaces without credentials", async () => {
+  it("handles present MiniMax auth namespaces without credentials", async () => {
     await Promise.all([
       expect(
         fetchMiniMaxTokenPlanUsage(undefined, { minimax: {} }, 1000)
@@ -284,7 +284,7 @@ describe("MiniMax provider", () => {
     ]);
   });
 
-  test("prefers openCodeAuth over the configured apiKey", async () => {
+  it("prefers openCodeAuth over the configured apiKey", async () => {
     const fetchMock = installFetchMock(
       Response.json(
         successEnvelope([
@@ -308,7 +308,7 @@ describe("MiniMax provider", () => {
     });
   });
 
-  test("resolves environment references when no other credential is available", async () => {
+  it("resolves environment references when no other credential is available", async () => {
     process.env.OC_USAGE_LIMITS_MINIMAX_KEY = "env-mm-key";
     const fetchMock = installFetchMock(
       Response.json(
@@ -333,7 +333,7 @@ describe("MiniMax provider", () => {
     });
   });
 
-  test("emits only the window whose remaining percent is reported", async () => {
+  it("emits only the window whose remaining percent is reported", async () => {
     installFetchMock(
       Response.json(
         successEnvelope([
@@ -360,7 +360,7 @@ describe("MiniMax provider", () => {
     });
   });
 
-  test("falls back to the first in-plan entry when no general entry exists", async () => {
+  it("falls back to the first in-plan entry when no general entry exists", async () => {
     installFetchMock(
       Response.json(
         successEnvelope([
@@ -396,7 +396,7 @@ describe("MiniMax provider", () => {
     });
   });
 
-  test("rejects missing keys and malformed responses", async () => {
+  it("rejects missing keys and malformed responses", async () => {
     await expect(
       fetchMiniMaxTokenPlanUsage(undefined, {}, 1000)
     ).rejects.toThrow("missing MiniMax key");
@@ -426,7 +426,7 @@ describe("MiniMax provider", () => {
     ).rejects.toThrow("invalid MiniMax usage");
   });
 
-  test("rejects payloads that are not wrapped in the model_remains envelope", async () => {
+  it("rejects payloads that are not wrapped in the model_remains envelope", async () => {
     installFetchMock(
       Response.json([
         {
@@ -441,7 +441,7 @@ describe("MiniMax provider", () => {
     ).rejects.toThrow("invalid MiniMax usage");
   });
 
-  test("ignores null model entries before selecting a usable entry", async () => {
+  it("ignores null model entries before selecting a usable entry", async () => {
     installFetchMock(
       Response.json(
         successEnvelope([
@@ -466,7 +466,7 @@ describe("MiniMax provider", () => {
     });
   });
 
-  test.each([-1, Number.NaN, Number.POSITIVE_INFINITY])(
+  it.each([-1, Number.NaN, Number.POSITIVE_INFINITY])(
     "rejects invalid remaining percentage %s",
     async (remainingPercent) => {
       installFetchMock(
@@ -486,7 +486,7 @@ describe("MiniMax provider", () => {
     }
   );
 
-  test("rejects envelopes whose base_resp status_code is non-zero", async () => {
+  it("rejects envelopes whose base_resp status_code is non-zero", async () => {
     installFetchMock(
       Response.json({
         base_resp: { status_code: 1, status_msg: "some error" },
@@ -505,7 +505,7 @@ describe("MiniMax provider", () => {
     ).rejects.toThrow("invalid MiniMax usage");
   });
 
-  test.each([null, undefined])(
+  it.each([null, undefined])(
     "accepts successful base_resp with status code %s",
     async (statusCode) => {
       installFetchMock(
@@ -523,7 +523,7 @@ describe("MiniMax provider", () => {
     }
   );
 
-  test.each([["current_interval_remaining_percent", "80"]])(
+  it.each([["current_interval_remaining_percent", "80"]])(
     "rejects invalid required model field: %s",
     async (field, value) => {
       installFetchMock(
@@ -549,7 +549,7 @@ describe("MiniMax provider", () => {
     }
   );
 
-  test.each([
+  it.each([
     ["current_interval_status", "1", ["5h", "weekly"], []],
     ["current_weekly_remaining_percent", "70", ["5h"], []],
     ["current_weekly_status", "1", ["5h", "weekly"], []],
@@ -590,7 +590,7 @@ describe("MiniMax provider", () => {
     }
   );
 
-  test("rejects a successful envelope without selectable model entries", async () => {
+  it("rejects a successful envelope without selectable model entries", async () => {
     installFetchMock(Response.json(successEnvelope([])));
 
     await expect(
@@ -598,7 +598,7 @@ describe("MiniMax provider", () => {
     ).rejects.toThrow("invalid MiniMax usage");
   });
 
-  test("rejects a malformed base response status message", async () => {
+  it("rejects a malformed base response status message", async () => {
     installFetchMock(
       Response.json({
         base_resp: { status_code: 0, status_msg: 42 },
@@ -613,7 +613,7 @@ describe("MiniMax provider", () => {
     ).rejects.toThrow("invalid MiniMax usage");
   });
 
-  test("rejects a response without a base response envelope", async () => {
+  it("rejects a response without a base response envelope", async () => {
     installFetchMock(
       Response.json({
         model_remains: [
@@ -627,7 +627,7 @@ describe("MiniMax provider", () => {
     ).rejects.toThrow("invalid MiniMax usage");
   });
 
-  test("accepts a weekly quota without a reported reset countdown", async () => {
+  it("accepts a weekly quota without a reported reset countdown", async () => {
     installFetchMock(
       Response.json(
         successEnvelope([
@@ -649,7 +649,7 @@ describe("MiniMax provider", () => {
     expect(usage.windows[1]?.resetsAt).toBeNull();
   });
 
-  test("hides the weekly window when the model is not in the weekly plan", async () => {
+  it("hides the weekly window when the model is not in the weekly plan", async () => {
     installFetchMock(
       Response.json(
         successEnvelope([
@@ -680,7 +680,7 @@ describe("MiniMax provider", () => {
   });
 
   describe("plan variants", () => {
-    test("general entry with both 5h and weekly", async () => {
+    it("general entry with both 5h and weekly", async () => {
       installFetchMock(
         Response.json(
           successEnvelope([
@@ -714,7 +714,7 @@ describe("MiniMax provider", () => {
       });
     });
 
-    test("general entry with only 5h (no weekly plan)", async () => {
+    it("general entry with only 5h (no weekly plan)", async () => {
       installFetchMock(
         Response.json(
           successEnvelope([
@@ -744,7 +744,7 @@ describe("MiniMax provider", () => {
       });
     });
 
-    test("5h window hidden (current_interval_status === 3)", async () => {
+    it("5h window hidden (current_interval_status === 3)", async () => {
       installFetchMock(
         Response.json(
           successEnvelope([
@@ -766,7 +766,7 @@ describe("MiniMax provider", () => {
       ).rejects.toThrow("invalid MiniMax usage");
     });
 
-    test("non-general entry fallback", async () => {
+    it("non-general entry fallback", async () => {
       installFetchMock(
         Response.json(
           successEnvelope([

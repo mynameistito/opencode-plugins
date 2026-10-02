@@ -1,5 +1,5 @@
 import { Result } from "effect";
-import { describe, expect, test } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { shouldRenderProviderState } from "@/components.tsx";
 import type { ProviderState, ProviderUsage } from "@/types.ts";
@@ -20,7 +20,7 @@ const providerUsage = (): ProviderUsage => ({
 });
 
 describe("sidebar provider visibility", () => {
-  test("hides missing credential errors without cached usage", () => {
+  it("hides missing credential errors without cached usage", () => {
     const state: ProviderState = {
       errorKind: "missing_credentials",
       id: "synthetic",
@@ -32,7 +32,7 @@ describe("sidebar provider visibility", () => {
     expect(shouldRenderProviderState(state, true)).toBeFalsy();
   });
 
-  test("keeps non-credential errors visible when error display is enabled", () => {
+  it("keeps non-credential errors visible when error display is enabled", () => {
     const state: ProviderState = {
       id: "synthetic",
       label: "Synthetic",
@@ -44,7 +44,7 @@ describe("sidebar provider visibility", () => {
     expect(shouldRenderProviderState(state, false)).toBeFalsy();
   });
 
-  test("keeps cached usage visible when a refresh hits missing credentials", () => {
+  it("keeps cached usage visible when a refresh hits missing credentials", () => {
     const state: ProviderState = {
       errorKind: "missing_credentials",
       id: "synthetic",
@@ -58,7 +58,7 @@ describe("sidebar provider visibility", () => {
     expect(shouldRenderProviderState(state, false)).toBeTruthy();
   });
 
-  test("hides disabled providers", () => {
+  it("hides disabled providers", () => {
     const state: ProviderState = {
       id: "synthetic",
       label: "Synthetic",

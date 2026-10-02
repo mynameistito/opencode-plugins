@@ -5,7 +5,7 @@ import { testRender } from "@opentui/solid";
 import type { JSX } from "@opentui/solid";
 import { Deferred, Effect, Result } from "effect";
 /* @jsxImportSource @opentui/solid */
-import { describe, expect, test } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import type { UsageTheme } from "@/components.tsx";
 import { ConfigDecodeError } from "@/errors.ts";
@@ -233,7 +233,7 @@ const initialize = async (harness: ReturnType<typeof createHarness>) => {
 };
 
 describe("usage-limits TUI lifecycle", () => {
-  test("registers both slots with initial successful state", async () => {
+  it("registers both slots with initial successful state", async () => {
     const harness = createHarness();
     const registered = await initialize(harness);
 
@@ -250,7 +250,7 @@ describe("usage-limits TUI lifecycle", () => {
     ).resolves.toContain("42%");
   });
 
-  test("retains the previous successful state when a provider fails", async () => {
+  it("retains the previous successful state when a provider fails", async () => {
     const harness = createHarness();
     const registered = await initialize(harness);
     harness.state.fetchError = new ProviderTransportError({
@@ -270,7 +270,7 @@ describe("usage-limits TUI lifecycle", () => {
     ).resolves.toContain("42%");
   });
 
-  test("keeps both slots empty when the plugin is disabled", async () => {
+  it("keeps both slots empty when the plugin is disabled", async () => {
     const harness = createHarness(config({ enabled: false }));
     const registered = await initialize(harness);
 
@@ -283,7 +283,7 @@ describe("usage-limits TUI lifecycle", () => {
     ).resolves.not.toContain("%");
   });
 
-  test("hides only both graphical bars without stopping provider refreshes", async () => {
+  it("hides only both graphical bars without stopping provider refreshes", async () => {
     const harness = createHarness(
       config({
         providers: {
@@ -306,7 +306,7 @@ describe("usage-limits TUI lifecycle", () => {
     expect(footer).not.toContain("[████░░░░░░░░]");
   });
 
-  test.each(slotCases)(
+  it.each(slotCases)(
     "hides only the configured %s bar",
     async (overrides, slot, text) => {
       const harness = createHarness(config(overrides));
@@ -320,7 +320,7 @@ describe("usage-limits TUI lifecycle", () => {
     }
   );
 
-  test("does not keep historical provider usage after switching models", async () => {
+  it("does not keep historical provider usage after switching models", async () => {
     const harness = createHarness();
     const registered = await initialize(harness);
 
@@ -335,7 +335,7 @@ describe("usage-limits TUI lifecycle", () => {
     ).resolves.not.toContain("42%");
   });
 
-  test("does not render footer usage for shell mode or missing sessions", async () => {
+  it("does not render footer usage for shell mode or missing sessions", async () => {
     const harness = createHarness();
     const registered = await initialize(harness);
 
@@ -352,7 +352,7 @@ describe("usage-limits TUI lifecycle", () => {
     ).resolves.not.toContain("42%");
   });
 
-  test("hides footer usage when the session has no provider selected", async () => {
+  it("hides footer usage when the session has no provider selected", async () => {
     const harness = createHarness();
     const registered = await initialize(harness);
     harness.setSessionModelProviderID("");
@@ -362,7 +362,7 @@ describe("usage-limits TUI lifecycle", () => {
     ).resolves.not.toContain("42%");
   });
 
-  test("uses safe defaults when typed config parsing fails", async () => {
+  it("uses safe defaults when typed config parsing fails", async () => {
     const harness = createHarness();
     harness.state.configError = new ConfigDecodeError({
       cause: "schema",
@@ -377,7 +377,7 @@ describe("usage-limits TUI lifecycle", () => {
     );
   });
 
-  test("uses a changed interval for the next scheduled refresh", async () => {
+  it("uses a changed interval for the next scheduled refresh", async () => {
     const harness = createHarness();
     await initialize(harness);
     harness.state.config = config({ refreshIntervalSeconds: 45 });
@@ -390,7 +390,7 @@ describe("usage-limits TUI lifecycle", () => {
     ]);
   });
 
-  test("disposal cancels the pending refresh", async () => {
+  it("disposal cancels the pending refresh", async () => {
     const harness = createHarness();
     await initialize(harness);
     const dispose = harness.getDispose();
