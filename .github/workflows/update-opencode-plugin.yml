@@ -21,26 +21,14 @@ jobs:
           ref: main
           persist-credentials: false
 
+      - name: Record main commit
+        id: main
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
       - name: Setup Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version: 1.4.2
-
-      - name: Prepare update branch
-        id: branch
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          gh auth setup-git
-          branch_sha=$(git ls-remote --heads origin refs/heads/update-opencode-plugin | cut -f1)
-          if [ -n "$branch_sha" ]; then
-            git fetch origin update-opencode-plugin
-          fi
-          git checkout -B update-opencode-plugin main
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          echo "branch_sha=$branch_sha" >> "$GITHUB_OUTPUT"
 
       - name: Check npm for the latest version
         id: latest
@@ -58,21 +46,13 @@ jobs:
           bun run changeset-add -- usage-limits patch "Update @opencode/plugin to $VERSION"
           bun run changeset-add -- force-input patch "Update @opencode/plugin to $VERSION"
 
-      - name: Commit and push update
+      - name: Create verified update commit
         if: steps.latest.outputs.changed == 'true'
         env:
-          BRANCH_SHA: ${{ steps.branch.outputs.branch_sha }}
           GH_TOKEN: ${{ github.token }}
+          MAIN_SHA: ${{ steps.main.outputs.sha }}
           VERSION: ${{ steps.latest.outputs.version }}
-        run: |
-          gh auth setup-git
-          git add package.json bun.lock .changeset
-          git commit -m "chore(deps): update @opencode/plugin to $VERSION"
-          if [ -n "$BRANCH_SHA" ]; then
-            git push --force-with-lease="refs/heads/update-opencode-plugin:$BRANCH_SHA" origin update-opencode-plugin
-          else
-            git push --set-upstream origin update-opencode-plugin
-          fi
+        run: bun scripts/create-signed-github-commit.ts
 
       - name: Open or update pull request
         if: steps.latest.outputs.changed == 'true'
