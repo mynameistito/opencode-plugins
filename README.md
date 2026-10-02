@@ -26,7 +26,7 @@ Supported providers:
 - [ChatGPT](https://chatgpt.com/)
 - [Command Code](https://commandcode.ai/)
 - [OpenCode GO](https://opencode.ai/go)
-- [MiniMax Token Plan](https://www.minimax.ai/)
+- [MiniMax Token Plan](https://platform.minimax.io/subscribe/token-plan)
 - [Synthetic](https://synthetic.ai/)
 - [Qwen](https://qwen.ai/)
 - [ZAI Coding Plan](https://zai.ai/)
