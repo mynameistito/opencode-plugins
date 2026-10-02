@@ -48,9 +48,6 @@ export default defineConfig({
   integrations: [reactGrab],
   lastModified: "git",
   logo: { href: "/", text: "mynameistito / plugins" },
-  navigation: {
-    tabs: [{ label: "Changelog", path: "/changelog" }],
-  },
   seo: {
     og: {
       enabled: true,
