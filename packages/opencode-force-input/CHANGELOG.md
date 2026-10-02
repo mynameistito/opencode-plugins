@@ -1,5 +1,11 @@
 # @mynameistito/opencode-force-input
 
+## 1.1.9
+
+### Patch Changes
+
+- fbf09c1: Update @opencode/plugin to 2.0.22
+
 ## 1.1.8
 
 ### Patch Changes

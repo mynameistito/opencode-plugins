@@ -1,5 +1,12 @@
 # @mynameistito/opencode-plugins-docs
 
+## 0.0.8
+
+### Patch Changes
+
+- 794c13c: Use the stable production Worker name for the docs site
+- 297774d: Generate detailed release pages from Changesets-backed GitHub Releases and link to both package changelogs.
+
 ## 0.0.7
 
 ### Patch Changes

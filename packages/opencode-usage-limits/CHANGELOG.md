@@ -1,5 +1,11 @@
 # @mynameistito/opencode-usage-limits
 
+## 1.2.1
+
+### Patch Changes
+
+- fbf09c1: Update @opencode/plugin to 2.0.22
+
 ## 1.2.0
 
 ### Minor Changes
