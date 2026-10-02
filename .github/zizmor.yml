@@ -1,0 +1,16 @@
+# These findings are limited to existing, intentionally reviewed workflow
+# patterns. Keep the ignores line-specific so new findings remain visible.
+rules:
+  dangerous-triggers:
+    ignore:
+      - deploy-preview.yml:3
+      - deploy.yml:3
+      # Required for fork-safe labeling; this workflow checks out only the trusted default branch.
+      - pr-metadata.yml:3
+  excessive-permissions:
+    ignore:
+      - deploy-preview.yml:20
+      - deploy-preview.yml:21
+  adhoc-packages:
+    ignore:
+      - release.yml:35
