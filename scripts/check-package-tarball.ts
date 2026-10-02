@@ -1,6 +1,8 @@
 import { appendFileSync, readFileSync } from "node:fs";
 import path from "node:path";
 
+import { isUnexpectedPackagePath } from "./package-tarball-helpers.ts";
+
 interface PackageManifest {
   name: string;
   files?: string[];
@@ -69,9 +71,7 @@ export const checkPackageTarball = async (
           "examples/usage-limits.jsonc",
         ];
   const missingFiles = requiredFiles.filter((file) => !packedPaths.has(file));
-  const unexpectedFiles = [...packedPaths].filter((file) =>
-    /^(?:src|__tests__|scripts|coverage|node_modules)\//u.test(file)
-  );
+  const unexpectedFiles = [...packedPaths].filter(isUnexpectedPackagePath);
   if (missingFiles.length > 0 || unexpectedFiles.length > 0) {
     throw new Error(
       [
