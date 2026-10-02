@@ -18,8 +18,12 @@ jobs:
       - name: Checkout main
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.sha }}
+          ref: main
           persist-credentials: false
+
+      - name: Record main commit
+        id: main
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
@@ -46,6 +50,7 @@ jobs:
         if: steps.latest.outputs.changed == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
+          MAIN_SHA: ${{ steps.main.outputs.sha }}
           VERSION: ${{ steps.latest.outputs.version }}
         run: bun scripts/create-signed-github-commit.ts
 

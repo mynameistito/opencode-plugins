@@ -2,6 +2,7 @@ import { readFile, readdir } from "node:fs/promises";
 
 interface ApiResponse {
   message?: string;
+  node_id?: string;
   sha?: string;
   tree?: { sha: string };
   verification?: { verified: boolean; reason: string };
@@ -24,31 +25,45 @@ interface CreateCommitRequest {
   tree: string;
 }
 
-interface UpdateRefRequest {
-  force: true;
-  sha: string;
-}
+type ApiRequestBody = CreateTreeRequest | CreateCommitRequest;
 
-interface CreateRefRequest {
-  ref: string;
-  sha: string;
+interface GraphQLResponse {
+  data?: { updateRefs?: { clientMutationId: string | null } };
+  errors?: unknown;
 }
-
-type ApiRequestBody =
-  | CreateTreeRequest
-  | CreateCommitRequest
-  | UpdateRefRequest
-  | CreateRefRequest;
 
 const isApiResponse = (value: unknown): value is ApiResponse =>
   value instanceof Object && !Array.isArray(value);
 
+const isGraphQLResponse = (value: unknown): value is GraphQLResponse => {
+  if (!(value instanceof Object) || Array.isArray(value)) {
+    return false;
+  }
+
+  if (
+    !("data" in value) ||
+    !(value.data instanceof Object) ||
+    Array.isArray(value.data) ||
+    !("updateRefs" in value.data)
+  ) {
+    return false;
+  }
+
+  return !(
+    "errors" in value &&
+    (!Array.isArray(value.errors) || value.errors.length > 0)
+  );
+};
+
 const token = process.env.GH_TOKEN;
 const repository = process.env.GITHUB_REPOSITORY;
 const version = process.env.VERSION;
+const mainSha = process.env.MAIN_SHA;
 
-if (!token || !repository || !version) {
-  throw new Error("GH_TOKEN, GITHUB_REPOSITORY, and VERSION are required");
+if (!token || !repository || !version || !mainSha) {
+  throw new Error(
+    "GH_TOKEN, GITHUB_REPOSITORY, MAIN_SHA, and VERSION are required"
+  );
 }
 
 const request = async (
@@ -100,11 +115,7 @@ const changesetFiles = changesetDirectoryEntries
   .map((entry) => `.changeset/${entry.name}`);
 const changedFiles = ["package.json", "bun.lock", ...changesetFiles];
 
-const baseSha = process.env.GITHUB_SHA;
-
-if (!baseSha) {
-  throw new Error("GITHUB_SHA is required");
-}
+const baseSha = mainSha;
 
 const baseCommit = await request(`/git/commits/${baseSha}`, "GET");
 
@@ -143,7 +154,6 @@ if (!commit.sha || !commit.verification?.verified) {
 }
 
 const refPath = "/git/ref/heads/update-opencode-plugin";
-const updateRefPath = "/git/refs/heads/update-opencode-plugin";
 let existingRef: ApiResponse | undefined;
 
 try {
@@ -154,12 +164,54 @@ try {
   }
 }
 
-const updateRef = existingRef?.object?.sha
-  ? request(updateRefPath, "PATCH", { force: true, sha: commit.sha })
-  : request("/git/refs", "POST", {
-      ref: "refs/heads/update-opencode-plugin",
-      sha: commit.sha,
-    });
-await updateRef;
+const repositoryInfo = await request("", "GET");
+
+if (!repositoryInfo.node_id) {
+  throw new Error("GitHub API did not return the repository node ID");
+}
+
+const refUpdateResponse = await fetch("https://api.github.com/graphql", {
+  body: JSON.stringify({
+    query:
+      "mutation($repositoryId: ID!, $refUpdates: [RefUpdate!]!) { updateRefs(input: { repositoryId: $repositoryId, refUpdates: $refUpdates }) { clientMutationId } }",
+    variables: {
+      refUpdates: [
+        {
+          afterOid: commit.sha,
+          beforeOid:
+            existingRef?.object?.sha ??
+            "0000000000000000000000000000000000000000",
+          force: true,
+          name: "refs/heads/update-opencode-plugin",
+        },
+      ],
+      repositoryId: repositoryInfo.node_id,
+    },
+  }),
+  headers: {
+    Accept: "application/vnd.github+json",
+    Authorization: `Bearer ${token}`,
+    "Content-Type": "application/json",
+  },
+  method: "POST",
+});
+const refUpdateResult: unknown = await refUpdateResponse.json();
+
+const graphQLResult = isGraphQLResponse(refUpdateResult)
+  ? refUpdateResult
+  : undefined;
+const hasGraphQLErrors = Array.isArray(graphQLResult?.errors)
+  ? graphQLResult.errors.length > 0
+  : false;
+
+if (
+  !refUpdateResponse.ok ||
+  hasGraphQLErrors ||
+  !graphQLResult?.data?.updateRefs
+) {
+  throw new Error(
+    `GitHub API failed to update the update branch: ${JSON.stringify(graphQLResult?.errors ?? refUpdateResponse.statusText)}`
+  );
+}
 
 console.log(`Pushed verified update commit ${commit.sha}`);
