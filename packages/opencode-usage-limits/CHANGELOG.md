@@ -1,5 +1,11 @@
 # @mynameistito/opencode-usage-limits
 
+## 1.2.2
+
+### Patch Changes
+
+- f435f84: Move plugin dependency to stable Effect 4
+
 ## 1.2.1
 
 ### Patch Changes
