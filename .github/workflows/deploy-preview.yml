@@ -25,7 +25,7 @@ jobs:
     name: Resolve preview pull request
     if: >-
       (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'pull_request') || (github.event_name == 'pull_request_target' && github.event.action == 'closed')
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       pull-requests: read
@@ -163,7 +163,7 @@ jobs:
     needs: resolve
     if: >-
       github.event_name == 'workflow_run' && needs.resolve.outputs.pull_request_number != '' && needs.resolve.outputs.trusted != 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       issues: write
       pull-requests: write
@@ -211,7 +211,7 @@ jobs:
     name: Deploy preview (review required)
     needs: resolve
     if: needs.resolve.outputs.pull_request_number != '' && needs.resolve.outputs.trusted != 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # Required reviewers protect the Cloudflare credentials when the PR author
     # does not have write access and the deployment executes pull-request code.
     environment: docs-preview
@@ -236,7 +236,7 @@ jobs:
     name: Deploy preview (trusted author)
     needs: resolve
     if: needs.resolve.outputs.pull_request_number != '' && needs.resolve.outputs.trusted == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # A write-level PR author is trusted to run pull-request code with the
     # repository's Cloudflare credentials, so no reviewer gate is needed.
     steps:
