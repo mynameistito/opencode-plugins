@@ -35,6 +35,7 @@ const run = (command, args, cwd = rootDirectory) => {
 };
 
 const vitestCli = path.join(rootDirectory, "node_modules/vitest/vitest.mjs");
+const coverageScript = path.join(rootDirectory, "scripts/check-coverage.ts");
 const runPackageCli = (script, packagePath) => {
   const [command, ...args] = script.split(/\s+/u);
   const manifestPath = [
@@ -73,11 +74,20 @@ for (const packageDirectory of packageDirectories) {
   if (manifest.scripts?.test) {
     console.log(`\n==> ${packageDirectory} test (Node)`);
     if (existsSync(path.join(packagePath, "vitest.config.ts"))) {
+      const coverageThreshold = manifest.scripts.test.match(
+        /check-coverage\.ts\s+coverage\/lcov\.info\s+(?<threshold>\S+)/u
+      )?.groups?.threshold;
+      if (!coverageThreshold) {
+        throw new Error(
+          `Could not resolve coverage threshold for ${packageDirectory}.`
+        );
+      }
       const result = spawnSync(
         process.execPath,
         [
           vitestCli,
           "run",
+          "--coverage",
           "--config",
           path.join(packagePath, "vitest.config.ts"),
         ],
@@ -93,6 +103,15 @@ for (const packageDirectory of packageDirectories) {
       if (result.status !== 0) {
         process.exit(result.status ?? 1);
       }
+      run(
+        "bun",
+        [
+          coverageScript,
+          path.join(packagePath, "coverage/lcov.info"),
+          coverageThreshold,
+        ],
+        packagePath
+      );
     } else {
       runPackageCli(manifest.scripts.test, packagePath);
     }
