@@ -21,6 +21,7 @@ const packageDirectories = ["packages", "apps"]
   })
   .toSorted();
 
+let hasFailedTask = false;
 const run = (command, args, cwd = rootDirectory) => {
   const result = spawnSync(command, args, {
     cwd,
@@ -30,7 +31,7 @@ const run = (command, args, cwd = rootDirectory) => {
     throw result.error;
   }
   if (result.status !== 0) {
-    process.exit(result.status ?? 1);
+    hasFailedTask = true;
   }
 };
 
@@ -100,20 +101,25 @@ for (const packageDirectory of packageDirectories) {
       if (result.error) {
         throw result.error;
       }
-      if (result.status !== 0) {
-        process.exit(result.status ?? 1);
+      if (result.status === 0) {
+        run(
+          "bun",
+          [
+            coverageScript,
+            path.join(packagePath, "coverage/lcov.info"),
+            coverageThreshold,
+          ],
+          packagePath
+        );
+      } else {
+        hasFailedTask = true;
       }
-      run(
-        "bun",
-        [
-          coverageScript,
-          path.join(packagePath, "coverage/lcov.info"),
-          coverageThreshold,
-        ],
-        packagePath
-      );
     } else {
       runPackageCli(manifest.scripts.test, packagePath);
     }
   }
+}
+
+if (hasFailedTask) {
+  process.exitCode = 1;
 }
