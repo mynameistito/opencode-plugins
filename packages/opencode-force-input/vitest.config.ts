@@ -3,6 +3,8 @@ import { fileURLToPath } from "node:url";
 import solid from "vite-plugin-solid";
 import { defineConfig } from "vitest/config";
 
+const runtimeConditions = process.env.NODE_COMPAT === "true" ? [] : ["bun"];
+
 export default defineConfig({
   plugins: [
     solid({
@@ -15,12 +17,12 @@ export default defineConfig({
     alias: {
       "@": fileURLToPath(new URL("src", import.meta.url)),
     },
-    conditions: ["bun"],
+    conditions: runtimeConditions,
     dedupe: ["solid-js"],
   },
   ssr: {
     resolve: {
-      conditions: ["bun"],
+      conditions: runtimeConditions,
     },
   },
   test: {
