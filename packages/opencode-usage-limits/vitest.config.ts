@@ -3,7 +3,8 @@ import { fileURLToPath } from "node:url";
 import solid from "vite-plugin-solid";
 import { defineConfig } from "vitest/config";
 
-const runtimeConditions = process.env.NODE_COMPAT === "true" ? [] : ["bun"];
+const runtimeConditions =
+  process.env.NODE_COMPAT === "true" ? undefined : ["bun"];
 
 export default defineConfig({
   plugins: [

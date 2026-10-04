@@ -38,6 +38,9 @@ const run = (command, args, cwd = rootDirectory) => {
 const vitestCli = path.join(rootDirectory, "node_modules/vitest/vitest.mjs");
 const coverageScript = path.join(rootDirectory, "scripts/check-coverage.ts");
 const runPackageCli = (script, packagePath) => {
+  if (/[\n\r"'`;&|<>]/u.test(script)) {
+    throw new Error(`Unsupported shell syntax in package script: ${script}`);
+  }
   const [command, ...args] = script.split(/\s+/u);
   const manifestPath = [
     path.join(packagePath, nodeModulesDirectory, command, packageManifestFile),
@@ -52,7 +55,7 @@ const runPackageCli = (script, packagePath) => {
     throw new Error(`Could not resolve package manifest for ${command}.`);
   }
   const cliManifest = JSON.parse(readFileSync(manifestPath, "utf-8"));
-  const bin = cliManifest.bin[command];
+  const bin = cliManifest.bin?.[command] ?? cliManifest.bin;
   if (!bin) {
     throw new Error(`Could not resolve executable for ${command}.`);
   }
@@ -118,6 +121,19 @@ for (const packageDirectory of packageDirectories) {
       runPackageCli(manifest.scripts.test, packagePath);
     }
   }
+}
+
+console.log("\n==> scripts/__tests__ (Node)");
+const rootTestResult = spawnSync(
+  process.execPath,
+  [vitestCli, "run", "scripts/__tests__"],
+  { cwd: rootDirectory, stdio: "inherit" }
+);
+if (rootTestResult.error) {
+  throw rootTestResult.error;
+}
+if (rootTestResult.status !== 0) {
+  hasFailedTask = true;
 }
 
 if (hasFailedTask) {
