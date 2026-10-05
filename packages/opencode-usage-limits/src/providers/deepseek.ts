@@ -119,6 +119,13 @@ const parseDeepSeekPayload = (value: JsonObject): DeepSeekPayload | null => {
   return { balances, isAvailable: value.is_available };
 };
 
+const deepSeekBalanceUrl = (baseUrl: string): string => {
+  const url = new URL(baseUrl);
+  url.pathname = `${url.pathname.replace(/\/$/u, "")}${DEEPSEEK_BALANCE_PATH}`;
+  url.hash = "";
+  return url.toString();
+};
+
 const balanceWindow = (balance: DeepSeekBalanceInfo): UsageWindow => ({
   kind: "credits",
   label: balance.currency,
@@ -168,7 +175,7 @@ const fetchDeepSeekBalanceUsageEffect = (
       method: "GET",
       providerID: PROVIDER_ID,
       timeoutMs,
-      url: `${baseUrl}${DEEPSEEK_BALANCE_PATH}`,
+      url: deepSeekBalanceUrl(baseUrl),
     });
     const parsedPayload = isRecord(payload)
       ? parseDeepSeekPayload(payload)

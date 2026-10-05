@@ -311,4 +311,22 @@ describe("DeepSeek provider", () => {
       { headers: { Authorization: "Bearer explicit-key" } },
     ]);
   });
+
+  it("appends the balance path before query and fragment components", async () => {
+    const fetchMock = installFetchMock(response([balance()]));
+
+    await fetchDeepSeekBalanceUsage(
+      {
+        apiKey: "explicit-key",
+        baseUrl: "https://deepseek.example.test/v1?tenant=example#balance",
+      },
+      {},
+      1000
+    );
+
+    expect(fetchMock.mock.calls[0]).toMatchObject([
+      "https://deepseek.example.test/v1/user/balance?tenant=example",
+      { headers: { Authorization: "Bearer explicit-key" } },
+    ]);
+  });
 });
