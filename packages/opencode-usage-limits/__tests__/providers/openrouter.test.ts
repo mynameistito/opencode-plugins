@@ -239,6 +239,32 @@ describe("OpenRouter provider", () => {
     ]);
   });
 
+  it("uses an explicitly configured authPath credential on custom origins", async () => {
+    const authPath = path.join(
+      tmpdir(),
+      `oc-usage-limits-openrouter-custom-${crypto.randomUUID()}.json`
+    );
+    await writeFile(authPath, JSON.stringify({ key: "auth-file-key" }));
+    try {
+      const fetchMock = installFetchMock(
+        keyResponse({ limit: 100, limit_remaining: 74.5 })
+      );
+
+      await fetchOpenRouterUsage(
+        { authPath, baseUrl: "https://router.example.test" },
+        {},
+        1000
+      );
+
+      expect(fetchMock.mock.calls[0]).toMatchObject([
+        "https://router.example.test/api/v1/key",
+        { headers: { Authorization: "Bearer auth-file-key" } },
+      ]);
+    } finally {
+      await rm(authPath, { force: true });
+    }
+  });
+
   it("classifies HTTP and malformed-envelope failures", async () => {
     installFetchMock(
       Response.json({ message: "unauthorized" }, { status: 401 })
