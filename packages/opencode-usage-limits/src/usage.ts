@@ -17,10 +17,13 @@ export type Percentage = typeof PercentageSchema.Type;
 /** A finite, non-negative quota count. */
 export type QuotaCount = typeof QuotaCountSchema.Type;
 
+/** A finite signed amount, used when a provider reports a negative balance. */
+export type BalanceAmount = typeof BalanceAmountSchema.Type;
+
 /** A remaining balance without a known total or usage percentage. */
 export interface BalanceQuota {
   readonly _tag: "Balance";
-  readonly remaining: QuotaCount;
+  readonly remaining: BalanceAmount;
   readonly unit: string;
 }
 
@@ -54,12 +57,14 @@ const PercentageSchema = Schema.Finite.check(
 const QuotaCountSchema = Schema.Finite.check(
   Schema.isGreaterThanOrEqualTo(0)
 ).pipe(Schema.brand("QuotaCount"));
+const BalanceAmountSchema = Schema.Finite.pipe(Schema.brand("BalanceAmount"));
 
 /** Schema for valid absolute reset instants. */
 const ResetInstantSchema = Schema.Date;
 
 const parsePercentage = Schema.decodeUnknownResult(PercentageSchema);
 const parseQuotaCount = Schema.decodeUnknownResult(QuotaCountSchema);
+const parseBalanceAmount = Schema.decodeUnknownResult(BalanceAmountSchema);
 const parseResetInstant = Schema.decodeUnknownResult(ResetInstantSchema);
 
 /**
@@ -81,6 +86,12 @@ export const parseUsagePercentage = (
 export const parseUsageBalance = (
   value: JsonValue
 ): Result.Result<QuotaCount, Schema.SchemaError> => parseQuotaCount(value);
+
+/** Decodes a finite signed amount reported as an authoritative balance. */
+export const parseUsageBalanceAmount = (
+  value: JsonValue
+): Result.Result<BalanceAmount, Schema.SchemaError> =>
+  parseBalanceAmount(value);
 
 /**
  * Decodes an unknown value as a finite, non-negative quota count.
@@ -176,16 +187,16 @@ export const countQuota = (
 /**
  * Creates a remaining-balance quota without inventing a total or percentage.
  *
- * @param remaining - Validated amount still available.
+ * @param remaining - Validated finite amount still available, possibly negative.
  * @param unit - Provider-reported unit or currency.
  * @returns A balance quota preserving the amount and unit.
  */
 export const balanceQuota = (
-  remaining: QuotaCount,
+  remaining: BalanceAmount | QuotaCount,
   unit: string
 ): BalanceQuota => ({
   _tag: "Balance",
-  remaining: QuotaCountSchema.make(remaining),
+  remaining: BalanceAmountSchema.make(remaining),
   unit: Schema.String.make(unit),
 });
 

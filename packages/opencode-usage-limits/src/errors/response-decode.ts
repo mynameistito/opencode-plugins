@@ -25,6 +25,8 @@ export class ProviderResponseDecodeError extends schemaTaggedError<ProviderRespo
       commandcode: "Command Code",
       deepseek: "DeepSeek",
       minimax: "MiniMax",
+      moonshotai: "Moonshot AI",
+      "moonshotai-cn": "Moonshot AI CN",
       "novita-ai": "Novita AI",
       "opencode-go": "OpenCode GO",
       openrouter: "OpenRouter",

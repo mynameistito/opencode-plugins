@@ -47,6 +47,8 @@ describe("provider manifest", () => {
     expect([
       ["openai", pluginProviderForOpenCode("openai")],
       ["deepseek", pluginProviderForOpenCode("deepseek")],
+      ["moonshotai", pluginProviderForOpenCode("moonshotai")],
+      ["moonshotai-cn", pluginProviderForOpenCode("moonshotai-cn")],
       ["novita-ai", pluginProviderForOpenCode("novita-ai")],
       ["openrouter", pluginProviderForOpenCode("openrouter")],
       ["zai-coding-plan", pluginProviderForOpenCode("zai-coding-plan")],
@@ -63,6 +65,8 @@ describe("provider manifest", () => {
     ]).toStrictEqual([
       ["openai", "codex"],
       ["deepseek", "deepseek"],
+      ["moonshotai", "moonshotai"],
+      ["moonshotai-cn", "moonshotai-cn"],
       ["novita-ai", "novita-ai"],
       ["openrouter", "openrouter"],
       ["zai-coding-plan", "zai"],

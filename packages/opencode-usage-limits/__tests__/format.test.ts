@@ -19,6 +19,7 @@ import {
   balanceQuota,
   countQuota,
   parseUsageBalance,
+  parseUsageBalanceAmount,
   parseUsageCount,
   parseUsagePercentage,
   percentageQuota,
@@ -116,6 +117,24 @@ describe("format helpers", () => {
     expect(windowMainText(usageWindow({ label: "USD balance", quota }))).toBe(
       "USD balance: $<0.01 remaining"
     );
+  });
+
+  it("renders zero and negative authoritative currency balances accurately", () => {
+    const negative = balanceQuota(
+      Result.getOrThrow(parseUsageBalanceAmount(-0.004)),
+      "USD"
+    );
+    const debt = balanceQuota(
+      Result.getOrThrow(parseUsageBalanceAmount(-12.5)),
+      "CNY"
+    );
+
+    expect(
+      windowMainText(usageWindow({ label: "USD balance", quota: negative }))
+    ).toBe("USD balance: -$<0.01 remaining");
+    expect(
+      windowMainText(usageWindow({ label: "CNY balance", quota: debt }))
+    ).toBe("CNY balance: -¥12.50 remaining");
   });
 
   it.each([

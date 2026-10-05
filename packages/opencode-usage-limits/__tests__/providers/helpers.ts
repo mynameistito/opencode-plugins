@@ -21,5 +21,7 @@ export const resetFetchMock = () => {
   delete process.env.OC_USAGE_LIMITS_MINIMAX_KEY;
   delete process.env.DEEPSEEK_API_KEY;
   delete process.env.OPENROUTER_API_KEY;
+  delete process.env.MOONSHOT_API_KEY;
+  delete process.env.MOONSHOT_API_KEY_CN;
   vi.restoreAllMocks();
 };

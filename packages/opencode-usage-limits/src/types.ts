@@ -28,6 +28,8 @@ export type ProviderID =
   | "zai"
   | "synthetic"
   | "minimax"
+  | "moonshotai"
+  | "moonshotai-cn"
   | "qwen"
   | "opencode-go"
   | "commandcode"
@@ -193,6 +195,16 @@ export interface DeepSeekProviderConfig extends CommonProviderConfig {
   readonly baseUrl?: string;
 }
 
+/** Moonshot/Kimi API balance provider configuration. */
+export interface MoonshotAiProviderConfig extends CommonProviderConfig {
+  /** API credential override. */
+  readonly apiKey?: Credential;
+  /** Optional path to an auth file; supports a leading `~`. */
+  readonly authPath?: string;
+  /** HTTPS API base URL override. */
+  readonly baseUrl?: string;
+}
+
 /** Novita AI balance provider configuration. */
 export interface NovitaAiProviderConfig extends CommonProviderConfig {
   /** Novita AI API credential override. */
@@ -252,6 +264,10 @@ export interface ProviderConfigMap {
   readonly deepseek: DeepSeekProviderConfig;
   /** MiniMax Token Plan settings. */
   readonly minimax: MiniMaxProviderConfig;
+  /** Global Moonshot/Kimi API balance settings. */
+  readonly moonshotai: MoonshotAiProviderConfig;
+  /** China Moonshot/Kimi API balance settings. */
+  readonly "moonshotai-cn": MoonshotAiProviderConfig;
   /** Novita AI balance settings. */
   readonly "novita-ai": NovitaAiProviderConfig;
   /** OpenRouter key spending-limit settings. */
@@ -299,6 +315,10 @@ export interface OpenCodeAuth {
   openai?: OpenCodeOpenAIAuthEntry | null;
   /** DeepSeek credentials stored under the provider's catalog ID. */
   deepseek?: OpenCodeAuthEntry | null;
+  /** Global Moonshot/Kimi API credentials. */
+  moonshotai?: OpenCodeAuthEntry | null;
+  /** China Moonshot/Kimi API credentials. */
+  "moonshotai-cn"?: OpenCodeAuthEntry | null;
   /** ZAI Coding Plan credentials stored under OpenCode's provider ID. */
   "zai-coding-plan"?: OpenCodeAuthEntry | null;
   /** ZAI credentials stored under the plugin's normalized provider ID. */

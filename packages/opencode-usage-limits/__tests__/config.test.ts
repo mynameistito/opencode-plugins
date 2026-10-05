@@ -52,6 +52,7 @@ interface PublishedSchema {
     commonDisplayFields: PublishedProviderDefinition;
     deepSeekProvider: PublishedProviderDefinition;
     minimaxProvider: PublishedProviderDefinition;
+    moonshotAiProvider: PublishedProviderDefinition;
     novitaAiProvider: PublishedProviderDefinition;
     openRouterProvider: PublishedProviderDefinition;
     openCodeGoProvider: PublishedProviderDefinition;
@@ -67,6 +68,8 @@ interface PublishedSchema {
         commandcode: { $ref: "#/$defs/commandCodeProvider" };
         deepseek: { $ref: "#/$defs/deepSeekProvider" };
         minimax: { $ref: "#/$defs/minimaxProvider" };
+        moonshotai: { $ref: "#/$defs/moonshotAiProvider" };
+        "moonshotai-cn": { $ref: "#/$defs/moonshotAiProvider" };
         "novita-ai": { $ref: "#/$defs/novitaAiProvider" };
         openrouter: { $ref: "#/$defs/openRouterProvider" };
         "opencode-go": { $ref: "#/$defs/openCodeGoProvider" };
@@ -103,6 +106,9 @@ describe("configuration parsing", () => {
       minimax: Object.keys(
         publishedSchema.$defs.minimaxProvider.properties
       ).toSorted(),
+      moonshotai: Object.keys(
+        publishedSchema.$defs.moonshotAiProvider.properties
+      ).toSorted(),
       "novita-ai": Object.keys(
         publishedSchema.$defs.novitaAiProvider.properties
       ).toSorted(),
@@ -127,6 +133,8 @@ describe("configuration parsing", () => {
       commandcode: { $ref: "#/$defs/commandCodeProvider" },
       deepseek: { $ref: "#/$defs/deepSeekProvider" },
       minimax: { $ref: "#/$defs/minimaxProvider" },
+      moonshotai: { $ref: "#/$defs/moonshotAiProvider" },
+      "moonshotai-cn": { $ref: "#/$defs/moonshotAiProvider" },
       "novita-ai": { $ref: "#/$defs/novitaAiProvider" },
       "opencode-go": { $ref: "#/$defs/openCodeGoProvider" },
       openrouter: { $ref: "#/$defs/openRouterProvider" },
@@ -158,6 +166,7 @@ describe("configuration parsing", () => {
       providerFields["novita-ai"],
       providerFields.openrouter,
       providerFields.minimax,
+      providerFields.moonshotai,
       providerFields["opencode-go"],
       providerFields.synthetic,
     ];
@@ -216,6 +225,16 @@ describe("configuration parsing", () => {
           baseUrl: "https://api.deepseek.com",
           enabled: true,
           label: "DS",
+        },
+        moonshotai: {
+          apiKey: "moonshot-global-secret",
+          baseUrl: "https://api.moonshot.ai",
+          enabled: true,
+        },
+        "moonshotai-cn": {
+          apiKey: "moonshot-cn-secret",
+          baseUrl: "https://api.moonshot.cn",
+          enabled: true,
         },
         "novita-ai": {
           apiKey: "novita-secret",
@@ -557,6 +576,8 @@ describe("configuration loading", () => {
       minimax: { key: "minimax" },
       "minimax-coding-plan": { apiKey: "coding" },
       "minimax-token-plan": { key: "token-plan" },
+      moonshotai: { key: "moonshot-global" },
+      "moonshotai-cn": { apiKey: "moonshot-cn" },
       "novita-ai": { apiKey: "novita-ai" },
       openai: { accountId: "account" },
       opencode: { key: "opencode" },
@@ -576,6 +597,8 @@ describe("configuration loading", () => {
       credentialValue(auth["opencode-go"]?.key),
       credentialValue(auth.commandcode?.key),
       credentialValue(auth.deepseek?.key),
+      credentialValue(auth.moonshotai?.key),
+      credentialValue(auth["moonshotai-cn"]?.apiKey),
       credentialValue(auth["novita-ai"]?.apiKey),
       credentialValue(auth.openrouter?.key),
       credentialValue(auth.synthetic?.apiKey),
@@ -590,6 +613,8 @@ describe("configuration loading", () => {
       "go",
       "commandcode",
       "deepseek",
+      "moonshot-global",
+      "moonshot-cn",
       "novita-ai",
       "openrouter",
       "synthetic",

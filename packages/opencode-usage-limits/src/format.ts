@@ -66,11 +66,14 @@ const CURRENCY_SYMBOLS = new Map([
  */
 const formatBalance = (quota: BalanceQuota): string => {
   const symbol = CURRENCY_SYMBOLS.get(quota.unit.toUpperCase());
-  const rounded = symbol ? quota.remaining.toFixed(2) : "";
+  const sign = quota.remaining < 0 ? "-" : "";
+  const rounded = symbol ? Math.abs(quota.remaining).toFixed(2) : "";
   const displayAmount =
-    symbol && quota.remaining > 0 && Number(rounded) === 0 ? "<0.01" : rounded;
+    symbol && quota.remaining !== 0 && Number(rounded) === 0
+      ? "<0.01"
+      : rounded;
   const amount = symbol
-    ? `${symbol}${displayAmount}`
+    ? `${sign}${symbol}${displayAmount}`
     : `${quota.remaining} ${quota.unit}`;
   return `${amount} remaining`;
 };

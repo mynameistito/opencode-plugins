@@ -96,6 +96,8 @@ const authEntryNames = new Set([
   "minimax",
   "minimax-coding-plan",
   "minimax-token-plan",
+  "moonshotai",
+  "moonshotai-cn",
   "novita-ai",
   "openai",
   "opencode",
