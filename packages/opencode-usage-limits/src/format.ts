@@ -75,10 +75,25 @@ export const formatBalance = (quota: BalanceQuota): string => {
   return `${amount} remaining`;
 };
 
-const quotaMainText = (quota: UsageQuota): string =>
-  quota._tag === "Balance"
-    ? formatBalance(quota)
-    : formatPercent(quotaUsedPercent(quota));
+/** Formats an explicitly-unitized count quota without losing its unit. */
+export const formatCountQuota = (
+  quota: Extract<UsageQuota, { _tag: "Count" }>
+): string => {
+  const symbol = CURRENCY_SYMBOLS.get(quota.unit?.toUpperCase() ?? "");
+  const amount = (value: number): string =>
+    symbol ? `${symbol}${value.toFixed(2)}` : `${value} ${quota.unit}`;
+  return `${amount(quota.current)} / ${amount(quota.total)} used`;
+};
+
+const quotaMainText = (quota: UsageQuota): string => {
+  if (quota._tag === "Balance") {
+    return formatBalance(quota);
+  }
+  if (quota._tag === "Count" && quota.unit) {
+    return formatCountQuota(quota);
+  }
+  return formatPercent(quotaUsedPercent(quota));
+};
 
 /**
  * Builds the primary line of text for a usage window in the sidebar panel.

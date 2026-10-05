@@ -39,6 +39,7 @@ export type UsageQuota =
       readonly current: QuotaCount;
       readonly remainingPercent: Percentage;
       readonly total: QuotaCount;
+      readonly unit?: string;
       readonly usedPercent: Percentage;
     }
   | BalanceQuota
@@ -151,7 +152,8 @@ export const percentageQuota = (usedPercent: Percentage): UsageQuota => {
 export const countQuota = (
   current: QuotaCount,
   total: QuotaCount,
-  usedPercent: Percentage
+  usedPercent: Percentage,
+  unit?: string
 ): UsageQuota => {
   const parsedCurrent = QuotaCountSchema.make(current);
   const parsedTotal = QuotaCountSchema.make(total);
@@ -159,13 +161,16 @@ export const countQuota = (
   if (parsedCurrent > parsedTotal) {
     throw new RangeError("quota current count cannot exceed total count");
   }
-  return {
+  const quota = {
     _tag: "Count",
     current: parsedCurrent,
     remainingPercent: PercentageSchema.make(100 - parsedUsed),
     total: parsedTotal,
     usedPercent: parsedUsed,
-  };
+  } as const;
+  return unit === undefined
+    ? quota
+    : { ...quota, unit: Schema.String.make(unit) };
 };
 
 /**

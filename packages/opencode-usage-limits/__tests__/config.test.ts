@@ -53,6 +53,7 @@ interface PublishedSchema {
     deepSeekProvider: PublishedProviderDefinition;
     minimaxProvider: PublishedProviderDefinition;
     novitaAiProvider: PublishedProviderDefinition;
+    openRouterProvider: PublishedProviderDefinition;
     openCodeGoProvider: PublishedProviderDefinition;
     qwenProvider: PublishedProviderDefinition;
     syntheticProvider: PublishedProviderDefinition;
@@ -67,6 +68,7 @@ interface PublishedSchema {
         deepseek: { $ref: "#/$defs/deepSeekProvider" };
         minimax: { $ref: "#/$defs/minimaxProvider" };
         "novita-ai": { $ref: "#/$defs/novitaAiProvider" };
+        openrouter: { $ref: "#/$defs/openRouterProvider" };
         "opencode-go": { $ref: "#/$defs/openCodeGoProvider" };
         qwen: { $ref: "#/$defs/qwenProvider" };
         synthetic: { $ref: "#/$defs/syntheticProvider" };
@@ -107,6 +109,9 @@ describe("configuration parsing", () => {
       "opencode-go": Object.keys(
         publishedSchema.$defs.openCodeGoProvider.properties
       ).toSorted(),
+      openrouter: Object.keys(
+        publishedSchema.$defs.openRouterProvider.properties
+      ).toSorted(),
       qwen: Object.keys(
         publishedSchema.$defs.qwenProvider.properties
       ).toSorted(),
@@ -124,6 +129,7 @@ describe("configuration parsing", () => {
       minimax: { $ref: "#/$defs/minimaxProvider" },
       "novita-ai": { $ref: "#/$defs/novitaAiProvider" },
       "opencode-go": { $ref: "#/$defs/openCodeGoProvider" },
+      openrouter: { $ref: "#/$defs/openRouterProvider" },
       qwen: { $ref: "#/$defs/qwenProvider" },
       synthetic: { $ref: "#/$defs/syntheticProvider" },
       zai: { $ref: "#/$defs/zaiProvider" },
@@ -150,6 +156,7 @@ describe("configuration parsing", () => {
       providerFields.commandcode,
       providerFields.deepseek,
       providerFields["novita-ai"],
+      providerFields.openrouter,
       providerFields.minimax,
       providerFields["opencode-go"],
       providerFields.synthetic,
@@ -217,6 +224,13 @@ describe("configuration parsing", () => {
           enabled: true,
           label: "Novita",
         },
+        openrouter: {
+          apiKey: "openrouter-secret",
+          authPath: "~/.config/opencode/auth.json",
+          baseUrl: "https://openrouter.ai",
+          enabled: true,
+          label: "OR",
+        },
       },
     });
 
@@ -225,13 +239,15 @@ describe("configuration parsing", () => {
     const commandCodeApiKey = success?.providers.commandcode?.apiKey;
     const deepSeekApiKey = success?.providers.deepseek?.apiKey;
     const novitaAiApiKey = success?.providers["novita-ai"]?.apiKey;
+    const openRouterApiKey = success?.providers.openrouter?.apiKey;
     expect(Result.isSuccess(result)).toBeTruthy();
     expect([
       Redacted.isRedacted(apiKey),
       Redacted.isRedacted(commandCodeApiKey),
       Redacted.isRedacted(deepSeekApiKey),
       Redacted.isRedacted(novitaAiApiKey),
-    ]).toStrictEqual([true, true, true, true]);
+      Redacted.isRedacted(openRouterApiKey),
+    ]).toStrictEqual([true, true, true, true, true]);
     expect(String(apiKey)).not.toContain("do-not-log");
     expect(success?.providers).toMatchObject({
       codex: {
@@ -262,6 +278,12 @@ describe("configuration parsing", () => {
         baseUrl: "https://api.novita.ai",
         enabled: true,
         label: "Novita",
+      },
+      openrouter: {
+        authPath: "~/.config/opencode/auth.json",
+        baseUrl: "https://openrouter.ai",
+        enabled: true,
+        label: "OR",
       },
     });
   });
@@ -539,6 +561,7 @@ describe("configuration loading", () => {
       openai: { accountId: "account" },
       opencode: { key: "opencode" },
       "opencode-go": { key: "go" },
+      openrouter: { key: "openrouter" },
       synthetic: { apiKey: "synthetic" },
       zai: { key: "zai" },
       "zai-coding-plan": { key: "zai-plan" },
@@ -554,6 +577,7 @@ describe("configuration loading", () => {
       credentialValue(auth.commandcode?.key),
       credentialValue(auth.deepseek?.key),
       credentialValue(auth["novita-ai"]?.apiKey),
+      credentialValue(auth.openrouter?.key),
       credentialValue(auth.synthetic?.apiKey),
       credentialValue(auth.zai?.key),
       credentialValue(auth["zai-coding-plan"]?.key),
@@ -567,6 +591,7 @@ describe("configuration loading", () => {
       "commandcode",
       "deepseek",
       "novita-ai",
+      "openrouter",
       "synthetic",
       "zai",
       "zai-plan",

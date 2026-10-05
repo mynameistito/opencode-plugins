@@ -6,6 +6,7 @@ import type { ConfigDiagnostic } from "@/config.ts";
 import {
   bottomWindowMainText,
   formatBalance,
+  formatCountQuota,
   formatPercent,
   formatTimestamp,
   percentBar,
@@ -89,6 +90,19 @@ const dotColor = (usedPercent: number | null, theme: ThemeColors): RGBA => {
   return theme.success;
 };
 
+const quotaTextForWindow = (
+  window: UsageWindow,
+  usedPercent: number | null
+) => {
+  if (window.quota._tag === "Balance") {
+    return formatBalance(window.quota);
+  }
+  if (window.quota._tag === "Count" && window.quota.unit) {
+    return formatCountQuota(window.quota);
+  }
+  return `${formatPercent(usedPercent)} used`;
+};
+
 const UsageWindowRows = (props: {
   showBar: boolean;
   theme: ThemeColors;
@@ -98,10 +112,7 @@ const UsageWindowRows = (props: {
     {(window) => {
       const usedPercent = quotaUsedPercent(window.quota);
       const showBar = props.showBar && window.quota._tag !== "Balance";
-      const quotaText =
-        window.quota._tag === "Balance"
-          ? formatBalance(window.quota)
-          : `${formatPercent(usedPercent)} used`;
+      const quotaText = quotaTextForWindow(window, usedPercent);
       return (
         <box flexDirection="column">
           <text>

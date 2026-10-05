@@ -68,6 +68,24 @@ describe("format helpers", () => {
     expect(bottomWindowMainText(window)).toBe("USD balance $12.34 remaining");
   });
 
+  it("formats unitized USD count quotas as spending amounts", () => {
+    const quota = countQuota(
+      Result.getOrThrow(parseUsageCount(25.5)),
+      Result.getOrThrow(parseUsageCount(100)),
+      Result.getOrThrow(parseUsagePercentage(25.5)),
+      "USD"
+    );
+
+    expect(
+      windowMainText(usageWindow({ label: "spend", quota, resetsAt: null }))
+    ).toBe("spend: $25.50 / $100.00 used");
+    expect(
+      bottomWindowMainText(
+        usageWindow({ label: "spend", quota, resetsAt: null })
+      )
+    ).toBe("spend $25.50 / $100.00 used");
+  });
+
   it("formats zero balances and preserves generic units", () => {
     const zero = balanceQuota(Result.getOrThrow(parseUsageBalance(0)), "CNY");
     const credits = balanceQuota(

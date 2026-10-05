@@ -47,6 +47,16 @@
       "apiKey": "{env:NOVITA_API_KEY}", // Optional fallback when OpenCode auth has no Novita AI key
       "baseUrl": "https://api.novita.ai",
     },
+    "openrouter": {
+      "enabled": false,
+      "label": "OpenRouter",
+      "showSidebarBar": true,
+      "showFooterBar": true,
+      "sidebarWindow": "all",
+      "footerWindow": "auto",
+      "apiKey": "{env:OPENROUTER_API_KEY}", // Optional explicit credential; normally OpenCode auth is discovered
+      "baseUrl": "https://openrouter.ai",
+    },
     "zai": {
       "enabled": true,
       "label": "ZAI",
