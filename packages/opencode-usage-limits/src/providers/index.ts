@@ -1,6 +1,7 @@
 import { alibabaTokenPlanProvider } from "@/providers/alibaba-token-plan.ts";
 import { codexProvider } from "@/providers/codex.ts";
 import { commandCodeProvider } from "@/providers/commandcode.ts";
+import { deepSeekProvider } from "@/providers/deepseek.ts";
 import type { ProviderDefinition } from "@/providers/definition.ts";
 import { minimaxProvider } from "@/providers/minimax.ts";
 import { openCodeGoProvider } from "@/providers/opencode-go.ts";
@@ -18,6 +19,7 @@ const PROVIDER_MANIFEST: ProviderRegistry = {
   "alibaba-token-plan": alibabaTokenPlanProvider,
   codex: codexProvider,
   commandcode: commandCodeProvider,
+  deepseek: deepSeekProvider,
   minimax: minimaxProvider,
   "opencode-go": openCodeGoProvider,
   qwen: qwenProvider,

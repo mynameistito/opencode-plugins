@@ -50,6 +50,7 @@ interface PublishedSchema {
     codexProvider: PublishedProviderDefinition;
     commandCodeProvider: PublishedProviderDefinition;
     commonDisplayFields: PublishedProviderDefinition;
+    deepSeekProvider: PublishedProviderDefinition;
     minimaxProvider: PublishedProviderDefinition;
     openCodeGoProvider: PublishedProviderDefinition;
     qwenProvider: PublishedProviderDefinition;
@@ -62,6 +63,7 @@ interface PublishedSchema {
         "alibaba-token-plan": { $ref: "#/$defs/alibabaTokenPlanProvider" };
         codex: { $ref: "#/$defs/codexProvider" };
         commandcode: { $ref: "#/$defs/commandCodeProvider" };
+        deepseek: { $ref: "#/$defs/deepSeekProvider" };
         minimax: { $ref: "#/$defs/minimaxProvider" };
         "opencode-go": { $ref: "#/$defs/openCodeGoProvider" };
         qwen: { $ref: "#/$defs/qwenProvider" };
@@ -91,6 +93,9 @@ describe("configuration parsing", () => {
       commandcode: Object.keys(
         publishedSchema.$defs.commandCodeProvider.properties
       ).toSorted(),
+      deepseek: Object.keys(
+        publishedSchema.$defs.deepSeekProvider.properties
+      ).toSorted(),
       minimax: Object.keys(
         publishedSchema.$defs.minimaxProvider.properties
       ).toSorted(),
@@ -110,6 +115,7 @@ describe("configuration parsing", () => {
       "alibaba-token-plan": { $ref: "#/$defs/alibabaTokenPlanProvider" },
       codex: { $ref: "#/$defs/codexProvider" },
       commandcode: { $ref: "#/$defs/commandCodeProvider" },
+      deepseek: { $ref: "#/$defs/deepSeekProvider" },
       minimax: { $ref: "#/$defs/minimaxProvider" },
       "opencode-go": { $ref: "#/$defs/openCodeGoProvider" },
       qwen: { $ref: "#/$defs/qwenProvider" },
@@ -136,6 +142,7 @@ describe("configuration parsing", () => {
     );
     const apiKeyProviders = [
       providerFields.commandcode,
+      providerFields.deepseek,
       providerFields.minimax,
       providerFields["opencode-go"],
       providerFields.synthetic,
@@ -189,17 +196,25 @@ describe("configuration parsing", () => {
           enabled: true,
           label: "CC",
         },
+        deepseek: {
+          apiKey: "deepseek-secret",
+          authPath: "~/.config/opencode/auth.json",
+          baseUrl: "https://api.deepseek.com",
+          enabled: true,
+          label: "DS",
+        },
       },
     });
 
     const success = Result.isSuccess(result) ? result.success : undefined;
     const apiKey = success?.providers.codex?.apiKey;
     const commandCodeApiKey = success?.providers.commandcode?.apiKey;
-    expect(Result.isSuccess(result)).toBeTruthy();
+    const deepSeekApiKey = success?.providers.deepseek?.apiKey;
     expect([
       Redacted.isRedacted(apiKey),
       Redacted.isRedacted(commandCodeApiKey),
-    ]).toStrictEqual([true, true]);
+      Redacted.isRedacted(deepSeekApiKey),
+    ]).toStrictEqual([true, true, true]);
     expect(String(apiKey)).not.toContain("do-not-log");
     expect(success?.providers.codex).toMatchObject({
       authPath: "~/.codex/auth.json",
@@ -217,6 +232,12 @@ describe("configuration parsing", () => {
       baseUrl: "https://api.commandcode.ai",
       enabled: true,
       label: "CC",
+    });
+    expect(success?.providers.deepseek).toMatchObject({
+      authPath: "~/.config/opencode/auth.json",
+      baseUrl: "https://api.deepseek.com",
+      enabled: true,
+      label: "DS",
     });
   });
 
@@ -485,6 +506,7 @@ describe("configuration loading", () => {
   it("parses every recognized auth entry and ignores non-object input", () => {
     const auth = parseOpenCodeAuth({
       commandcode: { key: "commandcode" },
+      deepseek: { key: "deepseek" },
       minimax: { key: "minimax" },
       "minimax-coding-plan": { apiKey: "coding" },
       "minimax-token-plan": { key: "token-plan" },
@@ -504,6 +526,7 @@ describe("configuration loading", () => {
       credentialValue(auth.opencode?.key),
       credentialValue(auth["opencode-go"]?.key),
       credentialValue(auth.commandcode?.key),
+      credentialValue(auth.deepseek?.key),
       credentialValue(auth.synthetic?.apiKey),
       credentialValue(auth.zai?.key),
       credentialValue(auth["zai-coding-plan"]?.key),
@@ -515,6 +538,7 @@ describe("configuration loading", () => {
       "opencode",
       "go",
       "commandcode",
+      "deepseek",
       "synthetic",
       "zai",
       "zai-plan",

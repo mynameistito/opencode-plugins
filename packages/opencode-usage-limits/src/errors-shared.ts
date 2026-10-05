@@ -6,6 +6,7 @@ export const schemaTaggedError = Schema.TaggedError;
 /** Schema for the provider identifiers accepted in structured errors. */
 export const ProviderIDSchema = Schema.Literals([
   "codex",
+  "deepseek",
   "zai",
   "synthetic",
   "minimax",
@@ -20,6 +21,7 @@ export const credentialMessages = {
   "alibaba-token-plan": "missing Bailian console login",
   codex: "missing Codex auth",
   commandcode: "missing Command Code key",
+  deepseek: "missing DeepSeek key",
   minimax: "missing MiniMax key",
   "opencode-go": "missing OpenCode GO key",
   qwen: "missing Qwen credentials",

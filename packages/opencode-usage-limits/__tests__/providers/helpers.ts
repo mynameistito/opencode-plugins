@@ -19,5 +19,6 @@ export const resetFetchMock = () => {
   delete process.env.OC_USAGE_LIMITS_ZAI_KEY;
   delete process.env.OC_USAGE_LIMITS_SYNTHETIC_KEY;
   delete process.env.OC_USAGE_LIMITS_MINIMAX_KEY;
+  delete process.env.DEEPSEEK_API_KEY;
   vi.restoreAllMocks();
 };

@@ -23,6 +23,7 @@ export class ProviderResponseDecodeError extends schemaTaggedError<ProviderRespo
       "alibaba-token-plan": "Alibaba Token Plan",
       codex: "Codex",
       commandcode: "Command Code",
+      deepseek: "DeepSeek",
       minimax: "MiniMax",
       "opencode-go": "OpenCode GO",
       qwen: "Qwen",

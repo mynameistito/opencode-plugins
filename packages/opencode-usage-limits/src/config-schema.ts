@@ -90,6 +90,14 @@ const minimaxProviderConfigSchema = Schema.Struct({
   baseUrl: Schema.optionalKey(Schema.String),
 });
 
+/** Schema for DeepSeek provider configuration. */
+const deepSeekProviderConfigSchema = Schema.Struct({
+  ...commonProviderFields,
+  apiKey: Schema.optionalKey(secret),
+  authPath: Schema.optionalKey(Schema.String),
+  baseUrl: Schema.optionalKey(Schema.String),
+});
+
 /** Schema for Qwen provider configuration. */
 const qwenProviderConfigSchema = Schema.Struct(commonProviderFields);
 
@@ -118,6 +126,7 @@ const providersSchema = Schema.Struct({
   ),
   codex: Schema.optionalKey(codexProviderConfigSchema),
   commandcode: Schema.optionalKey(commandCodeProviderConfigSchema),
+  deepseek: Schema.optionalKey(deepSeekProviderConfigSchema),
   minimax: Schema.optionalKey(minimaxProviderConfigSchema),
   "opencode-go": Schema.optionalKey(openCodeGoProviderConfigSchema),
   qwen: Schema.optionalKey(qwenProviderConfigSchema),
@@ -231,6 +240,7 @@ export const parseOpenCodeAuth = (input: JsonValue): OpenCodeAuth => {
   }
 
   const minimax = parseAuthEntry(input.minimax);
+  const deepseek = parseAuthEntry(input.deepseek);
   const minimaxCodingPlan = parseAuthEntry(input["minimax-coding-plan"]);
   const minimaxTokenPlan = parseAuthEntry(input["minimax-token-plan"]);
   const openai = parseOpenAIEntry(input.openai);
@@ -245,6 +255,9 @@ export const parseOpenCodeAuth = (input: JsonValue): OpenCodeAuth => {
   const auth: OpenCodeAuthBuilder = direct ?? {};
   if (minimax) {
     auth.minimax = minimax;
+  }
+  if (deepseek) {
+    auth.deepseek = deepseek;
   }
   if (minimaxCodingPlan) {
     auth["minimax-coding-plan"] = minimaxCodingPlan;

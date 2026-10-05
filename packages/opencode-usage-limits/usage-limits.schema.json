@@ -17,6 +17,7 @@
         "alibaba-token-plan": { "$ref": "#/$defs/alibabaTokenPlanProvider" },
         "codex": { "$ref": "#/$defs/codexProvider" },
         "commandcode": { "$ref": "#/$defs/commandCodeProvider" },
+        "deepseek": { "$ref": "#/$defs/deepSeekProvider" },
         "minimax": { "$ref": "#/$defs/minimaxProvider" },
         "opencode-go": { "$ref": "#/$defs/openCodeGoProvider" },
         "qwen": { "$ref": "#/$defs/qwenProvider" },
@@ -108,6 +109,35 @@
           "description": "Optional literal API key or {env:NAME} fallback when auth files do not contain a key."
         },
         "authorizationScheme": { "enum": ["raw", "bearer"] },
+        "baseUrl": { "type": "string" }
+      }
+    },
+    "deepSeekProvider": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "$ref": "#/$defs/commonDisplayFields/properties/enabled" },
+        "showSidebarBar": {
+          "$ref": "#/$defs/commonDisplayFields/properties/showSidebarBar"
+        },
+        "showFooterBar": {
+          "$ref": "#/$defs/commonDisplayFields/properties/showFooterBar"
+        },
+        "sidebarWindow": {
+          "$ref": "#/$defs/commonDisplayFields/properties/sidebarWindow"
+        },
+        "footerWindow": {
+          "$ref": "#/$defs/commonDisplayFields/properties/footerWindow"
+        },
+        "label": { "$ref": "#/$defs/commonDisplayFields/properties/label" },
+        "authPath": {
+          "type": "string",
+          "description": "Optional override path to a provider auth file. Omit to use auto-discovery from OpenCode auth and provider defaults."
+        },
+        "apiKey": {
+          "type": "string",
+          "description": "Optional literal API key or {env:DEEPSEEK_API_KEY} fallback when auth files do not contain a key."
+        },
         "baseUrl": { "type": "string" }
       }
     },
