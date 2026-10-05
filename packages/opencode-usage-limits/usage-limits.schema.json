@@ -19,6 +19,8 @@
         "commandcode": { "$ref": "#/$defs/commandCodeProvider" },
         "deepseek": { "$ref": "#/$defs/deepSeekProvider" },
         "minimax": { "$ref": "#/$defs/minimaxProvider" },
+        "moonshotai": { "$ref": "#/$defs/moonshotAiProvider" },
+        "moonshotai-cn": { "$ref": "#/$defs/moonshotAiProvider" },
         "novita-ai": { "$ref": "#/$defs/novitaAiProvider" },
         "openrouter": { "$ref": "#/$defs/openRouterProvider" },
         "opencode-go": { "$ref": "#/$defs/openCodeGoProvider" },
@@ -197,6 +199,32 @@
         "apiKey": {
           "type": "string",
           "description": "Optional literal API key or {env:NAME} fallback when auth files do not contain a key."
+        },
+        "baseUrl": { "type": "string" }
+      }
+    },
+    "moonshotAiProvider": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "$ref": "#/$defs/commonDisplayFields/properties/enabled" },
+        "showSidebarBar": {
+          "$ref": "#/$defs/commonDisplayFields/properties/showSidebarBar"
+        },
+        "showFooterBar": {
+          "$ref": "#/$defs/commonDisplayFields/properties/showFooterBar"
+        },
+        "sidebarWindow": {
+          "$ref": "#/$defs/commonDisplayFields/properties/sidebarWindow"
+        },
+        "footerWindow": {
+          "$ref": "#/$defs/commonDisplayFields/properties/footerWindow"
+        },
+        "label": { "$ref": "#/$defs/commonDisplayFields/properties/label" },
+        "authPath": { "type": "string" },
+        "apiKey": {
+          "type": "string",
+          "description": "Optional literal API key or environment reference (for example {env:MOONSHOT_API_KEY} for global and {env:MOONSHOT_API_KEY_CN} for China); custom origins require explicit credentials."
         },
         "baseUrl": { "type": "string" }
       }

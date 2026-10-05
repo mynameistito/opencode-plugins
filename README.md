@@ -29,6 +29,7 @@ Supported providers:
 - [Novita AI](https://novita.ai/)
 - [OpenCode GO](https://opencode.ai/go)
 - [MiniMax Token Plan](https://platform.minimax.io/subscribe/token-plan)
+- [Moonshot/Kimi API](https://platform.kimi.ai/docs/api/balance) (pay-as-you-go global USD / China CNY balances; distinct from Kimi For Coding subscription quota)
 - [Synthetic](https://synthetic.ai/)
 - [Qwen](https://qwen.ai/)
 - [ZAI Coding Plan](https://zai.ai/)

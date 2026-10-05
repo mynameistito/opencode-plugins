@@ -1,6 +1,6 @@
 # @mynameistito/opencode-usage-limits
 
-OpenCode TUI plugin that shows Codex, DeepSeek, Novita AI, OpenRouter, Command Code, OpenCode GO, ZAI, Synthetic, MiniMax Token Plan, Qwen, and Alibaba Token Plan usage limits in the sidebar and prompt footer.
+OpenCode TUI plugin that shows Codex, DeepSeek, Moonshot/Kimi API balances, Novita AI, OpenRouter, Command Code, OpenCode GO, ZAI, Synthetic, MiniMax Token Plan, Qwen, and Alibaba Token Plan usage limits in the sidebar and prompt footer.
 
 ## Features
 
@@ -8,6 +8,7 @@ OpenCode TUI plugin that shows Codex, DeepSeek, Novita AI, OpenRouter, Command C
 - Shows current Codex usage windows from OpenAI/Codex auth.
 - Shows current DeepSeek currency balances from the official balance API.
 - Shows the current available Novita AI API balance from its official billing API.
+- Shows the remaining pay-as-you-go Moonshot/Kimi API balance for global (USD) and China (CNY) accounts.
 - Shows the OpenRouter API-key spending limit, not the total account balance.
 - Shows current ZAI quota windows from ZAI Coding Plan auth.
 - Shows current Synthetic rolling 5-hour and weekly windows.
@@ -157,6 +158,8 @@ The response contract follows the official CLI's [`usage/token-plan.ts`](https:/
 | `codex` | ChatGPT Codex usage | — | Bearer | `https://chatgpt.com/backend-api` |
 | `deepseek` | DeepSeek balances | `DEEPSEEK_API_KEY` | Bearer | `https://api.deepseek.com` |
 | `novita-ai` | Novita AI available API balance (USD) | `NOVITA_API_KEY` | Bearer | `https://api.novita.ai` |
+| `moonshotai` | Moonshot/Kimi API balance (USD) | `MOONSHOT_API_KEY` | Bearer | `https://api.moonshot.ai` |
+| `moonshotai-cn` | Moonshot/Kimi API balance (CNY) | `MOONSHOT_API_KEY_CN` | Bearer | `https://api.moonshot.cn` |
 | `openrouter` | OpenRouter API-key spending limit (USD) | `OPENROUTER_API_KEY` | Bearer | `https://openrouter.ai` |
 | `zai` | Z.AI Coding Plan quota | `OC_ZAI_API_KEY` | raw / Bearer | `https://api.z.ai` |
 | `synthetic` | Synthetic quotas | `OC_SYNTHETIC_API_KEY` | Bearer | `https://api.synthetic.new` |
@@ -173,6 +176,13 @@ Synthetic always uses `Bearer` auth and ignores `authorizationScheme`.
 DeepSeek reads `GET https://api.deepseek.com/user/balance`. Each reported currency is displayed as an independent `credits` balance using `total_balance`; the component balances are not summed. OpenCode auth is used only for the exact official DeepSeek origin. A custom `baseUrl` requires an explicit `authPath` or `apiKey`, including `{env:DEEPSEEK_API_KEY}`.
 
 Novita AI reads `GET https://api.novita.ai/openapi/v1/billing/balance/detail` and displays `availableBalance` as the remaining USD balance. API monetary values are strings in units of 1/10,000 USD (for example, `10000` is `$1.00`). The adapter does not derive the balance from cash, credit, debt, or invoice fields, and does not invent a percentage or reset time. OpenCode-discovered credentials are used only for the exact official Novita origin; a custom `baseUrl` requires an explicit `authPath` or `apiKey`, including `{env:NOVITA_API_KEY}`.
+
+| Provider          | Billing model | What we show                     |
+| ----------------- | ------------- | -------------------------------- |
+| Kimi For Coding   | Subscription  | 5-hour and weekly quota          |
+| Moonshot/Kimi API | Pay-as-you-go | Remaining USD or CNY API balance |
+
+The global `moonshotai` provider reads `GET https://api.moonshot.ai/v1/users/me/balance` in USD; `moonshotai-cn` reads `GET https://api.moonshot.cn/v1/users/me/balance` in CNY. Both display the API's authoritative `data.available_balance` directly as a remaining balance; cash/voucher fields are not recombined and no percentage or reset is inferred. Global and China API keys are independent and are never sent to the other region. OpenCode credentials are used only for the matching exact official origin; custom `baseUrl` values require an explicitly configured `authPath` or `apiKey`.
 
 OpenRouter reads `GET https://openrouter.ai/api/v1/key` and displays the current API key's finite USD spending limit using `limit` and `limit_remaining`. This is **key-level spending-limit usage**, not total OpenRouter account balance. Reset cadence is shown only when the API reports `daily`, `weekly`, or `monthly`; no absolute reset countdown is inferred. Unbounded or unavailable limits are shown as unknown. Deprecated `rate_limit` and BYOK usage are ignored. OpenCode-discovered credentials are used only for the exact official OpenRouter origin; a custom `baseUrl` requires an explicit `authPath` or `apiKey`, including `{env:OPENROUTER_API_KEY}`.
 
@@ -214,6 +224,14 @@ DeepSeek lookup order:
 2. OpenCode auth at `~/.local/share/opencode/auth.json`, provider `deepseek`.
 3. Config `apiKey`, including `{env:DEEPSEEK_API_KEY}` references.
 
+Moonshot/Kimi lookup order, separately for each provider:
+
+1. Config `authPath` JSON file (`{ "key": "..." }`, `{ "apiKey": "..." }`, or the matching provider ID nested inside it).
+2. OpenCode auth at `~/.local/share/opencode/auth.json`, provider `moonshotai` or `moonshotai-cn` matching the configured provider. This is used only for the corresponding official origin.
+3. Config `apiKey`, including `{env:MOONSHOT_API_KEY}` for global or `{env:MOONSHOT_API_KEY_CN}` for China.
+
+The global and China credentials are not interchangeable. A custom origin never receives an automatically discovered OpenCode credential.
+
 Novita AI lookup order:
 
 1. Config `authPath` JSON file (`{ "key": "..." }` / `{ "apiKey": "..." }` / `{ "novita-ai": { "key": "..." } }`).
@@ -254,6 +272,10 @@ MiniMax
 DeepSeek
   USD: $12.50 remaining
   CNY: ¥0.00 remaining
+Moonshot AI
+  USD balance: $49.59 remaining
+Moonshot AI CN
+  CNY balance: ¥49.59 remaining
 Novita AI
   balance: $100.00 remaining
 OpenRouter
@@ -272,6 +294,8 @@ Provider mapping:
 
 - OpenCode provider `openai` -> Codex usage.
 - OpenCode provider `deepseek` -> DeepSeek balance usage.
+- OpenCode provider `moonshotai` -> global Moonshot/Kimi USD balance.
+- OpenCode provider `moonshotai-cn` -> China Moonshot/Kimi CNY balance.
 - OpenCode provider `novita-ai` -> Novita AI available-balance usage.
 - OpenCode provider `zai-coding-plan` -> ZAI token usage.
 - OpenCode provider `synthetic` -> Synthetic usage.

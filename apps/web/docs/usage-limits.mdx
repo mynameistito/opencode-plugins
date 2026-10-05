@@ -126,6 +126,9 @@ The top-level `enabled` flag disables the plugin. Each provider's `enabled` flag
     <img src="https://cdn.simpleicons.org/minimax" alt="MiniMax" />
     <span class="provider-logo-name">MiniMax</span>
   </a>
+  <a href="#moonshot-kimi-api" aria-label="Moonshot/Kimi API">
+    <span class="provider-logo-name">Moonshot/Kimi API</span>
+  </a>
   <a href="#novita-ai" aria-label="Novita AI">
     <span class="provider-logo-name">Novita AI</span>
   </a>
@@ -253,6 +256,36 @@ The adapter uses `total_balance` directly. It does not add `granted_balance` and
 ### MiniMax
 
 Token Plan rolling five-hour and weekly windows. Uses MiniMax auth or `OC_MINIMAX_TOKEN_PLAN_KEY`. See the [MiniMax documentation](https://platform.minimax.io/docs/token-plan/intro).
+
+### Moonshot/Kimi API
+
+Moonshot/Kimi Open Platform is a pay-as-you-go API balance, separate from Kimi For Coding's subscription-based 5-hour and weekly quota. Choose the provider matching the region where the API key was created:
+
+| Provider ID | Official balance endpoint | Currency | OpenCode auth ID |
+| --- | --- | --- | --- |
+| `moonshotai` | `https://api.moonshot.ai/v1/users/me/balance` | USD | `moonshotai` |
+| `moonshotai-cn` | `https://api.moonshot.cn/v1/users/me/balance` | CNY | `moonshotai-cn` |
+
+The adapter displays `data.available_balance` directly as the remaining balance. It does not recompute cash plus voucher balances, convert the amount to a percentage, or infer a reset time. Zero and negative balances remain visible. The response must have `code: 0`, `status: true`, and a finite numeric `data.available_balance`; malformed or unsuccessful responses fail closed.
+
+Enable either region with the matching OpenCode auth entry, or provide an explicit key:
+
+```jsonc
+{
+  "providers": {
+    "moonshotai": {
+      "enabled": true,
+      "apiKey": "{env:MOONSHOT_API_KEY}", // Optional global key
+    },
+    "moonshotai-cn": {
+      "enabled": true,
+      "apiKey": "{env:MOONSHOT_API_KEY_CN}", // Optional China key
+    },
+  },
+}
+```
+
+Global and China keys are independent and are never sent to the other region. OpenCode-discovered credentials are sent only to the exact corresponding official origin. A custom `baseUrl` requires an explicitly configured `authPath` or `apiKey`.
 
 ### Novita AI
 

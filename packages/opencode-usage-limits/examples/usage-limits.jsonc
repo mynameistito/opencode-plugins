@@ -90,6 +90,26 @@
       "apiKey": "{env:OC_MINIMAX_TOKEN_PLAN_KEY}", // Optional fallback when OpenCode auth has no MiniMax key
       "baseUrl": "https://www.minimax.io",
     },
+    "moonshotai": {
+      "enabled": false,
+      "label": "Moonshot AI",
+      "showSidebarBar": true,
+      "showFooterBar": true,
+      "sidebarWindow": "all",
+      "footerWindow": "auto",
+      "apiKey": "{env:MOONSHOT_API_KEY}", // Optional; OpenCode moonshotai auth is discovered by default
+      "baseUrl": "https://api.moonshot.ai",
+    },
+    "moonshotai-cn": {
+      "enabled": false,
+      "label": "Moonshot AI CN",
+      "showSidebarBar": true,
+      "showFooterBar": true,
+      "sidebarWindow": "all",
+      "footerWindow": "auto",
+      "apiKey": "{env:MOONSHOT_API_KEY_CN}", // Optional; OpenCode moonshotai-cn auth is discovered by default
+      "baseUrl": "https://api.moonshot.cn",
+    },
     "qwen": {
       "enabled": false,
       "label": "Qwen",
