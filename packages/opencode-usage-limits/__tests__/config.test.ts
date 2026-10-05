@@ -210,34 +210,37 @@ describe("configuration parsing", () => {
     const apiKey = success?.providers.codex?.apiKey;
     const commandCodeApiKey = success?.providers.commandcode?.apiKey;
     const deepSeekApiKey = success?.providers.deepseek?.apiKey;
+    expect(Result.isSuccess(result)).toBeTruthy();
     expect([
       Redacted.isRedacted(apiKey),
       Redacted.isRedacted(commandCodeApiKey),
       Redacted.isRedacted(deepSeekApiKey),
     ]).toStrictEqual([true, true, true]);
     expect(String(apiKey)).not.toContain("do-not-log");
-    expect(success?.providers.codex).toMatchObject({
-      authPath: "~/.codex/auth.json",
-      authorizationScheme: "bearer",
-      baseUrl: "https://example.com",
-      enabled: true,
-      footerWindow: "weekly",
-      label: "Work",
-      showFooterBar: false,
-      showSidebarBar: true,
-      sidebarWindow: "weekly",
-    });
-    expect(success?.providers.commandcode).toMatchObject({
-      authPath: "~/.config/opencode/auth.json",
-      baseUrl: "https://api.commandcode.ai",
-      enabled: true,
-      label: "CC",
-    });
-    expect(success?.providers.deepseek).toMatchObject({
-      authPath: "~/.config/opencode/auth.json",
-      baseUrl: "https://api.deepseek.com",
-      enabled: true,
-      label: "DS",
+    expect(success?.providers).toMatchObject({
+      codex: {
+        authPath: "~/.codex/auth.json",
+        authorizationScheme: "bearer",
+        baseUrl: "https://example.com",
+        enabled: true,
+        footerWindow: "weekly",
+        label: "Work",
+        showFooterBar: false,
+        showSidebarBar: true,
+        sidebarWindow: "weekly",
+      },
+      commandcode: {
+        authPath: "~/.config/opencode/auth.json",
+        baseUrl: "https://api.commandcode.ai",
+        enabled: true,
+        label: "CC",
+      },
+      deepseek: {
+        authPath: "~/.config/opencode/auth.json",
+        baseUrl: "https://api.deepseek.com",
+        enabled: true,
+        label: "DS",
+      },
     });
   });
 
