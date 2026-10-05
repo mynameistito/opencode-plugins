@@ -83,6 +83,15 @@ describe("format helpers", () => {
     ).toBe("credits 12.5 credits remaining");
   });
 
+  it("keeps tiny positive currency balances visible", () => {
+    const remaining = Result.getOrThrow(parseUsageBalance(0.004));
+    const quota = balanceQuota(remaining, "USD");
+
+    expect(windowMainText(usageWindow({ label: "USD balance", quota }))).toBe(
+      "USD balance: $<0.01 remaining"
+    );
+  });
+
   it.each([
     [null, ""],
     [0, " · now"],
