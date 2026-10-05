@@ -252,7 +252,7 @@ Token Plan rolling five-hour and weekly windows. Uses MiniMax auth or `OC_MINIMA
 
 ### Novita AI
 
-Displays the current available API balance as a remaining USD amount, not a monthly usage window. Novita's official [`GET /openapi/v1/billing/balance/detail`](https://novita.ai/docs/api-reference/basic-get-user-balance) endpoint returns monetary fields in 1/10,000 USD units; the plugin uses `availableBalance` directly and does not infer a percentage, balance total, or reset time.
+Displays the current available API balance as a remaining USD amount, not a monthly usage window. Novita's official [`GET /openapi/v1/billing/balance/detail`](https://novita.ai/docs/api-reference/basic-get-user-balance) endpoint returns monetary fields in 1/10,000 USD units; the plugin converts `availableBalance` to USD and does not infer a percentage, balance total, or reset time.
 
 Enable the `novita-ai` provider using OpenCode's saved credential, or configure a key explicitly:
 
