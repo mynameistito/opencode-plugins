@@ -47,6 +47,7 @@ describe("provider manifest", () => {
     expect([
       ["openai", pluginProviderForOpenCode("openai")],
       ["deepseek", pluginProviderForOpenCode("deepseek")],
+      ["novita-ai", pluginProviderForOpenCode("novita-ai")],
       ["zai-coding-plan", pluginProviderForOpenCode("zai-coding-plan")],
       ["minimax-coding-plan", pluginProviderForOpenCode("minimax-coding-plan")],
       ["minimax", pluginProviderForOpenCode("minimax")],
@@ -61,6 +62,7 @@ describe("provider manifest", () => {
     ]).toStrictEqual([
       ["openai", "codex"],
       ["deepseek", "deepseek"],
+      ["novita-ai", "novita-ai"],
       ["zai-coding-plan", "zai"],
       ["minimax-coding-plan", "minimax"],
       ["minimax", "minimax"],

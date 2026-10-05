@@ -52,6 +52,7 @@ interface PublishedSchema {
     commonDisplayFields: PublishedProviderDefinition;
     deepSeekProvider: PublishedProviderDefinition;
     minimaxProvider: PublishedProviderDefinition;
+    novitaAiProvider: PublishedProviderDefinition;
     openCodeGoProvider: PublishedProviderDefinition;
     qwenProvider: PublishedProviderDefinition;
     syntheticProvider: PublishedProviderDefinition;
@@ -65,6 +66,7 @@ interface PublishedSchema {
         commandcode: { $ref: "#/$defs/commandCodeProvider" };
         deepseek: { $ref: "#/$defs/deepSeekProvider" };
         minimax: { $ref: "#/$defs/minimaxProvider" };
+        "novita-ai": { $ref: "#/$defs/novitaAiProvider" };
         "opencode-go": { $ref: "#/$defs/openCodeGoProvider" };
         qwen: { $ref: "#/$defs/qwenProvider" };
         synthetic: { $ref: "#/$defs/syntheticProvider" };
@@ -99,6 +101,9 @@ describe("configuration parsing", () => {
       minimax: Object.keys(
         publishedSchema.$defs.minimaxProvider.properties
       ).toSorted(),
+      "novita-ai": Object.keys(
+        publishedSchema.$defs.novitaAiProvider.properties
+      ).toSorted(),
       "opencode-go": Object.keys(
         publishedSchema.$defs.openCodeGoProvider.properties
       ).toSorted(),
@@ -117,6 +122,7 @@ describe("configuration parsing", () => {
       commandcode: { $ref: "#/$defs/commandCodeProvider" },
       deepseek: { $ref: "#/$defs/deepSeekProvider" },
       minimax: { $ref: "#/$defs/minimaxProvider" },
+      "novita-ai": { $ref: "#/$defs/novitaAiProvider" },
       "opencode-go": { $ref: "#/$defs/openCodeGoProvider" },
       qwen: { $ref: "#/$defs/qwenProvider" },
       synthetic: { $ref: "#/$defs/syntheticProvider" },
@@ -143,6 +149,7 @@ describe("configuration parsing", () => {
     const apiKeyProviders = [
       providerFields.commandcode,
       providerFields.deepseek,
+      providerFields["novita-ai"],
       providerFields.minimax,
       providerFields["opencode-go"],
       providerFields.synthetic,
@@ -203,6 +210,13 @@ describe("configuration parsing", () => {
           enabled: true,
           label: "DS",
         },
+        "novita-ai": {
+          apiKey: "novita-secret",
+          authPath: "~/.config/opencode/auth.json",
+          baseUrl: "https://api.novita.ai",
+          enabled: true,
+          label: "Novita",
+        },
       },
     });
 
@@ -210,12 +224,14 @@ describe("configuration parsing", () => {
     const apiKey = success?.providers.codex?.apiKey;
     const commandCodeApiKey = success?.providers.commandcode?.apiKey;
     const deepSeekApiKey = success?.providers.deepseek?.apiKey;
+    const novitaAiApiKey = success?.providers["novita-ai"]?.apiKey;
     expect(Result.isSuccess(result)).toBeTruthy();
     expect([
       Redacted.isRedacted(apiKey),
       Redacted.isRedacted(commandCodeApiKey),
       Redacted.isRedacted(deepSeekApiKey),
-    ]).toStrictEqual([true, true, true]);
+      Redacted.isRedacted(novitaAiApiKey),
+    ]).toStrictEqual([true, true, true, true]);
     expect(String(apiKey)).not.toContain("do-not-log");
     expect(success?.providers).toMatchObject({
       codex: {
@@ -240,6 +256,12 @@ describe("configuration parsing", () => {
         baseUrl: "https://api.deepseek.com",
         enabled: true,
         label: "DS",
+      },
+      "novita-ai": {
+        authPath: "~/.config/opencode/auth.json",
+        baseUrl: "https://api.novita.ai",
+        enabled: true,
+        label: "Novita",
       },
     });
   });
@@ -513,6 +535,7 @@ describe("configuration loading", () => {
       minimax: { key: "minimax" },
       "minimax-coding-plan": { apiKey: "coding" },
       "minimax-token-plan": { key: "token-plan" },
+      "novita-ai": { apiKey: "novita-ai" },
       openai: { accountId: "account" },
       opencode: { key: "opencode" },
       "opencode-go": { key: "go" },
@@ -530,6 +553,7 @@ describe("configuration loading", () => {
       credentialValue(auth["opencode-go"]?.key),
       credentialValue(auth.commandcode?.key),
       credentialValue(auth.deepseek?.key),
+      credentialValue(auth["novita-ai"]?.apiKey),
       credentialValue(auth.synthetic?.apiKey),
       credentialValue(auth.zai?.key),
       credentialValue(auth["zai-coding-plan"]?.key),
@@ -542,6 +566,7 @@ describe("configuration loading", () => {
       "go",
       "commandcode",
       "deepseek",
+      "novita-ai",
       "synthetic",
       "zai",
       "zai-plan",
