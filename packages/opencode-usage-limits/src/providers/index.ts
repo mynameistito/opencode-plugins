@@ -4,6 +4,7 @@ import { commandCodeProvider } from "@/providers/commandcode.ts";
 import { deepSeekProvider } from "@/providers/deepseek.ts";
 import type { ProviderDefinition } from "@/providers/definition.ts";
 import { minimaxProvider } from "@/providers/minimax.ts";
+import { novitaAiProvider } from "@/providers/novita-ai.ts";
 import { openCodeGoProvider } from "@/providers/opencode-go.ts";
 import { qwenProvider } from "@/providers/qwen.ts";
 import { syntheticProvider } from "@/providers/synthetic.ts";
@@ -21,6 +22,7 @@ const PROVIDER_MANIFEST: ProviderRegistry = {
   commandcode: commandCodeProvider,
   deepseek: deepSeekProvider,
   minimax: minimaxProvider,
+  "novita-ai": novitaAiProvider,
   "opencode-go": openCodeGoProvider,
   qwen: qwenProvider,
   synthetic: syntheticProvider,

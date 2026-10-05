@@ -98,6 +98,14 @@ const deepSeekProviderConfigSchema = Schema.Struct({
   baseUrl: Schema.optionalKey(Schema.String),
 });
 
+/** Schema for Novita AI balance provider configuration. */
+const novitaAiProviderConfigSchema = Schema.Struct({
+  ...commonProviderFields,
+  apiKey: Schema.optionalKey(secret),
+  authPath: Schema.optionalKey(Schema.String),
+  baseUrl: Schema.optionalKey(Schema.String),
+});
+
 /** Schema for Qwen provider configuration. */
 const qwenProviderConfigSchema = Schema.Struct(commonProviderFields);
 
@@ -128,6 +136,7 @@ const providersSchema = Schema.Struct({
   commandcode: Schema.optionalKey(commandCodeProviderConfigSchema),
   deepseek: Schema.optionalKey(deepSeekProviderConfigSchema),
   minimax: Schema.optionalKey(minimaxProviderConfigSchema),
+  "novita-ai": Schema.optionalKey(novitaAiProviderConfigSchema),
   "opencode-go": Schema.optionalKey(openCodeGoProviderConfigSchema),
   qwen: Schema.optionalKey(qwenProviderConfigSchema),
   synthetic: Schema.optionalKey(syntheticProviderConfigSchema),
@@ -240,6 +249,7 @@ export const parseOpenCodeAuth = (input: JsonValue): OpenCodeAuth => {
   }
 
   const minimax = parseAuthEntry(input.minimax);
+  const novitaAi = parseAuthEntry(input["novita-ai"]);
   const deepseek = parseAuthEntry(input.deepseek);
   const minimaxCodingPlan = parseAuthEntry(input["minimax-coding-plan"]);
   const minimaxTokenPlan = parseAuthEntry(input["minimax-token-plan"]);
@@ -255,6 +265,9 @@ export const parseOpenCodeAuth = (input: JsonValue): OpenCodeAuth => {
   const auth: OpenCodeAuthBuilder = direct ?? {};
   if (minimax) {
     auth.minimax = minimax;
+  }
+  if (novitaAi) {
+    auth["novita-ai"] = novitaAi;
   }
   if (deepseek) {
     auth.deepseek = deepseek;

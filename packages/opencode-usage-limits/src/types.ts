@@ -30,7 +30,8 @@ export type ProviderID =
   | "minimax"
   | "qwen"
   | "opencode-go"
-  | "commandcode";
+  | "commandcode"
+  | "novita-ai";
 
 /** Sensitive string accepted by parsed config and legacy provider boundaries. */
 type Credential = Redacted.Redacted<string> | string;
@@ -191,6 +192,16 @@ export interface DeepSeekProviderConfig extends CommonProviderConfig {
   readonly baseUrl?: string;
 }
 
+/** Novita AI balance provider configuration. */
+export interface NovitaAiProviderConfig extends CommonProviderConfig {
+  /** Novita AI API credential override. */
+  readonly apiKey?: Credential;
+  /** Optional path to an auth file; supports a leading `~`. */
+  readonly authPath?: string;
+  /** HTTPS API base URL override. */
+  readonly baseUrl?: string;
+}
+
 /** Qwen settings; provider credentials are obtained from the Qwen CLI. */
 export type QwenProviderConfig = CommonProviderConfig;
 
@@ -230,6 +241,8 @@ export interface ProviderConfigMap {
   readonly deepseek: DeepSeekProviderConfig;
   /** MiniMax Token Plan settings. */
   readonly minimax: MiniMaxProviderConfig;
+  /** Novita AI balance settings. */
+  readonly "novita-ai": NovitaAiProviderConfig;
   /** Qwen CLI settings. */
   readonly qwen: QwenProviderConfig;
   /** Synthetic settings. */
@@ -289,6 +302,8 @@ export interface OpenCodeAuth {
   "opencode-go"?: OpenCodeAuthEntry | null;
   /** Command Code credentials stored under OpenCode's provider ID. */
   commandcode?: OpenCodeAuthEntry | null;
+  /** Novita AI credentials stored under the provider's catalog ID. */
+  "novita-ai"?: OpenCodeAuthEntry | null;
   /** OpenCode Zen credentials stored under the legacy provider ID. */
   opencode?: OpenCodeAuthEntry | null;
 }

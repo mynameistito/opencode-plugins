@@ -96,6 +96,7 @@ const authEntryNames = new Set([
   "minimax",
   "minimax-coding-plan",
   "minimax-token-plan",
+  "novita-ai",
   "openai",
   "opencode",
   "opencode-go",

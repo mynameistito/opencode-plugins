@@ -19,6 +19,7 @@
         "commandcode": { "$ref": "#/$defs/commandCodeProvider" },
         "deepseek": { "$ref": "#/$defs/deepSeekProvider" },
         "minimax": { "$ref": "#/$defs/minimaxProvider" },
+        "novita-ai": { "$ref": "#/$defs/novitaAiProvider" },
         "opencode-go": { "$ref": "#/$defs/openCodeGoProvider" },
         "qwen": { "$ref": "#/$defs/qwenProvider" },
         "synthetic": { "$ref": "#/$defs/syntheticProvider" },
@@ -195,6 +196,35 @@
         "apiKey": {
           "type": "string",
           "description": "Optional literal API key or {env:NAME} fallback when auth files do not contain a key."
+        },
+        "baseUrl": { "type": "string" }
+      }
+    },
+    "novitaAiProvider": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "$ref": "#/$defs/commonDisplayFields/properties/enabled" },
+        "showSidebarBar": {
+          "$ref": "#/$defs/commonDisplayFields/properties/showSidebarBar"
+        },
+        "showFooterBar": {
+          "$ref": "#/$defs/commonDisplayFields/properties/showFooterBar"
+        },
+        "sidebarWindow": {
+          "$ref": "#/$defs/commonDisplayFields/properties/sidebarWindow"
+        },
+        "footerWindow": {
+          "$ref": "#/$defs/commonDisplayFields/properties/footerWindow"
+        },
+        "label": { "$ref": "#/$defs/commonDisplayFields/properties/label" },
+        "authPath": {
+          "type": "string",
+          "description": "Optional override path to a provider auth file. Omit to use OpenCode auth or provider defaults."
+        },
+        "apiKey": {
+          "type": "string",
+          "description": "Optional literal API key or {env:NOVITA_API_KEY} fallback when auth files do not contain a key."
         },
         "baseUrl": { "type": "string" }
       }

@@ -14,6 +14,7 @@ export const ProviderIDSchema = Schema.Literals([
   "alibaba-token-plan",
   "opencode-go",
   "commandcode",
+  "novita-ai",
 ]);
 
 /** Safe, user-facing missing-credential message for each provider. */
@@ -23,6 +24,7 @@ export const credentialMessages = {
   commandcode: "missing Command Code key",
   deepseek: "missing DeepSeek key",
   minimax: "missing MiniMax key",
+  "novita-ai": "missing Novita AI key",
   "opencode-go": "missing OpenCode GO key",
   qwen: "missing Qwen credentials",
   synthetic: "missing Synthetic key",
