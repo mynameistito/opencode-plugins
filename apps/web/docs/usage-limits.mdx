@@ -142,6 +142,10 @@ The top-level `enabled` flag disables the plugin. Each provider's `enabled` flag
     </svg>
     <span class="provider-logo-name">OpenAI</span>
   </a>
+  <a href="#openrouter" aria-label="OpenRouter">
+    <img src="https://cdn.simpleicons.org/openrouter" alt="OpenRouter" />
+    <span class="provider-logo-name">OpenRouter</span>
+  </a>
   <a href="#opencode-go" aria-label="OpenCode GO">
     <svg
       class="provider-logo-opencode provider-logo-opencode-dark"
@@ -268,6 +272,25 @@ Enable the `novita-ai` provider using OpenCode's saved credential, or configure 
 ```
 
 OpenCode credentials are only sent to `https://api.novita.ai`; a custom `baseUrl` requires an explicit `authPath` or `apiKey`.
+
+### OpenRouter
+
+Displays the current OpenRouter API key's finite spending limit from the official [`GET /api/v1/key`](https://openrouter.ai/docs/api/api-reference/api-keys/get-current-key) endpoint. The `spend` window uses `limit` and `limit_remaining` as USD amounts; it is key-level spending-limit usage, not total account balance. `daily`, `weekly`, and `monthly` reset cadences are shown without inferring an absolute reset time. Unbounded or unavailable limits appear as unknown. Deprecated `rate_limit` and BYOK usage are ignored.
+
+OpenCode's saved `openrouter` credential is used automatically, or configure an explicit environment-backed API key:
+
+```jsonc
+{
+  "providers": {
+    "openrouter": {
+      "enabled": true,
+      "apiKey": "{env:OPENROUTER_API_KEY}", // Optional fallback
+    },
+  },
+}
+```
+
+OpenCode-discovered credentials are sent only to the exact official `https://openrouter.ai` origin. A custom `baseUrl` requires an explicit `authPath` or `apiKey`.
 
 ### OpenAI
 

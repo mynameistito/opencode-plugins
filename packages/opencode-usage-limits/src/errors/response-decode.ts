@@ -27,6 +27,7 @@ export class ProviderResponseDecodeError extends schemaTaggedError<ProviderRespo
       minimax: "MiniMax",
       "novita-ai": "Novita AI",
       "opencode-go": "OpenCode GO",
+      openrouter: "OpenRouter",
       qwen: "Qwen",
       synthetic: "Synthetic",
       zai: "ZAI",

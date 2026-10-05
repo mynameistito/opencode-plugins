@@ -31,7 +31,8 @@ export type ProviderID =
   | "qwen"
   | "opencode-go"
   | "commandcode"
-  | "novita-ai";
+  | "novita-ai"
+  | "openrouter";
 
 /** Sensitive string accepted by parsed config and legacy provider boundaries. */
 type Credential = Redacted.Redacted<string> | string;
@@ -202,6 +203,16 @@ export interface NovitaAiProviderConfig extends CommonProviderConfig {
   readonly baseUrl?: string;
 }
 
+/** OpenRouter API-key spending-limit configuration. */
+export interface OpenRouterProviderConfig extends CommonProviderConfig {
+  /** OpenRouter API credential override. */
+  readonly apiKey?: Credential;
+  /** Optional path to an auth file; supports a leading `~`. */
+  readonly authPath?: string;
+  /** HTTPS API base URL override. */
+  readonly baseUrl?: string;
+}
+
 /** Qwen settings; provider credentials are obtained from the Qwen CLI. */
 export type QwenProviderConfig = CommonProviderConfig;
 
@@ -243,6 +254,8 @@ export interface ProviderConfigMap {
   readonly minimax: MiniMaxProviderConfig;
   /** Novita AI balance settings. */
   readonly "novita-ai": NovitaAiProviderConfig;
+  /** OpenRouter key spending-limit settings. */
+  readonly openrouter: OpenRouterProviderConfig;
   /** Qwen CLI settings. */
   readonly qwen: QwenProviderConfig;
   /** Synthetic settings. */
@@ -304,6 +317,8 @@ export interface OpenCodeAuth {
   commandcode?: OpenCodeAuthEntry | null;
   /** Novita AI credentials stored under the provider's catalog ID. */
   "novita-ai"?: OpenCodeAuthEntry | null;
+  /** OpenRouter credentials stored under the provider's catalog ID. */
+  openrouter?: OpenCodeAuthEntry | null;
   /** OpenCode Zen credentials stored under the legacy provider ID. */
   opencode?: OpenCodeAuthEntry | null;
 }

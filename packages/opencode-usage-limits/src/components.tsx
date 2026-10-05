@@ -5,8 +5,7 @@ import { createMemo, For } from "solid-js";
 import type { ConfigDiagnostic } from "@/config.ts";
 import {
   bottomWindowMainText,
-  formatBalance,
-  formatPercent,
+  formatQuotaText,
   formatTimestamp,
   percentBar,
   windowResetText,
@@ -98,10 +97,7 @@ const UsageWindowRows = (props: {
     {(window) => {
       const usedPercent = quotaUsedPercent(window.quota);
       const showBar = props.showBar && window.quota._tag !== "Balance";
-      const quotaText =
-        window.quota._tag === "Balance"
-          ? formatBalance(window.quota)
-          : `${formatPercent(usedPercent)} used`;
+      const quotaText = formatQuotaText(window.quota, true);
       return (
         <box flexDirection="column">
           <text>

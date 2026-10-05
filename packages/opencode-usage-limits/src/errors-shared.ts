@@ -15,6 +15,7 @@ export const ProviderIDSchema = Schema.Literals([
   "opencode-go",
   "commandcode",
   "novita-ai",
+  "openrouter",
 ]);
 
 /** Safe, user-facing missing-credential message for each provider. */
@@ -26,6 +27,7 @@ export const credentialMessages = {
   minimax: "missing MiniMax key",
   "novita-ai": "missing Novita AI key",
   "opencode-go": "missing OpenCode GO key",
+  openrouter: "missing OpenRouter key",
   qwen: "missing Qwen credentials",
   synthetic: "missing Synthetic key",
   zai: "missing ZAI key",

@@ -6,6 +6,7 @@ import type { ProviderDefinition } from "@/providers/definition.ts";
 import { minimaxProvider } from "@/providers/minimax.ts";
 import { novitaAiProvider } from "@/providers/novita-ai.ts";
 import { openCodeGoProvider } from "@/providers/opencode-go.ts";
+import { openRouterProvider } from "@/providers/openrouter.ts";
 import { qwenProvider } from "@/providers/qwen.ts";
 import { syntheticProvider } from "@/providers/synthetic.ts";
 import { zaiProvider } from "@/providers/zai-coding-plan.ts";
@@ -24,6 +25,7 @@ const PROVIDER_MANIFEST: ProviderRegistry = {
   minimax: minimaxProvider,
   "novita-ai": novitaAiProvider,
   "opencode-go": openCodeGoProvider,
+  openrouter: openRouterProvider,
   qwen: qwenProvider,
   synthetic: syntheticProvider,
   zai: zaiProvider,
