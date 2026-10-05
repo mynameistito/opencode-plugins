@@ -123,6 +123,39 @@ describe("provider manifest", () => {
     await expect(result).resolves.toMatchObject({ id: "codex" });
   });
 
+  it("dispatches Moonshot provider IDs through the registry definition", async () => {
+    const fetchMock = installFetchMock(
+      Response.json({
+        code: 0,
+        data: { available_balance: -2.5 },
+        status: true,
+      })
+    );
+
+    const usage = await Effect.runPromise(
+      fetchProviderEffect(
+        "moonshotai-cn",
+        { apiKey: "china-key" },
+        {},
+        1000
+      ).pipe(Effect.provide(ProviderRuntimeLive))
+    );
+
+    expect(fetchMock.mock.calls[0]).toMatchObject([
+      "https://api.moonshot.cn/v1/users/me/balance",
+      { headers: { Authorization: "Bearer china-key" } },
+    ]);
+    expect(usage).toMatchObject({
+      id: "moonshotai-cn",
+      windows: [
+        {
+          label: "CNY balance",
+          quota: { _tag: "Balance", remaining: -2.5, unit: "CNY" },
+        },
+      ],
+    });
+  });
+
   it("rejects unknown provider ids asynchronously", async () => {
     const unknownEffect = fetchProviderEffect("unknown", undefined, {}, 1000);
     expect(unknownEffect).toBeDefined();

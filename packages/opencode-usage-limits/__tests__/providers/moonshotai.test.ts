@@ -98,12 +98,13 @@ describe("Moonshot/Kimi API balance providers", () => {
   });
 
   it.each([
-    ["missing data", {}],
-    ["missing available balance", { data: {} }],
-    ["string balance", { data: { available_balance: "1.25" } }],
+    ["non-object response", null],
+    ["missing data", { code: 0, status: true }],
+    ["missing available balance", { code: 0, data: {}, status: true }],
+    ["non-object data", { code: 0, data: null, status: true }],
     [
-      "infinite balance",
-      { data: { available_balance: Number.POSITIVE_INFINITY } },
+      "string balance",
+      { code: 0, data: { available_balance: "1.25" }, status: true },
     ],
     ["missing status", { code: 0, data: { available_balance: 1 } }],
     [
@@ -113,6 +114,19 @@ describe("Moonshot/Kimi API balance providers", () => {
     ["nonzero code", { code: 1, data: { available_balance: 1 }, status: true }],
   ] as const)("fails closed for %s", async (_label, payload) => {
     installFetchMock(Response.json(payload));
+
+    await expect(
+      fetchMoonshotAiBalanceUsage({ apiKey: "global-key" }, {}, 1000)
+    ).rejects.toBeInstanceOf(ProviderResponseDecodeError);
+  });
+
+  it("rejects numeric overflow as a non-finite balance", async () => {
+    installFetchMock(
+      new Response(
+        '{"code":0,"status":true,"data":{"available_balance":1e999}}',
+        { headers: { "content-type": "application/json" } }
+      )
+    );
 
     await expect(
       fetchMoonshotAiBalanceUsage({ apiKey: "global-key" }, {}, 1000)
@@ -182,6 +196,42 @@ describe("Moonshot/Kimi API balance providers", () => {
       });
     } finally {
       await rm(authPath, { force: true });
+    }
+  });
+
+  it("accepts direct auth-file keys and ignores malformed provider entries", async () => {
+    const authPath = path.join(
+      tmpdir(),
+      `oc-usage-limits-moonshot-direct-${crypto.randomUUID()}.json`
+    );
+    await writeFile(authPath, JSON.stringify({ apiKey: "direct-file-key" }));
+    try {
+      const fetchMock = installFetchMock(response(1));
+      await fetchMoonshotAiBalanceUsage({ authPath }, {}, 1000);
+      expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({
+        headers: { Authorization: "Bearer direct-file-key" },
+      });
+    } finally {
+      await rm(authPath, { force: true });
+    }
+
+    const malformedPath = path.join(
+      tmpdir(),
+      `oc-usage-limits-moonshot-malformed-${crypto.randomUUID()}.json`
+    );
+    await writeFile(malformedPath, JSON.stringify({ moonshotai: null }));
+    try {
+      const fetchMock = installFetchMock(response(1));
+      await fetchMoonshotAiBalanceUsage(
+        { apiKey: "explicit-fallback", authPath: malformedPath },
+        {},
+        1000
+      );
+      expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({
+        headers: { Authorization: "Bearer explicit-fallback" },
+      });
+    } finally {
+      await rm(malformedPath, { force: true });
     }
   });
 

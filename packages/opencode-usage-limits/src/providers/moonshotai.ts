@@ -6,7 +6,6 @@ import {
 } from "@/errors.ts";
 import { readProviderAuthFileCredential } from "@/providers/auth-file.ts";
 import type { ProviderDefinition } from "@/providers/definition.ts";
-import { isJsonNumber } from "@/providers/json.ts";
 import { ProviderEnvironment } from "@/providers/runtime/environment.ts";
 import { ProviderHttpClient } from "@/providers/runtime/http.ts";
 import { ProviderRuntimeLive } from "@/providers/runtime/index.ts";
@@ -74,9 +73,6 @@ const keyFromOpenCodeAuth = (
     value: JsonValue | Redacted.Redacted<string> | undefined
   ) => Redacted.Redacted<string> | undefined
 ): Redacted.Redacted<string> | undefined => {
-  if (!isRecord(value)) {
-    return undefined;
-  }
   const entry = value[providerID];
   if (!isRecord(entry)) {
     return undefined;
@@ -99,9 +95,6 @@ const parseMoonshotBalance = (value: JsonValue): BalanceAmount | null => {
     return null;
   }
   const amount = value.data.available_balance;
-  if (!isJsonNumber(amount) || !Number.isFinite(amount)) {
-    return null;
-  }
   const parsed = parseUsageBalanceAmount(amount);
   return Result.isSuccess(parsed) ? parsed.success : null;
 };
