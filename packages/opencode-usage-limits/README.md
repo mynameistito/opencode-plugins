@@ -1,12 +1,13 @@
 # @mynameistito/opencode-usage-limits
 
-OpenCode TUI plugin that shows Codex, DeepSeek, Command Code, OpenCode GO, ZAI, Synthetic, MiniMax Token Plan, Qwen, and Alibaba Token Plan usage limits in the sidebar and prompt footer.
+OpenCode TUI plugin that shows Codex, DeepSeek, Novita AI, Command Code, OpenCode GO, ZAI, Synthetic, MiniMax Token Plan, Qwen, and Alibaba Token Plan usage limits in the sidebar and prompt footer.
 
 ## Features
 
 - Adds a `Usage Limits` block under the sidebar `Context` section.
 - Shows current Codex usage windows from OpenAI/Codex auth.
 - Shows current DeepSeek currency balances from the official balance API.
+- Shows the current available Novita AI API balance from its official billing API.
 - Shows current ZAI quota windows from ZAI Coding Plan auth.
 - Shows current Synthetic rolling 5-hour and weekly windows.
 - Shows current MiniMax Token Plan rolling 5-hour and weekly windows.
@@ -14,7 +15,7 @@ OpenCode TUI plugin that shows Codex, DeepSeek, Command Code, OpenCode GO, ZAI, 
 - Shows current Alibaba Token Plan 5-hour and weekly windows from the local `bl` CLI.
 - Shows current OpenCode GO rolling, weekly, and monthly windows.
 - Displays current Command Code 5-hour, weekly, and derived monthly credit usage.
-- Adds compact prompt-footer usage when the current session uses an OpenAI, DeepSeek, Command Code, OpenCode GO, ZAI Coding Plan, Synthetic, MiniMax Token Plan, or Qwen Token Plan model.
+- Adds compact prompt-footer usage when the current session uses an OpenAI, DeepSeek, Novita AI, Command Code, OpenCode GO, ZAI Coding Plan, Synthetic, MiniMax Token Plan, or Qwen Token Plan model.
 - Providers are toggled from `~/.config/opencode/usage-limits.jsonc`.
 - Reads OpenCode-connected credentials first, then falls back to explicit config/env credentials.
 
@@ -154,6 +155,7 @@ The response contract follows the official CLI's [`usage/token-plan.ts`](https:/
 | --- | --- | --- | --- | --- |
 | `codex` | ChatGPT Codex usage | — | Bearer | `https://chatgpt.com/backend-api` |
 | `deepseek` | DeepSeek balances | `DEEPSEEK_API_KEY` | Bearer | `https://api.deepseek.com` |
+| `novita-ai` | Novita AI available API balance (USD) | `NOVITA_API_KEY` | Bearer | `https://api.novita.ai` |
 | `zai` | Z.AI Coding Plan quota | `OC_ZAI_API_KEY` | raw / Bearer | `https://api.z.ai` |
 | `synthetic` | Synthetic quotas | `OC_SYNTHETIC_API_KEY` | Bearer | `https://api.synthetic.new` |
 | `minimax` | MiniMax Token Plan | `OC_MINIMAX_TOKEN_PLAN_KEY` | Bearer | `https://www.minimax.io` |
@@ -167,6 +169,8 @@ Qwen usage requires the local `qwencloud` CLI to be installed and authenticated 
 Synthetic always uses `Bearer` auth and ignores `authorizationScheme`.
 
 DeepSeek reads `GET https://api.deepseek.com/user/balance`. Each reported currency is displayed as an independent `credits` balance using `total_balance`; the component balances are not summed. OpenCode auth is used only for the exact official DeepSeek origin. A custom `baseUrl` requires an explicit `authPath` or `apiKey`, including `{env:DEEPSEEK_API_KEY}`.
+
+Novita AI reads `GET https://api.novita.ai/openapi/v1/billing/balance/detail` and displays `availableBalance` as the remaining USD balance. API monetary values are strings in units of 1/10,000 USD (for example, `10000` is `$1.00`). The adapter does not derive the balance from cash, credit, debt, or invoice fields, and does not invent a percentage or reset time. OpenCode-discovered credentials are used only for the exact official Novita origin; a custom `baseUrl` requires an explicit `authPath` or `apiKey`, including `{env:NOVITA_API_KEY}`.
 
 Set `baseUrl` on `minimax` to `https://api.minimaxi.com` when using the mainland-China region. MiniMax always uses `Bearer` auth and ignores `authorizationScheme`.
 
@@ -206,6 +210,12 @@ DeepSeek lookup order:
 2. OpenCode auth at `~/.local/share/opencode/auth.json`, provider `deepseek`.
 3. Config `apiKey`, including `{env:DEEPSEEK_API_KEY}` references.
 
+Novita AI lookup order:
+
+1. Config `authPath` JSON file (`{ "key": "..." }` / `{ "apiKey": "..." }` / `{ "novita-ai": { "key": "..." } }`).
+2. OpenCode auth at `~/.local/share/opencode/auth.json`, provider `novita-ai`.
+3. Config `apiKey`, including `{env:NOVITA_API_KEY}` references.
+
 Command Code lookup order:
 
 1. Config `authPath` JSON file (`{ "key": "..." }` / `{ "apiKey": "..." }` / `{ "commandcode": { "key": "..." } }`).
@@ -234,6 +244,8 @@ MiniMax
 DeepSeek
   USD: $12.50 remaining
   CNY: ¥0.00 remaining
+Novita AI
+  balance: $100.00 remaining
 ```
 
 Prompt footer shows compact usage when the current session model belongs to a supported provider:
@@ -248,6 +260,7 @@ Provider mapping:
 
 - OpenCode provider `openai` -> Codex usage.
 - OpenCode provider `deepseek` -> DeepSeek balance usage.
+- OpenCode provider `novita-ai` -> Novita AI available-balance usage.
 - OpenCode provider `zai-coding-plan` -> ZAI token usage.
 - OpenCode provider `synthetic` -> Synthetic usage.
 - OpenCode provider `minimax-coding-plan` -> MiniMax Token Plan usage (prompt footer); `minimax` is also accepted as an alias.

@@ -37,6 +37,16 @@
       "apiKey": "{env:DEEPSEEK_API_KEY}", // Optional fallback when OpenCode auth has no DeepSeek key
       "baseUrl": "https://api.deepseek.com",
     },
+    "novita-ai": {
+      "enabled": false,
+      "label": "Novita AI",
+      "showSidebarBar": true,
+      "showFooterBar": true,
+      "sidebarWindow": "all",
+      "footerWindow": "auto",
+      "apiKey": "{env:NOVITA_API_KEY}", // Optional fallback when OpenCode auth has no Novita AI key
+      "baseUrl": "https://api.novita.ai",
+    },
     "zai": {
       "enabled": true,
       "label": "ZAI",
