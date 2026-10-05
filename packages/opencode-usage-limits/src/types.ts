@@ -24,6 +24,7 @@ export interface ProviderDisplayConfig {
 export type ProviderID =
   | "alibaba-token-plan"
   | "codex"
+  | "deepseek"
   | "zai"
   | "synthetic"
   | "minimax"
@@ -180,6 +181,16 @@ export interface MiniMaxProviderConfig extends CommonProviderConfig {
   readonly baseUrl?: string;
 }
 
+/** DeepSeek balance provider configuration. */
+export interface DeepSeekProviderConfig extends CommonProviderConfig {
+  /** DeepSeek API credential override. */
+  readonly apiKey?: Credential;
+  /** Optional path to an auth file; supports a leading `~`. */
+  readonly authPath?: string;
+  /** HTTPS API base URL override. */
+  readonly baseUrl?: string;
+}
+
 /** Qwen settings; provider credentials are obtained from the Qwen CLI. */
 export type QwenProviderConfig = CommonProviderConfig;
 
@@ -215,6 +226,8 @@ export interface ProviderConfigMap {
   readonly "alibaba-token-plan": AlibabaTokenPlanProviderConfig;
   /** Codex settings. */
   readonly codex: CodexProviderConfig;
+  /** DeepSeek balance settings. */
+  readonly deepseek: DeepSeekProviderConfig;
   /** MiniMax Token Plan settings. */
   readonly minimax: MiniMaxProviderConfig;
   /** Qwen CLI settings. */
@@ -258,6 +271,8 @@ export interface OpenCodeAuth {
   readonly apiKey?: OpenCodeAuthCredential;
   /** OpenAI/Codex credentials stored by OpenCode. */
   openai?: OpenCodeOpenAIAuthEntry | null;
+  /** DeepSeek credentials stored under the provider's catalog ID. */
+  deepseek?: OpenCodeAuthEntry | null;
   /** ZAI Coding Plan credentials stored under OpenCode's provider ID. */
   "zai-coding-plan"?: OpenCodeAuthEntry | null;
   /** ZAI credentials stored under the plugin's normalized provider ID. */

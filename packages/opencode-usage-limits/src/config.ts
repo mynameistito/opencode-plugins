@@ -92,6 +92,7 @@ export interface OpenCodeAuthLoad {
 const AUTH_DECODE_KIND = "auth-decode" as const;
 
 const authEntryNames = new Set([
+  "deepseek",
   "minimax",
   "minimax-coding-plan",
   "minimax-token-plan",

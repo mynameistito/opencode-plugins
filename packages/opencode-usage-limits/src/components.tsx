@@ -5,6 +5,7 @@ import { createMemo, For } from "solid-js";
 import type { ConfigDiagnostic } from "@/config.ts";
 import {
   bottomWindowMainText,
+  formatBalance,
   formatPercent,
   formatTimestamp,
   percentBar,
@@ -94,40 +95,48 @@ const UsageWindowRows = (props: {
   windows: readonly UsageWindow[];
 }) => (
   <For each={props.windows}>
-    {(window) => (
-      <box flexDirection="column">
-        <text>
-          <span style={{ fg: props.theme.subdued }}>{"  "}</span>
-          <span style={{ fg: props.theme.text }}>
-            <b>{window.label}</b>
-          </span>
-          <span style={{ fg: props.theme.subdued }}>
-            {windowResetText(window)}
-            {windowResetTime(window)}
-          </span>
-        </text>
-        <text>
-          <span style={{ fg: props.theme.subdued }}>{"  "}</span>
-          {props.showBar ? (
+    {(window) => {
+      const usedPercent = quotaUsedPercent(window.quota);
+      const showBar = props.showBar && window.quota._tag !== "Balance";
+      const quotaText =
+        window.quota._tag === "Balance"
+          ? formatBalance(window.quota)
+          : `${formatPercent(usedPercent)} used`;
+      return (
+        <box flexDirection="column">
+          <text>
+            <span style={{ fg: props.theme.subdued }}>{"  "}</span>
+            <span style={{ fg: props.theme.text }}>
+              <b>{window.label}</b>
+            </span>
+            <span style={{ fg: props.theme.subdued }}>
+              {windowResetText(window)}
+              {windowResetTime(window)}
+            </span>
+          </text>
+          <text>
+            <span style={{ fg: props.theme.subdued }}>{"  "}</span>
+            {showBar ? (
+              <span
+                style={{
+                  fg: dotColor(usedPercent, props.theme),
+                }}
+              >
+                {percentBar(usedPercent, 12)}
+              </span>
+            ) : null}
             <span
               style={{
-                fg: dotColor(quotaUsedPercent(window.quota), props.theme),
+                fg: dotColor(usedPercent, props.theme),
               }}
             >
-              {percentBar(quotaUsedPercent(window.quota), 12)}
+              {" "}
+              {quotaText}
             </span>
-          ) : null}
-          <span
-            style={{
-              fg: dotColor(quotaUsedPercent(window.quota), props.theme),
-            }}
-          >
-            {" "}
-            {formatPercent(quotaUsedPercent(window.quota))} used
-          </span>
-        </text>
-      </box>
-    )}
+          </text>
+        </box>
+      );
+    }}
   </For>
 );
 
@@ -307,16 +316,18 @@ export const BottomUsage = (props: {
   if (!props.window) {
     return null;
   }
+  const usedPercent = quotaUsedPercent(props.window.quota);
+  const showBar = props.showBar && props.window.quota._tag !== "Balance";
 
   return (
     <text>
-      {props.showBar ? (
+      {showBar ? (
         <span
           style={{
-            fg: dotColor(quotaUsedPercent(props.window.quota), colors),
+            fg: dotColor(usedPercent, colors),
           }}
         >
-          {percentBar(quotaUsedPercent(props.window.quota), 8)}
+          {percentBar(usedPercent, 8)}
         </span>
       ) : null}
       <span style={{ fg: colors.text }}>

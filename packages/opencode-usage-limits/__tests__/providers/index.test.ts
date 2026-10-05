@@ -46,6 +46,7 @@ describe("provider manifest", () => {
   it("maps OpenCode session providers to plugin providers", () => {
     expect([
       ["openai", pluginProviderForOpenCode("openai")],
+      ["deepseek", pluginProviderForOpenCode("deepseek")],
       ["zai-coding-plan", pluginProviderForOpenCode("zai-coding-plan")],
       ["minimax-coding-plan", pluginProviderForOpenCode("minimax-coding-plan")],
       ["minimax", pluginProviderForOpenCode("minimax")],
@@ -59,6 +60,7 @@ describe("provider manifest", () => {
       ["anthropic", pluginProviderForOpenCode("anthropic")],
     ]).toStrictEqual([
       ["openai", "codex"],
+      ["deepseek", "deepseek"],
       ["zai-coding-plan", "zai"],
       ["minimax-coding-plan", "minimax"],
       ["minimax", "minimax"],

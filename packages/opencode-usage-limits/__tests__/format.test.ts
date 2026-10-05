@@ -15,7 +15,9 @@ import {
 import type { UsageWindow } from "@/types.ts";
 import type { UsageQuota } from "@/usage.ts";
 import {
+  balanceQuota,
   countQuota,
+  parseUsageBalance,
   parseUsageCount,
   parseUsagePercentage,
   percentageQuota,
@@ -54,6 +56,39 @@ describe("format helpers", () => {
     );
     expect(windowMainText(usageWindow({ quota: percentage(42.5) }))).toBe(
       "5h: 43%"
+    );
+  });
+
+  it("formats currency balances without percentages", () => {
+    const remaining = Result.getOrThrow(parseUsageBalance(12.34));
+    const quota = balanceQuota(remaining, "USD");
+    const window = usageWindow({ label: "USD balance", quota });
+
+    expect(windowMainText(window)).toBe("USD balance: $12.34 remaining");
+    expect(bottomWindowMainText(window)).toBe("USD balance $12.34 remaining");
+  });
+
+  it("formats zero balances and preserves generic units", () => {
+    const zero = balanceQuota(Result.getOrThrow(parseUsageBalance(0)), "CNY");
+    const credits = balanceQuota(
+      Result.getOrThrow(parseUsageBalance(12.5)),
+      "credits"
+    );
+
+    expect(
+      windowMainText(usageWindow({ label: "CNY balance", quota: zero }))
+    ).toBe("CNY balance: ¥0.00 remaining");
+    expect(
+      bottomWindowMainText(usageWindow({ label: "credits", quota: credits }))
+    ).toBe("credits 12.5 credits remaining");
+  });
+
+  it("keeps tiny positive currency balances visible", () => {
+    const remaining = Result.getOrThrow(parseUsageBalance(0.004));
+    const quota = balanceQuota(remaining, "USD");
+
+    expect(windowMainText(usageWindow({ label: "USD balance", quota }))).toBe(
+      "USD balance: $<0.01 remaining"
     );
   });
 

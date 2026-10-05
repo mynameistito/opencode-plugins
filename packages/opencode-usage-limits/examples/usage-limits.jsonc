@@ -26,6 +26,17 @@
       "authorizationScheme": "bearer",
       "baseUrl": "https://chatgpt.com/backend-api",
     },
+    "deepseek": {
+      "enabled": true,
+      "label": "DeepSeek",
+      "showSidebarBar": true,
+      "showFooterBar": true,
+      "sidebarWindow": "all",
+      "footerWindow": "auto",
+      "authPath": "~/.config/opencode/auth.json",
+      "apiKey": "{env:DEEPSEEK_API_KEY}", // Optional fallback when OpenCode auth has no DeepSeek key
+      "baseUrl": "https://api.deepseek.com",
+    },
     "zai": {
       "enabled": true,
       "label": "ZAI",

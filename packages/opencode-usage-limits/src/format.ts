@@ -1,4 +1,5 @@
 import type { UsageWindow } from "@/types.ts";
+import type { BalanceQuota, UsageQuota } from "@/usage.ts";
 import { quotaUsedPercent } from "@/usage.ts";
 
 /**
@@ -48,23 +49,54 @@ const duration = (seconds: number | null): string => {
 export const formatPercent = (value: number | null): string =>
   value === null ? "?" : `${Math.round(value)}%`;
 
+const CURRENCY_SYMBOLS = new Map([
+  ["CNY", "¥"],
+  ["EUR", "€"],
+  ["GBP", "£"],
+  ["JPY", "¥"],
+  ["KRW", "₩"],
+  ["USD", "$"],
+]);
+
+/**
+ * Formats a remaining balance amount without implying a percentage or total.
+ *
+ * @param quota - The remaining balance to render.
+ * @returns A concise amount followed by `remaining`.
+ */
+export const formatBalance = (quota: BalanceQuota): string => {
+  const symbol = CURRENCY_SYMBOLS.get(quota.unit.toUpperCase());
+  const rounded = symbol ? quota.remaining.toFixed(2) : "";
+  const displayAmount =
+    symbol && quota.remaining > 0 && Number(rounded) === 0 ? "<0.01" : rounded;
+  const amount = symbol
+    ? `${symbol}${displayAmount}`
+    : `${quota.remaining} ${quota.unit}`;
+  return `${amount} remaining`;
+};
+
+const quotaMainText = (quota: UsageQuota): string =>
+  quota._tag === "Balance"
+    ? formatBalance(quota)
+    : formatPercent(quotaUsedPercent(quota));
+
 /**
  * Builds the primary line of text for a usage window in the sidebar panel.
  *
  * @param window - The provider usage window to summarize.
- * @returns A label and percentage pair such as `daily: 42% used`.
+ * @returns A label and quota summary such as `daily: 42%` or `$12.34 remaining`.
  */
 export const windowMainText = (window: UsageWindow): string =>
-  `${window.label}: ${formatPercent(quotaUsedPercent(window.quota))}`;
+  `${window.label}: ${quotaMainText(window.quota)}`;
 
 /**
  * Builds the compact prompt-footer text for the active provider's primary window.
  *
  * @param window - The active provider usage window to summarize.
- * @returns A compact percentage label such as `daily 42%`.
+ * @returns A compact quota label such as `daily 42%` or `$12.34 remaining`.
  */
 export const bottomWindowMainText = (window: UsageWindow): string =>
-  `${window.label} ${formatPercent(quotaUsedPercent(window.quota))}`;
+  `${window.label} ${quotaMainText(window.quota)}`;
 
 /**
  * Formats the reset suffix for a usage window.

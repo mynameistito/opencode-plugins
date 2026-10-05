@@ -54,6 +54,15 @@
   text-align: center;
 }
 
+.provider-logo-deepseek {
+  width: 2.25rem !important;
+  height: 1.67rem !important;
+}
+
+:root[data-theme="dark"] .provider-logo-deepseek {
+  filter: invert(1);
+}
+
 .provider-logo-opencode-light {
   display: none;
 }
