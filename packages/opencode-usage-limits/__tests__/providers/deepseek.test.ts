@@ -4,7 +4,11 @@ import path from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
 
-import { ProviderResponseDecodeError } from "@/errors.ts";
+import {
+  ProviderRateLimitError,
+  ProviderResponseDecodeError,
+  ProviderTransportError,
+} from "@/errors.ts";
 import { fetchDeepSeekBalanceUsage } from "@/providers/deepseek.ts";
 
 import { installFetchMock, resetFetchMock } from "./helpers.ts";
@@ -28,6 +32,37 @@ const response = (
   balanceInfos: readonly BalanceInfoInput[],
   isAvailable = true
 ) => Response.json({ balance_infos: balanceInfos, is_available: isAvailable });
+
+const regressionApiKey = "deepseek-regression-api-key";
+
+const rejectDeepSeekRequest = async (status: number): Promise<Error> => {
+  installFetchMock(
+    Response.json(
+      { error: regressionApiKey },
+      {
+        headers: { "retry-after": "later" },
+        status,
+      }
+    )
+  );
+  try {
+    await fetchDeepSeekBalanceUsage({ apiKey: regressionApiKey }, {}, 1000);
+  } catch (error) {
+    if (error instanceof Error) {
+      return error;
+    }
+    return new Error(String(error));
+  }
+  return new Error(`expected DeepSeek request to reject with HTTP ${status}`);
+};
+
+const expectSafeProviderFailure = (error: Error, message: string): void => {
+  expect(error.message).toBe(message);
+  expect(String(error)).not.toContain(regressionApiKey);
+  const serialized = JSON.stringify(error);
+  expect(serialized).toBeDefined();
+  expect(serialized).not.toContain(regressionApiKey);
+};
 
 describe("DeepSeek provider", () => {
   afterEach(resetFetchMock);
@@ -165,6 +200,40 @@ describe("DeepSeek provider", () => {
     await expect(
       fetchDeepSeekBalanceUsage({ apiKey: "deepseek-key" }, {}, 1000)
     ).rejects.toBeInstanceOf(ProviderResponseDecodeError);
+  });
+
+  it.each([
+    [401, "unauthorized", "provider credentials were rejected"],
+    [403, "forbidden", "provider access was forbidden"],
+    [500, "http", "provider request failed (HTTP 500)"],
+  ] as const)(
+    "classifies DeepSeek HTTP %d as a safe transport error",
+    async (status, cause, message) => {
+      const error = await rejectDeepSeekRequest(status);
+
+      expect(error).toBeInstanceOf(ProviderTransportError);
+      if (!(error instanceof ProviderTransportError)) {
+        return;
+      }
+      expect(error.cause).toBe(cause);
+      expect(error.operation).toBe("fetch-usage");
+      expect(error.providerID).toBe("deepseek");
+      expect(error.status).toBe(status);
+      expectSafeProviderFailure(error, message);
+    }
+  );
+
+  it("classifies DeepSeek rate limits without leaking the API key", async () => {
+    const error = await rejectDeepSeekRequest(429);
+
+    expect(error).toBeInstanceOf(ProviderRateLimitError);
+    if (!(error instanceof ProviderRateLimitError)) {
+      return;
+    }
+    expect(error.operation).toBe("fetch-usage");
+    expect(error.providerID).toBe("deepseek");
+    expect(error.retryAfterMs).toBeUndefined();
+    expectSafeProviderFailure(error, "provider rate limit reached");
   });
 
   it("uses authPath before OpenCode auth and configured credentials", async () => {
