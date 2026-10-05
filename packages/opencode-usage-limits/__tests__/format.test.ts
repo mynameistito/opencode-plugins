@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   bottomWindowMainText,
+  formatQuotaText,
   formatTimestamp,
   formatTokenCount,
   limitLabelForWindow,
@@ -84,6 +85,13 @@ describe("format helpers", () => {
         usageWindow({ label: "spend", quota, resetsAt: null })
       )
     ).toBe("spend $25.50 / $100.00 used");
+  });
+
+  it("appends used only to percentage-style component text", () => {
+    const quota = percentageQuota(Result.getOrThrow(parseUsagePercentage(42)));
+
+    expect(formatQuotaText(quota)).toBe("42%");
+    expect(formatQuotaText(quota, true)).toBe("42% used");
   });
 
   it("formats zero balances and preserves generic units", () => {

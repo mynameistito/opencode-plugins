@@ -46,7 +46,7 @@ const duration = (seconds: number | null): string => {
  *   report a percentage.
  * @returns A rounded usage string, or `? used` when usage is unknown.
  */
-export const formatPercent = (value: number | null): string =>
+const formatPercent = (value: number | null): string =>
   value === null ? "?" : `${Math.round(value)}%`;
 
 const CURRENCY_SYMBOLS = new Map([
@@ -64,7 +64,7 @@ const CURRENCY_SYMBOLS = new Map([
  * @param quota - The remaining balance to render.
  * @returns A concise amount followed by `remaining`.
  */
-export const formatBalance = (quota: BalanceQuota): string => {
+const formatBalance = (quota: BalanceQuota): string => {
   const symbol = CURRENCY_SYMBOLS.get(quota.unit.toUpperCase());
   const rounded = symbol ? quota.remaining.toFixed(2) : "";
   const displayAmount =
@@ -76,7 +76,7 @@ export const formatBalance = (quota: BalanceQuota): string => {
 };
 
 /** Formats an explicitly-unitized count quota without losing its unit. */
-export const formatCountQuota = (
+const formatCountQuota = (
   quota: Extract<UsageQuota, { _tag: "Count" }>
 ): string => {
   const symbol = CURRENCY_SYMBOLS.get(quota.unit?.toUpperCase() ?? "");
@@ -85,14 +85,18 @@ export const formatCountQuota = (
   return `${amount(quota.current)} / ${amount(quota.total)} used`;
 };
 
-const quotaMainText = (quota: UsageQuota): string => {
+export const formatQuotaText = (
+  quota: UsageQuota,
+  appendUsedSuffix = false
+): string => {
   if (quota._tag === "Balance") {
     return formatBalance(quota);
   }
   if (quota._tag === "Count" && quota.unit) {
     return formatCountQuota(quota);
   }
-  return formatPercent(quotaUsedPercent(quota));
+  const text = formatPercent(quotaUsedPercent(quota));
+  return appendUsedSuffix ? `${text} used` : text;
 };
 
 /**
@@ -102,7 +106,7 @@ const quotaMainText = (quota: UsageQuota): string => {
  * @returns A label and quota summary such as `daily: 42%` or `$12.34 remaining`.
  */
 export const windowMainText = (window: UsageWindow): string =>
-  `${window.label}: ${quotaMainText(window.quota)}`;
+  `${window.label}: ${formatQuotaText(window.quota)}`;
 
 /**
  * Builds the compact prompt-footer text for the active provider's primary window.
@@ -111,7 +115,7 @@ export const windowMainText = (window: UsageWindow): string =>
  * @returns A compact quota label such as `daily 42%` or `$12.34 remaining`.
  */
 export const bottomWindowMainText = (window: UsageWindow): string =>
-  `${window.label} ${quotaMainText(window.quota)}`;
+  `${window.label} ${formatQuotaText(window.quota)}`;
 
 /**
  * Formats the reset suffix for a usage window.
