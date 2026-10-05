@@ -17,6 +17,13 @@ export type Percentage = typeof PercentageSchema.Type;
 /** A finite, non-negative quota count. */
 export type QuotaCount = typeof QuotaCountSchema.Type;
 
+/** A remaining balance without a known total or usage percentage. */
+export interface BalanceQuota {
+  readonly _tag: "Balance";
+  readonly remaining: QuotaCount;
+  readonly unit: string;
+}
+
 /** A valid absolute reset instant. */
 export type ResetInstant = typeof ResetInstantSchema.Type;
 
@@ -34,6 +41,7 @@ export type UsageQuota =
       readonly total: QuotaCount;
       readonly usedPercent: Percentage;
     }
+  | BalanceQuota
   | { readonly _tag: "Unknown" };
 
 /** Schema for finite percentages in the inclusive range `0..100`. */
@@ -62,6 +70,16 @@ const parseResetInstant = Schema.decodeUnknownResult(ResetInstantSchema);
 export const parseUsagePercentage = (
   value: JsonValue
 ): Result.Result<Percentage, Schema.SchemaError> => parsePercentage(value);
+
+/**
+ * Decodes an unknown value as a finite, non-negative remaining balance.
+ *
+ * @param value - Amount supplied by a provider response.
+ * @returns A validated balance amount or a schema decoding failure.
+ */
+export const parseUsageBalance = (
+  value: JsonValue
+): Result.Result<QuotaCount, Schema.SchemaError> => parseQuotaCount(value);
 
 /**
  * Decodes an unknown value as a finite, non-negative quota count.
@@ -150,15 +168,33 @@ export const countQuota = (
   };
 };
 
+/**
+ * Creates a remaining-balance quota without inventing a total or percentage.
+ *
+ * @param remaining - Validated amount still available.
+ * @param unit - Provider-reported unit or currency.
+ * @returns A balance quota preserving the amount and unit.
+ */
+export const balanceQuota = (
+  remaining: QuotaCount,
+  unit: string
+): BalanceQuota => ({
+  _tag: "Balance",
+  remaining: QuotaCountSchema.make(remaining),
+  unit: Schema.String.make(unit),
+});
+
 /** Quota form used when a provider cannot report meaningful usage. */
 /** Quota sentinel for providers that cannot report meaningful usage. */
 export const unknownQuota: UsageQuota = { _tag: "Unknown" };
 
 /**
- * Gets the percentage consumed by a quota when it is known.
+ * Gets the percentage consumed by a quota when it reports consumption.
  *
  * @param quota - Normalized quota representation.
- * @returns The used percentage, or `null` for an unknown quota.
+ * @returns The used percentage, or `null` for balances and unknown quotas.
  */
 export const quotaUsedPercent = (quota: UsageQuota): Percentage | null =>
-  quota._tag === "Unknown" ? null : quota.usedPercent;
+  quota._tag === "Percentage" || quota._tag === "Count"
+    ? quota.usedPercent
+    : null;

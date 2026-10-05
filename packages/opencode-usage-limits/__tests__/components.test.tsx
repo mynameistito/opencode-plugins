@@ -11,7 +11,12 @@ import type {
   ProviderUsage,
   UsageWindow,
 } from "@/types.ts";
-import { parseUsagePercentage, percentageQuota } from "@/usage.ts";
+import {
+  balanceQuota,
+  parseUsageBalance,
+  parseUsagePercentage,
+  percentageQuota,
+} from "@/usage.ts";
 
 const color = RGBA.fromValues(1, 2, 3, 255);
 
@@ -189,6 +194,37 @@ describe(UsageLimitsPanel, () => {
     expect(text).toContain("5h");
     expect(text).toContain("42%");
     expect(text).toContain("[█████░░░░░░░]");
+  });
+
+  it("renders a remaining balance without a percentage or progress bar", async () => {
+    const text = await renderPanelText(
+      [
+        {
+          data: usage({
+            windows: [
+              usageWindow({
+                label: "USD balance",
+                quota: balanceQuota(
+                  Result.getOrThrow(parseUsageBalance(12.34)),
+                  "USD"
+                ),
+                resetsAt: null,
+              }),
+            ],
+          }),
+          id: "codex",
+          label: "Codex",
+          stale: false,
+          status: "ready",
+        },
+      ],
+      true
+    );
+
+    expect(text).toContain("USD balance");
+    expect(text).toContain("$12.34 remaining");
+    expect(text).not.toContain("%");
+    expect(text).not.toContain("[");
   });
 
   it("filters windows by the provider sidebar window", async () => {
@@ -420,6 +456,32 @@ describe(UsageLimitsPanel, () => {
       await setup.flush();
       expect(setup.captureCharFrame()).toContain("5h ?");
       expect(setup.captureCharFrame()).toContain("[░░░░░░░░]");
+    } finally {
+      setup.renderer.destroy();
+    }
+  });
+
+  it("renders footer balances without a percentage or progress bar", async () => {
+    const setup = await testRender(
+      () => (
+        <BottomUsage
+          showBar
+          theme={theme}
+          window={usageWindow({
+            label: "CNY balance",
+            quota: balanceQuota(Result.getOrThrow(parseUsageBalance(0)), "CNY"),
+            resetsAt: null,
+          })}
+        />
+      ),
+      { height: 4, width: 80 }
+    );
+    try {
+      await setup.flush();
+      const text = setup.captureCharFrame();
+      expect(text).toContain("CNY balance ¥0.00 remaining");
+      expect(text).not.toContain("%");
+      expect(text).not.toContain("[");
     } finally {
       setup.renderer.destroy();
     }

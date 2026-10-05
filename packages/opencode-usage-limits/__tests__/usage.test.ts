@@ -2,17 +2,21 @@ import { Result } from "effect";
 import { describe, expect, expectTypeOf, it } from "vitest";
 
 import {
+  balanceQuota,
   countQuota,
+  parseUsageBalance,
   parseUsageCount,
   parseUsagePercentage,
   parseUsageResetInstant,
+  quotaUsedPercent,
 } from "@/usage.ts";
-import type { Percentage, QuotaCount } from "@/usage.ts";
+import type { BalanceQuota, Percentage, QuotaCount } from "@/usage.ts";
 
 describe("usage domain invariants", () => {
   it("keeps refined numeric types nominal", () => {
     expectTypeOf<number>().not.toMatchTypeOf<Percentage>();
     expectTypeOf<number>().not.toMatchTypeOf<QuotaCount>();
+    expectTypeOf<number>().not.toMatchTypeOf<BalanceQuota>();
   });
 
   it.each([0, 42.5, 100])("accepts finite percentage %s", (value) => {
@@ -34,6 +38,29 @@ describe("usage domain invariants", () => {
       Result.isFailure(parseUsageCount(Number.POSITIVE_INFINITY))
     ).toBeTruthy();
   });
+
+  it("constructs a remaining balance without usage percentages", () => {
+    const remaining = Result.getOrThrow(parseUsageBalance(12.34));
+    const quota = balanceQuota(remaining, "USD");
+
+    expect(quota).toStrictEqual({
+      _tag: "Balance",
+      remaining: 12.34,
+      unit: "USD",
+    });
+    expect(quotaUsedPercent(quota)).toBeNull();
+  });
+
+  it.each([0, 12.5])("accepts finite non-negative balances %s", (value) => {
+    expect(Result.isSuccess(parseUsageBalance(value))).toBeTruthy();
+  });
+
+  it.each([-1, Number.NaN, Number.POSITIVE_INFINITY, "12.5"])(
+    "rejects invalid balance amount %s",
+    (value) => {
+      expect(Result.isFailure(parseUsageBalance(value))).toBeTruthy();
+    }
+  );
 
   it("rejects count quotas whose current value exceeds the total", () => {
     const current = Result.getOrThrow(parseUsageCount(20));
