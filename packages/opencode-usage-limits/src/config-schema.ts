@@ -98,6 +98,14 @@ const deepSeekProviderConfigSchema = Schema.Struct({
   baseUrl: Schema.optionalKey(Schema.String),
 });
 
+/** Schema for Moonshot/Kimi API balance provider configuration. */
+const moonshotAiProviderConfigSchema = Schema.Struct({
+  ...commonProviderFields,
+  apiKey: Schema.optionalKey(secret),
+  authPath: Schema.optionalKey(Schema.String),
+  baseUrl: Schema.optionalKey(Schema.String),
+});
+
 /** Schema for Novita AI balance provider configuration. */
 const novitaAiProviderConfigSchema = Schema.Struct({
   ...commonProviderFields,
@@ -144,6 +152,8 @@ const providersSchema = Schema.Struct({
   commandcode: Schema.optionalKey(commandCodeProviderConfigSchema),
   deepseek: Schema.optionalKey(deepSeekProviderConfigSchema),
   minimax: Schema.optionalKey(minimaxProviderConfigSchema),
+  moonshotai: Schema.optionalKey(moonshotAiProviderConfigSchema),
+  "moonshotai-cn": Schema.optionalKey(moonshotAiProviderConfigSchema),
   "novita-ai": Schema.optionalKey(novitaAiProviderConfigSchema),
   "opencode-go": Schema.optionalKey(openCodeGoProviderConfigSchema),
   openrouter: Schema.optionalKey(openRouterProviderConfigSchema),
@@ -258,6 +268,8 @@ export const parseOpenCodeAuth = (input: JsonValue): OpenCodeAuth => {
   }
 
   const minimax = parseAuthEntry(input.minimax);
+  const moonshotai = parseAuthEntry(input.moonshotai);
+  const moonshotaiCn = parseAuthEntry(input["moonshotai-cn"]);
   const novitaAi = parseAuthEntry(input["novita-ai"]);
   const openrouter = parseAuthEntry(input.openrouter);
   const deepseek = parseAuthEntry(input.deepseek);
@@ -275,6 +287,12 @@ export const parseOpenCodeAuth = (input: JsonValue): OpenCodeAuth => {
   const auth: OpenCodeAuthBuilder = direct ?? {};
   if (minimax) {
     auth.minimax = minimax;
+  }
+  if (moonshotai) {
+    auth.moonshotai = moonshotai;
+  }
+  if (moonshotaiCn) {
+    auth["moonshotai-cn"] = moonshotaiCn;
   }
   if (novitaAi) {
     auth["novita-ai"] = novitaAi;

@@ -47,6 +47,8 @@ describe("provider manifest", () => {
     expect([
       ["openai", pluginProviderForOpenCode("openai")],
       ["deepseek", pluginProviderForOpenCode("deepseek")],
+      ["moonshotai", pluginProviderForOpenCode("moonshotai")],
+      ["moonshotai-cn", pluginProviderForOpenCode("moonshotai-cn")],
       ["novita-ai", pluginProviderForOpenCode("novita-ai")],
       ["openrouter", pluginProviderForOpenCode("openrouter")],
       ["zai-coding-plan", pluginProviderForOpenCode("zai-coding-plan")],
@@ -63,6 +65,8 @@ describe("provider manifest", () => {
     ]).toStrictEqual([
       ["openai", "codex"],
       ["deepseek", "deepseek"],
+      ["moonshotai", "moonshotai"],
+      ["moonshotai-cn", "moonshotai-cn"],
       ["novita-ai", "novita-ai"],
       ["openrouter", "openrouter"],
       ["zai-coding-plan", "zai"],
@@ -117,6 +121,39 @@ describe("provider manifest", () => {
       ).pipe(Effect.provide(ProviderRuntimeLive))
     );
     await expect(result).resolves.toMatchObject({ id: "codex" });
+  });
+
+  it("dispatches Moonshot provider IDs through the registry definition", async () => {
+    const fetchMock = installFetchMock(
+      Response.json({
+        code: 0,
+        data: { available_balance: -2.5 },
+        status: true,
+      })
+    );
+
+    const usage = await Effect.runPromise(
+      fetchProviderEffect(
+        "moonshotai-cn",
+        { apiKey: "china-key" },
+        {},
+        1000
+      ).pipe(Effect.provide(ProviderRuntimeLive))
+    );
+
+    expect(fetchMock.mock.calls[0]).toMatchObject([
+      "https://api.moonshot.cn/v1/users/me/balance",
+      { headers: { Authorization: "Bearer china-key" } },
+    ]);
+    expect(usage).toMatchObject({
+      id: "moonshotai-cn",
+      windows: [
+        {
+          label: "CNY balance",
+          quota: { _tag: "Balance", remaining: -2.5, unit: "CNY" },
+        },
+      ],
+    });
   });
 
   it("rejects unknown provider ids asynchronously", async () => {

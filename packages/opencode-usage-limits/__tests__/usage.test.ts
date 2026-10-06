@@ -5,6 +5,7 @@ import {
   balanceQuota,
   countQuota,
   parseUsageBalance,
+  parseUsageBalanceAmount,
   parseUsageCount,
   parseUsagePercentage,
   parseUsageResetInstant,
@@ -61,6 +62,14 @@ describe("usage domain invariants", () => {
       expect(Result.isFailure(parseUsageBalance(value))).toBeTruthy();
     }
   );
+
+  it("accepts signed finite authoritative balance amounts", () => {
+    expect(Result.isSuccess(parseUsageBalanceAmount(-2.5))).toBeTruthy();
+    expect(Result.isSuccess(parseUsageBalanceAmount(0))).toBeTruthy();
+    expect(
+      Result.isFailure(parseUsageBalanceAmount(Number.NEGATIVE_INFINITY))
+    ).toBeTruthy();
+  });
 
   it("rejects count quotas whose current value exceeds the total", () => {
     const current = Result.getOrThrow(parseUsageCount(20));

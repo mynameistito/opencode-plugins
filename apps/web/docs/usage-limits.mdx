@@ -126,6 +126,25 @@ The top-level `enabled` flag disables the plugin. Each provider's `enabled` flag
     <img src="https://cdn.simpleicons.org/minimax" alt="MiniMax" />
     <span class="provider-logo-name">MiniMax</span>
   </a>
+  <a href="#moonshot-kimi-api" aria-label="Moonshot/Kimi API">
+    <svg
+      class="provider-logo-moonshot"
+      width="32"
+      height="33"
+      viewBox="0 0 32 33"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <path
+        fill-rule="evenodd"
+        clip-rule="evenodd"
+        d="M28.8186 6.53427C26.7444 3.70464 23.7481 1.53765 20.1255 0.555191C16.5029 -0.427271 12.837 -0.067732 9.64385 1.3328L28.8186 6.53427ZM2.80611 7.0269C4.22375 4.93586 6.09629 3.23501 8.24272 2.03098L22.3683 5.86327C21.4413 6.40467 20.4483 7.33766 19.6796 8.36332L31.294 11.5142C31.6236 12.6172 31.8383 13.7606 31.9285 14.9277L2.80611 7.0269ZM31.4282 20.3772C31.2644 20.9974 31.0669 21.5994 30.8384 22.1812L0.168318 13.8609C0.257781 13.2408 0.384406 12.62 0.548192 11.9998C0.933572 10.5429 1.50338 9.18622 2.22597 7.94874L17.2345 12.0207C16.6337 12.8903 16.0866 13.8352 15.6049 14.8462L31.6917 19.2108C31.6181 19.6003 31.53 19.9891 31.4275 20.3786L31.4282 20.3772ZM0.928067 21.6161C0.184146 19.507 -0.133105 17.2257 0.0513275 14.9075L14.2058 18.7475C14.1039 19.0736 14.0083 19.4038 13.9195 19.739C13.7392 20.4211 13.5919 21.1019 13.4777 21.7778L28.7621 25.9243C28.0506 26.881 27.2399 27.7478 26.3501 28.5129L0.928067 21.6161ZM11.8508 31.8212C7.02602 30.5119 3.31123 27.1033 1.4091 22.8257L12.9272 25.9508C12.9086 27.0385 12.9753 28.0983 13.1219 29.1149L21.4909 31.385C18.5035 32.4971 15.1596 32.7186 11.8508 31.8212Z"
+        fill="white"
+      />
+    </svg>
+    <span class="provider-logo-name">Moonshot/Kimi API</span>
+  </a>
   <a href="#novita-ai" aria-label="Novita AI">
     <span class="provider-logo-name">Novita AI</span>
   </a>
@@ -253,6 +272,36 @@ The adapter uses `total_balance` directly. It does not add `granted_balance` and
 ### MiniMax
 
 Token Plan rolling five-hour and weekly windows. Uses MiniMax auth or `OC_MINIMAX_TOKEN_PLAN_KEY`. See the [MiniMax documentation](https://platform.minimax.io/docs/token-plan/intro).
+
+### Moonshot/Kimi API
+
+Moonshot/Kimi Open Platform is a pay-as-you-go API balance, separate from Kimi For Coding's subscription-based 5-hour and weekly quota. Choose the provider matching the region where the API key was created:
+
+| Provider ID | Official balance endpoint | Currency | OpenCode auth ID |
+| --- | --- | --- | --- |
+| `moonshotai` | `https://api.moonshot.ai/v1/users/me/balance` | USD | `moonshotai` |
+| `moonshotai-cn` | `https://api.moonshot.cn/v1/users/me/balance` | CNY | `moonshotai-cn` |
+
+The adapter displays `data.available_balance` directly as the remaining balance. It does not recompute cash plus voucher balances, convert the amount to a percentage, or infer a reset time. Zero and negative balances remain visible. The response must have `code: 0`, `status: true`, and a finite numeric `data.available_balance`; malformed or unsuccessful responses fail closed.
+
+Enable either region with the matching OpenCode auth entry, or provide an explicit key:
+
+```jsonc
+{
+  "providers": {
+    "moonshotai": {
+      "enabled": true,
+      "apiKey": "{env:MOONSHOT_API_KEY}", // Optional global key
+    },
+    "moonshotai-cn": {
+      "enabled": true,
+      "apiKey": "{env:MOONSHOT_API_KEY_CN}", // Optional China key
+    },
+  },
+}
+```
+
+Global and China keys are independent and are never sent to the other region. OpenCode-discovered credentials are sent only to the exact corresponding official origin. A custom `baseUrl` requires an explicitly configured `authPath` or `apiKey`.
 
 ### Novita AI
 
