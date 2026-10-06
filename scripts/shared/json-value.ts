@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 
 /** A JSON value projected into a recursive TypeScript representation. */
 export type JsonValue =
-  | undefined
   | null
   | boolean
   | number
@@ -13,13 +12,16 @@ export type JsonValue =
 /** A JSON object whose members retain their recursive JSON value types. */
 export type JsonObject = ReadonlyMap<string, JsonValue>;
 
+/** Read an optional JSON object member, normalizing absent members to null. */
+export const getJsonField = (object: JsonObject, key: string): JsonValue =>
+  object.get(key) ?? null;
+
 /** Parse a JSON value as a plain object. */
 export const parseJsonObject = (
   value: JsonValue,
   context: string
 ): JsonObject => {
   assert.notEqual(value, null, `${context} must be an object`);
-  assert.notEqual(value, undefined, `${context} must be an object`);
   const object = new Object(value);
   assert.equal(
     Object.getPrototypeOf(object),

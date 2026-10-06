@@ -36,18 +36,7 @@ jobs:
       - name: Upgrade npm
         run: npm install --global npm@11.15.0
       - name: Verify npm staged publishing support
-        run: |
-          node --input-type=module <<'EOF'
-          import { execFileSync } from "node:child_process";
-
-          const version = execFileSync("npm", ["--version"], { encoding: "utf8" }).trim();
-          const [major = 0, minor = 0, patch = 0] = version.split(".").map(Number);
-          const supported = major > 11 || (major === 11 && (minor > 15 || (minor === 15 && patch >= 0)));
-
-          if (!supported) {
-            throw new Error(`npm ${version} does not support staged publishing. Use npm >= 11.15.0.`);
-          }
-          EOF
+        run: bun .github/scripts/verify-npm-staged-publishing.ts
       - name: Install dependencies
         run: bun install --frozen-lockfile
       - name: Verify packages

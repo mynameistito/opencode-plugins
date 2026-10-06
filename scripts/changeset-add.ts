@@ -9,7 +9,8 @@ const packages = new Map([
 ]);
 const types = new Set(["patch", "minor", "major"]);
 const [packageSelector, type, ...summaryParts] = process.argv.slice(2);
-const packageName = packageSelector ? packages.get(packageSelector) : undefined;
+const packageName =
+  (packageSelector ? packages.get(packageSelector) : null) ?? null;
 const summary = summaryParts.join(" ").trim();
 
 if (!packageName || !type || !types.has(type) || !summary) {

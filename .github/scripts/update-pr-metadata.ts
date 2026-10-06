@@ -62,7 +62,7 @@ const api = async (
     throw new GitHubApiError(response.status, await response.text());
   }
   if (response.status === 204) {
-    return undefined;
+    return null;
   }
   const result: JsonValue = JSON.parse(await response.text());
   return result;
@@ -78,45 +78,52 @@ interface PullRequest {
   head: {
     ref: string;
     sha: string;
-    repo?: { full_name?: string } | null;
+    repo: { full_name: string | null } | null;
   };
   labels: { name: string }[];
   changed_files: number;
 }
 
 interface PullRequestContents {
-  content?: string;
-  encoding?: string;
+  content: string | null;
+  encoding: string | null;
 }
 
 const parsePullRequest = (value: JsonValue): PullRequest => {
   const pullRequest = parseJsonObject(value, "Pull request response");
-  const head = parseJsonObject(pullRequest.get("head"), "Pull request head");
-  const repositoryValue = head.get("repo");
+  const head = parseJsonObject(
+    pullRequest.get("head") ?? null,
+    "Pull request head"
+  );
+  const repositoryValue = head.get("repo") ?? null;
   let repo: PullRequest["head"]["repo"];
   if (repositoryValue === null) {
     repo = null;
-  } else if (repositoryValue !== undefined) {
+  } else {
     const headRepositoryDetails = parseJsonObject(
       repositoryValue,
       "Pull request head repository"
     );
-    const fullName = headRepositoryDetails.get("full_name");
-    repo =
-      fullName === undefined
-        ? {}
-        : { full_name: parseJsonString(fullName, "Repository full name") };
+    const fullName = headRepositoryDetails.get("full_name") ?? null;
+    repo = {
+      full_name:
+        fullName === null
+          ? null
+          : parseJsonString(fullName, "Repository full name"),
+    };
   }
 
   const labels = parseJsonArray(
-    pullRequest.get("labels"),
+    pullRequest.get("labels") ?? null,
     "Pull request labels"
   ).map((label, index) => {
     const parsedLabel = parseJsonObject(label, `Pull request label ${index}`);
-    return { name: parseJsonString(parsedLabel.get("name"), "Label name") };
+    return {
+      name: parseJsonString(parsedLabel.get("name") ?? null, "Label name"),
+    };
   });
   const changedFiles = parseJsonNumber(
-    pullRequest.get("changed_files"),
+    pullRequest.get("changed_files") ?? null,
     "Pull request changed file count"
   );
   assert.ok(
@@ -131,9 +138,9 @@ const parsePullRequest = (value: JsonValue): PullRequest => {
   return {
     changed_files: changedFiles,
     head: {
-      ref: parseJsonString(head.get("ref"), "Pull request head ref"),
+      ref: parseJsonString(head.get("ref") ?? null, "Pull request head ref"),
       repo,
-      sha: parseJsonString(head.get("sha"), "Pull request head SHA"),
+      sha: parseJsonString(head.get("sha") ?? null, "Pull request head SHA"),
     },
     labels,
   };
@@ -143,27 +150,35 @@ const parsePullRequestFiles = (value: JsonValue): PullRequestFile[] =>
   parseJsonArray(value, "Pull request file list").map((file, index) => {
     const parsedFile = parseJsonObject(file, `Pull request file ${index}`);
     return {
-      additions: parseJsonNumber(parsedFile.get("additions"), "File additions"),
-      deletions: parseJsonNumber(parsedFile.get("deletions"), "File deletions"),
-      filename: parseJsonString(parsedFile.get("filename"), "File name"),
+      additions: parseJsonNumber(
+        parsedFile.get("additions") ?? null,
+        "File additions"
+      ),
+      deletions: parseJsonNumber(
+        parsedFile.get("deletions") ?? null,
+        "File deletions"
+      ),
+      filename: parseJsonString(
+        parsedFile.get("filename") ?? null,
+        "File name"
+      ),
     };
   });
 
 const parseContentsResponse = (value: JsonValue): PullRequestContents => {
   const contents = parseJsonObject(value, "GitHub contents response");
-  const parsedContents: PullRequestContents = {};
-  const content = contents.get("content");
-  if (content !== undefined) {
-    parsedContents.content = parseJsonString(content, "GitHub contents data");
-  }
-  const encoding = contents.get("encoding");
-  if (encoding !== undefined) {
-    parsedContents.encoding = parseJsonString(
-      encoding,
-      "GitHub contents encoding"
-    );
-  }
-  return parsedContents;
+  const content = contents.get("content") ?? null;
+  const encoding = contents.get("encoding") ?? null;
+  return {
+    content:
+      content === null
+        ? null
+        : parseJsonString(content, "GitHub contents data"),
+    encoding:
+      encoding === null
+        ? null
+        : parseJsonString(encoding, "GitHub contents encoding"),
+  };
 };
 
 const pullRequest = parsePullRequest(
@@ -329,7 +344,7 @@ const requiredPackages =
   skipChangeset ||
   isChangesetReleasePR(
     pullRequest.head.ref,
-    pullRequest.head.repo?.full_name,
+    pullRequest.head.repo?.full_name ?? null,
     `${owner}/${repository}`
   )
     ? new Set<string>()

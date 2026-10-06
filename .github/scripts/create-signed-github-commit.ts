@@ -1,14 +1,20 @@
 import { readFile, readdir } from "node:fs/promises";
 
+import type { JsonValue } from "@/scripts/shared/json-value.ts";
+import {
+  parseJsonObject,
+  parseJsonString,
+} from "@/scripts/shared/json-value.ts";
+
 interface ApiResponse {
-  data?: unknown;
-  errors?: unknown;
-  message?: string;
-  node_id?: string;
-  sha?: string;
-  tree?: { sha: string };
-  verification?: { verified: boolean; reason: string };
-  object?: { sha: string };
+  data: JsonValue | null;
+  errors: JsonValue | null;
+  message: string | null;
+  node_id: string | null;
+  sha: string | null;
+  tree: { sha: string } | null;
+  verification: { verified: boolean; reason: string } | null;
+  object: { sha: string } | null;
 }
 
 interface CreateTreeRequest {
@@ -29,17 +35,54 @@ interface CreateCommitRequest {
 
 type ApiRequestBody = CreateTreeRequest | CreateCommitRequest;
 
-const isApiResponse = (value: unknown): value is ApiResponse =>
-  value instanceof Object && !Array.isArray(value);
+const parseNullableString = (value: JsonValue): string | null =>
+  value === null ? null : parseJsonString(value, "GitHub response string");
 
-const hasUpdateRefs = (response: ApiResponse | undefined): boolean => {
-  const { data } = response ?? {};
+const parseApiResponse = (value: JsonValue): ApiResponse => {
+  const response = parseJsonObject(value, "GitHub API response");
+  const treeValue = response.get("tree") ?? null;
+  const verificationValue = response.get("verification") ?? null;
+  const objectValue = response.get("object") ?? null;
+  const tree =
+    treeValue === null ? null : parseJsonObject(treeValue, "Git tree");
+  const verification =
+    verificationValue === null
+      ? null
+      : parseJsonObject(verificationValue, "Commit verification");
+  const refObject =
+    objectValue === null
+      ? null
+      : parseJsonObject(objectValue, "Git ref object");
+  return {
+    data: response.get("data") ?? null,
+    errors: response.get("errors") ?? null,
+    message: parseNullableString(response.get("message") ?? null),
+    node_id: parseNullableString(response.get("node_id") ?? null),
+    object: refObject
+      ? { sha: parseJsonString(refObject.get("sha") ?? null, "Git object SHA") }
+      : null,
+    sha: parseNullableString(response.get("sha") ?? null),
+    tree: tree
+      ? { sha: parseJsonString(tree.get("sha") ?? null, "Tree SHA") }
+      : null,
+    verification: verification
+      ? {
+          reason: parseJsonString(
+            verification.get("reason") ?? null,
+            "Verification reason"
+          ),
+          verified: verification.get("verified") === true,
+        }
+      : null,
+  };
+};
 
-  if (!(data instanceof Object) || Array.isArray(data)) {
+const hasUpdateRefs = (response: ApiResponse | null): boolean => {
+  if (response === null || response.data === null) {
     return false;
   }
-
-  return "updateRefs" in data && Boolean(data.updateRefs);
+  const data = parseJsonObject(response.data, "GraphQL response data");
+  return data.has("updateRefs") && data.get("updateRefs") !== null;
 };
 
 const token = process.env.GH_TOKEN;
@@ -56,7 +99,7 @@ if (!token || !repository || !version || !mainSha) {
 const request = async (
   path: string,
   method: "GET" | "POST" | "PATCH",
-  body?: ApiRequestBody
+  body: ApiRequestBody | null
 ): Promise<ApiResponse> => {
   const headers = new Headers({
     Accept: "application/vnd.github+json",
@@ -65,7 +108,7 @@ const request = async (
   });
   const init: RequestInit = { headers, method };
 
-  if (body) {
+  if (body !== null) {
     headers.set("Content-Type", "application/json");
     init.body = JSON.stringify(body);
   }
@@ -75,23 +118,15 @@ const request = async (
     init
   );
 
-  const result: unknown = await response.json();
+  const result: JsonValue = JSON.parse(await response.text());
+  const parsed = parseApiResponse(result);
 
   if (!response.ok) {
-    const message =
-      isApiResponse(result) && result.message
-        ? String(result.message)
-        : response.statusText;
+    const message = parsed.message || response.statusText;
     throw new Error(`GitHub API ${method} ${path} failed: ${message}`);
   }
 
-  if (!isApiResponse(result)) {
-    throw new Error(
-      `GitHub API ${method} ${path} returned an invalid response`
-    );
-  }
-
-  return result;
+  return parsed;
 };
 
 const changesetDirectoryEntries = await readdir(".changeset", {
@@ -104,7 +139,7 @@ const changedFiles = ["package.json", "bun.lock", ...changesetFiles];
 
 const baseSha = mainSha;
 
-const baseCommit = await request(`/git/commits/${baseSha}`, "GET");
+const baseCommit = await request(`/git/commits/${baseSha}`, "GET", null);
 
 if (!baseCommit.tree?.sha) {
   throw new Error("GitHub API did not return the base tree SHA");
@@ -136,22 +171,22 @@ const commit = await request("/git/commits", "POST", {
 
 if (!commit.sha || !commit.verification?.verified) {
   throw new Error(
-    `GitHub did not verify the update commit (reason: ${commit.verification?.reason ?? "unknown"})`
+    `GitHub did not verify the update commit (reason: ${commit.verification?.reason ?? "not provided"})`
   );
 }
 
 const refPath = "/git/ref/heads/update-opencode-plugin";
-let existingRef: ApiResponse | undefined;
+let existingRef: ApiResponse | null = null;
 
 try {
-  existingRef = await request(refPath, "GET");
+  existingRef = await request(refPath, "GET", null);
 } catch (error) {
   if (!(error instanceof Error) || !error.message.includes("Not Found")) {
     throw error;
   }
 }
 
-const repositoryInfo = await request("", "GET");
+const repositoryInfo = await request("", "GET", null);
 
 if (!repositoryInfo.node_id) {
   throw new Error("GitHub API did not return the repository node ID");
@@ -182,14 +217,13 @@ const refUpdateResponse = await fetch("https://api.github.com/graphql", {
   },
   method: "POST",
 });
-const refUpdateResult: unknown = await refUpdateResponse.json();
-
-const graphQLResult = isApiResponse(refUpdateResult)
-  ? refUpdateResult
-  : undefined;
-const hasGraphQLErrors = Array.isArray(graphQLResult?.errors)
-  ? graphQLResult.errors.length > 0
-  : false;
+const graphQLResult = parseApiResponse(
+  JSON.parse(await refUpdateResponse.text())
+);
+const hasGraphQLErrors =
+  graphQLResult.errors !== null && Array.isArray(graphQLResult.errors)
+    ? graphQLResult.errors.length > 0
+    : false;
 
 if (
   !refUpdateResponse.ok ||

@@ -30,31 +30,34 @@ interface PackResult {
 
 const parsePackageManifest = (value: JsonValue): PackageManifest => {
   const manifest = parseJsonObject(value, "Package manifest");
-  return { name: parseJsonString(manifest.get("name"), "Package name") };
+  return {
+    name: parseJsonString(manifest.get("name") ?? null, "Package name"),
+  };
 };
 
 const parsePackResult = (value: JsonValue): PackResult => {
   const result = parseJsonObject(value, "npm pack result");
-  const files = parseJsonArray(result.get("files"), "npm pack files").map(
-    (file, index) => {
-      const packedFile = parseJsonObject(file, `npm pack file ${index}`);
-      return {
-        path: parseJsonString(
-          packedFile.get("path"),
-          `npm pack file ${index} path`
-        ),
-        size: parseJsonNumber(
-          packedFile.get("size"),
-          `npm pack file ${index} size`
-        ),
-      };
-    }
-  );
+  const files = parseJsonArray(
+    result.get("files") ?? null,
+    "npm pack files"
+  ).map((file, index) => {
+    const packedFile = parseJsonObject(file, `npm pack file ${index}`);
+    return {
+      path: parseJsonString(
+        packedFile.get("path") ?? null,
+        `npm pack file ${index} path`
+      ),
+      size: parseJsonNumber(
+        packedFile.get("size") ?? null,
+        `npm pack file ${index} size`
+      ),
+    };
+  });
   return {
     files,
-    size: parseJsonNumber(result.get("size"), "npm pack size"),
+    size: parseJsonNumber(result.get("size") ?? null, "npm pack size"),
     unpackedSize: parseJsonNumber(
-      result.get("unpackedSize"),
+      result.get("unpackedSize") ?? null,
       "npm pack unpacked size"
     ),
   };
@@ -82,13 +85,10 @@ export const checkPackageTarball = (packageDirectory: string): void => {
     }
   );
   const parsed: JsonValue = JSON.parse(output);
-  let packValue: JsonValue;
-  if (Array.isArray(parsed)) {
-    [packValue] = parsed;
-  } else {
-    packValue = parseJsonObject(parsed, "npm pack response").get(manifest.name);
-  }
-  if (packValue === undefined) {
+  const packValue: JsonValue | null = Array.isArray(parsed)
+    ? (parsed[0] ?? null)
+    : (parseJsonObject(parsed, "npm pack response").get(manifest.name) ?? null);
+  if (packValue === null) {
     throw new Error(`npm pack returned no result for ${manifest.name}`);
   }
   const pack = parsePackResult(packValue);
