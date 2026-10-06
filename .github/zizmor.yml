@@ -13,4 +13,4 @@ rules:
       - deploy-preview.yml:21
   adhoc-packages:
     ignore:
-      - release.yml:37
+      - release.yml:35
