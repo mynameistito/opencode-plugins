@@ -87,8 +87,8 @@ jobs:
         with:
           version-script: bunx changeset version
           publish-script: bun .github/scripts/create-git-tag.ts
+          github-token: ${{ steps.app-token.outputs.token }}
           pr-title: ${{ steps.version-title.outputs.title }}
           commit-message: "chore: release packages"
         env:
-          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
           GIT_EXECUTABLE: /usr/bin/git
