@@ -1,7 +1,5 @@
 # yaml-language-server: $schema=https://www.schemastore.org/github-workflow.json
 
-name: Deploy documentation preview
-
 on:
   workflow_run:
     workflows:
@@ -11,7 +9,7 @@ on:
   pull_request_target:
     types:
       - closed
-
+name: Deploy documentation preview
 concurrency:
   group: deploy-documentation-${{ (github.event_name == 'pull_request' || github.event_name == 'pull_request_target') && format('pr-{0}', github.event.pull_request.number) || format('run-{0}', github.event.workflow_run.id) }}
   cancel-in-progress: false
