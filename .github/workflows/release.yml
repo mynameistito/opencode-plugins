@@ -59,7 +59,7 @@ jobs:
         env:
           OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
           GH_APP_ID: op://uhub4xx3iwwsaxj3robdosm2hu/spbjca2lethbsiz6menimq7afm/ID
-          GH_APP_PRIVATE_KEY: op://uhub4xx3iwwsaxj3robdosm2hu/spbjca2lethbsiz6menimq7afm/credential
+          GH_APP_PRIVATE_KEY: op://uhub4xx3iwwsaxj3robdosm2hu/spbjca2lethbsiz6menimq7afm/github-app.pem
       - name: Create repository-scoped App token
         id: app-token
         uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2
