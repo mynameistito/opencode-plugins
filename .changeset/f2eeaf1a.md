@@ -1,0 +1,5 @@
+---
+"@mynameistito/opencode-usage-limits": patch
+---
+
+Update @opencode/plugin to 2.0.23
