@@ -1,6 +1,6 @@
 # Repository scripts
 
-This directory contains shared repository utilities. Bun's native workspace filters run package scripts across the workspace. GitHub configuration, workflows, and workflow-specific scripts are documented in [`.github/README.md`](../.github/README.md).
+This directory contains shared repository utilities. Bun's native workspace filters run package scripts across the workspace. GitHub configuration, workflows, and workflow-specific scripts are documented in [`.github/CONFIGURATION.md`](../.github/CONFIGURATION.md).
 
 ## Shared scripts
 
