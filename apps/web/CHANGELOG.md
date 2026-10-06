@@ -1,5 +1,14 @@
 # @mynameistito/opencode-plugins-docs
 
+## 0.0.10
+
+### Patch Changes
+
+- a60733a: document OpenRouter spending limits
+- 4e2c603: Document Novita AI balance support
+- ea8e791: Document the DeepSeek balance provider and add its logo to the Usage Limits guide.
+- 61f39cf: Add isolated global and China Moonshot/Kimi API balance providers.
+
 ## 0.0.9
 
 ### Patch Changes

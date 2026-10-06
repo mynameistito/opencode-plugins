@@ -1,5 +1,18 @@
 # @mynameistito/opencode-usage-limits
 
+## 1.3.0
+
+### Minor Changes
+
+- 4c1c40e: Add Novita AI available-balance provider
+- 61f39cf: Add isolated global and China Moonshot/Kimi API balance providers.
+
+### Patch Changes
+
+- 822cda5: Add DeepSeek balance usage provider
+- 986f8dc: add OpenRouter API-key spending limit support
+- 20eef87: Update @opencode/plugin to 2.0.23
+
 ## 1.2.2
 
 ### Patch Changes
