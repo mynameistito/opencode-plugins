@@ -23,15 +23,16 @@ Shows provider usage limits in the sidebar and prompt footer.
 Supported providers:
 
 - [Alibaba Token Plan](https://www.alibabacloud.com/help/en/model-studio/token-plan-personal-overview)
-- [ChatGPT](https://chatgpt.com/)
+- [ChatGPT Codex](https://chatgpt.com/)
 - [Command Code](https://commandcode.ai/)
 - [DeepSeek](https://www.deepseek.com/)
-- [Novita AI](https://novita.ai/)
-- [OpenCode GO](https://opencode.ai/go)
 - [MiniMax Token Plan](https://platform.minimax.io/subscribe/token-plan)
 - [Moonshot/Kimi API](https://platform.kimi.ai/docs/api/balance) (pay-as-you-go global USD / China CNY balances; distinct from Kimi For Coding subscription quota)
-- [Synthetic](https://synthetic.ai/)
+- [Novita AI](https://novita.ai/)
+- [OpenCode GO](https://opencode.ai/go)
+- [OpenRouter](https://openrouter.ai/)
 - [Qwen](https://qwen.ai/)
+- [Synthetic](https://synthetic.ai/)
 - [ZAI Coding Plan](https://zai.ai/)
 
 Install it with:
