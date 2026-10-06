@@ -1,9 +1,9 @@
-name: PR metadata
+# yaml-language-server: $schema=https://www.schemastore.org/github-workflow.json
 
 on:
   pull_request_target:
     types: [opened, reopened, synchronize, ready_for_review, labeled, unlabeled]
-
+name: PR metadata
 concurrency:
   group: pr-metadata-${{ github.event.pull_request.number }}-${{ github.event.action }}-${{ github.event.label.name || 'none' }}
   cancel-in-progress: ${{ github.event.action == 'synchronize' }}
@@ -34,4 +34,4 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: bun scripts/pr-metadata.ts
+        run: bun .github/scripts/update-pr-metadata.ts

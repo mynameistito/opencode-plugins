@@ -9,12 +9,13 @@ const packages = new Map([
 ]);
 const types = new Set(["patch", "minor", "major"]);
 const [packageSelector, type, ...summaryParts] = process.argv.slice(2);
-const packageName = packageSelector ? packages.get(packageSelector) : undefined;
+const packageName =
+  (packageSelector ? packages.get(packageSelector) : null) ?? null;
 const summary = summaryParts.join(" ").trim();
 
 if (!packageName || !type || !types.has(type) || !summary) {
   console.error(
-    'Usage: bun run changeset-add -- <docs|force-input|usage-limits> <patch|minor|major> "summary"'
+    'Usage: bun run changeset-add <docs|force-input|usage-limits> <patch|minor|major> "summary"'
   );
   process.exit(1);
 }

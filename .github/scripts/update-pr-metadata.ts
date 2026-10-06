@@ -1,3 +1,5 @@
+import assert from "node:assert/strict";
+
 import {
   getComponentLabels,
   getMissingChangesets,
@@ -9,7 +11,14 @@ import {
   packageLabels,
   parseChangesetEntries,
   reconcileLabels,
-} from "./pr-metadata-helpers.ts";
+} from "@/github/pr-metadata-helpers.ts";
+import type { JsonValue } from "@/scripts/shared/json-value.ts";
+import {
+  parseJsonArray,
+  parseJsonNumber,
+  parseJsonObject,
+  parseJsonString,
+} from "@/scripts/shared/json-value.ts";
 
 const owner = process.env.GITHUB_REPOSITORY?.split("/")[0];
 const repository = process.env.GITHUB_REPOSITORY?.split("/")[1];
@@ -35,7 +44,10 @@ class GitHubApiError extends Error {
   }
 }
 
-const api = async <T>(endpoint: string, init?: RequestInit): Promise<T> => {
+const api = async (
+  endpoint: string,
+  init?: RequestInit
+): Promise<JsonValue> => {
   const response = await fetch(`https://api.github.com${endpoint}`, {
     ...init,
     headers: {
@@ -50,11 +62,10 @@ const api = async <T>(endpoint: string, init?: RequestInit): Promise<T> => {
     throw new GitHubApiError(response.status, await response.text());
   }
   if (response.status === 204) {
-    // SAFETY: The DELETE label endpoint returns no response body.
-    return undefined as T;
+    return null;
   }
-  // SAFETY: Each caller pairs this response with the schema for the requested GitHub API endpoint.
-  return (await response.json()) as T;
+  const result: JsonValue = JSON.parse(await response.text());
+  return result;
 };
 
 interface PullRequestFile {
@@ -67,14 +78,111 @@ interface PullRequest {
   head: {
     ref: string;
     sha: string;
-    repo?: { full_name?: string } | null;
+    repo: { full_name: string | null } | null;
   };
   labels: { name: string }[];
   changed_files: number;
 }
 
-const pullRequest = await api<PullRequest>(
-  `/repos/${owner}/${repository}/pulls/${pullRequestNumber}`
+interface PullRequestContents {
+  content: string | null;
+  encoding: string | null;
+}
+
+const parsePullRequest = (value: JsonValue): PullRequest => {
+  const pullRequest = parseJsonObject(value, "Pull request response");
+  const head = parseJsonObject(
+    pullRequest.get("head") ?? null,
+    "Pull request head"
+  );
+  const repositoryValue = head.get("repo") ?? null;
+  let repo: PullRequest["head"]["repo"];
+  if (repositoryValue === null) {
+    repo = null;
+  } else {
+    const headRepositoryDetails = parseJsonObject(
+      repositoryValue,
+      "Pull request head repository"
+    );
+    const fullName = headRepositoryDetails.get("full_name") ?? null;
+    repo = {
+      full_name:
+        fullName === null
+          ? null
+          : parseJsonString(fullName, "Repository full name"),
+    };
+  }
+
+  const labels = parseJsonArray(
+    pullRequest.get("labels") ?? null,
+    "Pull request labels"
+  ).map((label, index) => {
+    const parsedLabel = parseJsonObject(label, `Pull request label ${index}`);
+    return {
+      name: parseJsonString(parsedLabel.get("name") ?? null, "Label name"),
+    };
+  });
+  const changedFiles = parseJsonNumber(
+    pullRequest.get("changed_files") ?? null,
+    "Pull request changed file count"
+  );
+  assert.ok(
+    Number.isInteger(changedFiles),
+    "Pull request changed file count must be an integer"
+  );
+  assert.ok(
+    changedFiles >= 0,
+    "Pull request changed file count cannot be negative"
+  );
+
+  return {
+    changed_files: changedFiles,
+    head: {
+      ref: parseJsonString(head.get("ref") ?? null, "Pull request head ref"),
+      repo,
+      sha: parseJsonString(head.get("sha") ?? null, "Pull request head SHA"),
+    },
+    labels,
+  };
+};
+
+const parsePullRequestFiles = (value: JsonValue): PullRequestFile[] =>
+  parseJsonArray(value, "Pull request file list").map((file, index) => {
+    const parsedFile = parseJsonObject(file, `Pull request file ${index}`);
+    return {
+      additions: parseJsonNumber(
+        parsedFile.get("additions") ?? null,
+        "File additions"
+      ),
+      deletions: parseJsonNumber(
+        parsedFile.get("deletions") ?? null,
+        "File deletions"
+      ),
+      filename: parseJsonString(
+        parsedFile.get("filename") ?? null,
+        "File name"
+      ),
+    };
+  });
+
+const parseContentsResponse = (value: JsonValue): PullRequestContents => {
+  const contents = parseJsonObject(value, "GitHub contents response");
+  const content = contents.get("content") ?? null;
+  const encoding = contents.get("encoding") ?? null;
+  return {
+    content:
+      content === null
+        ? null
+        : parseJsonString(content, "GitHub contents data"),
+    encoding:
+      encoding === null
+        ? null
+        : parseJsonString(encoding, "GitHub contents encoding"),
+  };
+};
+
+const pullRequest = parsePullRequest(
+  await api(`/repos/${owner}/${repository}/pulls/${pullRequestNumber}`)
 );
 if (headSha && pullRequest.head.sha !== headSha) {
   console.log(
@@ -85,12 +193,12 @@ if (headSha && pullRequest.head.sha !== headSha) {
 const pageCount = getPullRequestFilePageCount(pullRequest.changed_files);
 const filePages = await Promise.all(
   Array.from({ length: pageCount }, (_, index) =>
-    api<PullRequestFile[]>(
+    api(
       `/repos/${owner}/${repository}/pulls/${pullRequestNumber}/files?per_page=100&page=${index + 1}`
     )
   )
 );
-const files = filePages.flat();
+const files = filePages.flatMap(parsePullRequestFiles);
 
 const componentLabels = new Set(packageLabels.values());
 const managedLabels = new Set([
@@ -114,8 +222,10 @@ const changesetContents = await Promise.all(
   changesetFiles.map(async ({ filename }) => {
     try {
       const encodedPath = filename.split("/").map(encodeURIComponent).join("/");
-      const file = await api<{ content?: string; encoding?: string }>(
-        `/repos/${headRepository}/contents/${encodedPath}?ref=${encodeURIComponent(headSha ?? pullRequest.head.sha)}`
+      const file = parseContentsResponse(
+        await api(
+          `/repos/${headRepository}/contents/${encodedPath}?ref=${encodeURIComponent(headSha ?? pullRequest.head.sha)}`
+        )
       );
       if (file.encoding !== "base64" || !file.content) {
         return [];
@@ -234,7 +344,7 @@ const requiredPackages =
   skipChangeset ||
   isChangesetReleasePR(
     pullRequest.head.ref,
-    pullRequest.head.repo?.full_name,
+    pullRequest.head.repo?.full_name ?? null,
     `${owner}/${repository}`
   )
     ? new Set<string>()

@@ -1,4 +1,4 @@
-import { checkPackageTarball } from "../../../scripts/check-package-tarball.ts";
+import { checkPackageTarball } from "@/package-tarball/check.ts";
 
 const tuiEntrypoint = new URL("../dist/index.mjs", import.meta.url);
 const tuiModule = await import(tuiEntrypoint.href);
@@ -15,4 +15,4 @@ if (!hasValidTuiPlugin) {
 }
 
 console.log(`Package smoke test passed: ${tuiPlugin.id}`);
-await checkPackageTarball("packages/opencode-force-input");
+checkPackageTarball("packages/opencode-force-input");

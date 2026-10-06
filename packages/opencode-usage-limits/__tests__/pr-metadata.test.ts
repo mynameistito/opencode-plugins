@@ -10,7 +10,7 @@ import {
   isDuplicateLabelError,
   parseChangesetEntries,
   reconcileLabels,
-} from "../../../scripts/pr-metadata-helpers.ts";
+} from "@/github/pr-metadata-helpers.ts";
 
 const forceInput = "@mynameistito/opencode-force-input";
 const usageLimits = "@mynameistito/opencode-usage-limits";

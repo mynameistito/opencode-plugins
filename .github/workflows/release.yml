@@ -1,11 +1,11 @@
-name: Release
+# yaml-language-server: $schema=https://www.schemastore.org/github-workflow.json
 
 on:
   push:
     branches:
       - main
   workflow_dispatch:
-
+name: Release
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
 permissions:
@@ -28,24 +28,13 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 24
+          node-version-file: .node-version
           registry-url: https://registry.npmjs.org
           package-manager-cache: false
       - name: Upgrade npm
         run: npm install --global npm@11.15.0
       - name: Verify npm staged publishing support
-        run: |
-          node --input-type=module <<'EOF'
-          import { execFileSync } from "node:child_process";
-
-          const version = execFileSync("npm", ["--version"], { encoding: "utf8" }).trim();
-          const [major = 0, minor = 0, patch = 0] = version.split(".").map(Number);
-          const supported = major > 11 || (major === 11 && (minor > 15 || (minor === 15 && patch >= 0)));
-
-          if (!supported) {
-            throw new Error(`npm ${version} does not support staged publishing. Use npm >= 11.15.0.`);
-          }
-          EOF
+        run: bun .github/scripts/verify-npm-staged-publishing.ts
       - name: Install dependencies
         run: bun install --frozen-lockfile
       - name: Verify packages
@@ -58,17 +47,37 @@ jobs:
       - name: Determine version PR title
         id: version-title
         run: |
-          title=$(bun run version-pr-title)
+          title=$(bun .github/scripts/get-version-pr-title.ts)
           echo "title=$title" >> "$GITHUB_OUTPUT"
       - name: Stage packages on npm
-        run: bun run release:stage
+        run: bun .github/scripts/stage-packages.ts
+      - name: Load GitHub App credentials
+        id: onepassword
+        uses: 1Password/load-secrets-action@70062d7a876d3eb6334754fa26efd2fbd90c32f2 # v5
+        with:
+          version: 2.39.0
+        env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+          GH_APP_ID: op://uhub4xx3iwwsaxj3robdosm2hu/spbjca2lethbsiz6menimq7afm/ID
+          GH_APP_PRIVATE_KEY: op://uhub4xx3iwwsaxj3robdosm2hu/spbjca2lethbsiz6menimq7afm/github-app.pem
+      - name: Create repository-scoped App token
+        id: app-token
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2
+        with:
+          app-id: ${{ steps.onepassword.outputs.GH_APP_ID }}
+          private-key: ${{ steps.onepassword.outputs.GH_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+          permission-contents: write
+          permission-pull-requests: write
       - name: Create release pull request or publish
         id: changesets
         uses: changesets/action@ae32849d5ba541f9ae29e40e22a623bc13562f51 # v2.1.2
         with:
           version-script: bunx changeset version
-          publish-script: bun run release:tag
+          publish-script: bun .github/scripts/create-git-tag.ts
+          github-token: ${{ steps.app-token.outputs.token }}
           pr-title: ${{ steps.version-title.outputs.title }}
           commit-message: "chore: release packages"
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GIT_EXECUTABLE: /usr/bin/git

@@ -3,7 +3,12 @@
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
     "types": ["node", "bun"],
+    "paths": {
+      "@/github/*": ["./.github/scripts/*"],
+      "@/package-tarball/*": ["./scripts/package-tarball/*"],
+      "@/scripts/*": ["./scripts/*"]
+    },
     "strictNullChecks": true
   },
-  "include": ["scripts/**/*.ts"]
+  "include": ["scripts/**/*.ts", ".github/scripts/**/*.ts"]
 }

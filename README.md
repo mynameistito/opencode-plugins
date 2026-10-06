@@ -69,9 +69,9 @@ bun run build
 Use the root Changesets helper for user-facing changes:
 
 ```powershell
-bun run changeset-add -- docs patch "Describe the documentation change"
-bun run changeset-add -- force-input patch "Describe the change"
-bun run changeset-add -- usage-limits minor "Describe the change"
+bun run changeset-add docs patch "Describe the documentation change"
+bun run changeset-add force-input patch "Describe the change"
+bun run changeset-add usage-limits minor "Describe the change"
 ```
 
 Packages are independently publishable. Build output is generated during packaging and is not committed.

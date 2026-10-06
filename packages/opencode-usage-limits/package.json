@@ -76,7 +76,7 @@
     "fix": "ultracite fix",
     "knip": "knip",
     "prepack": "bun run build",
-    "test": "bun ../../node_modules/vitest/vitest.mjs run --coverage && bun ../../scripts/check-coverage.ts coverage/lcov.info 0.95",
+    "test": "bun run --bun vitest run --coverage && bun ../../scripts/check-coverage.ts coverage/lcov.info 0.95",
     "test:package": "bun run build && bun ./scripts/test-package.ts",
     "typecheck": "tsc --noEmit"
   },

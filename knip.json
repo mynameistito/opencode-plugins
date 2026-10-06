@@ -7,6 +7,13 @@
     "react-grab"
   ],
   "workspaces": {
+    ".": {
+      "entry": [
+        ".github/scripts/create-git-tag.ts",
+        ".github/scripts/__tests__/**/*.test.ts",
+        "scripts/package-tarball/__tests__/**/*.test.ts"
+      ]
+    },
     "apps/web": {
       "entry": ["alchemy.run.ts", "blume.config.ts"]
     }

@@ -1,3 +1,5 @@
+import { readFile } from "node:fs/promises";
+
 const [coveragePath, thresholdText] = process.argv.slice(2);
 const threshold = Number(thresholdText);
 
@@ -7,7 +9,7 @@ if (!coveragePath || !Number.isFinite(threshold)) {
   );
 }
 
-const report = await Bun.file(coveragePath).text();
+const report = await readFile(coveragePath, "utf-8");
 const hits = [...report.matchAll(/^DA:\d+,(?<hits>\d+)$/gmu)].map((match) =>
   Number(match.groups?.hits)
 );

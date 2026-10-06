@@ -76,9 +76,9 @@ const comparePrereleaseIdentifier = (left: string, right: string): number => {
 
 const comparePrerelease = (left: string[], right: string[]): number => {
   for (const [index, leftIdentifier] of left.entries()) {
-    const rightIdentifier = right[index];
+    const rightIdentifier = right[index] ?? null;
 
-    if (rightIdentifier === undefined) {
+    if (rightIdentifier === null) {
       return 1;
     }
 

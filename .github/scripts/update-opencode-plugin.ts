@@ -1,32 +1,26 @@
 import { appendFile, readFile, writeFile } from "node:fs/promises";
 
-import { isNewerSemVer, parseSerializedSemVer } from "./semver";
+import { isNewerSemVer, parseSerializedSemVer } from "@/github/semver.ts";
 
-const packageJsonPath = new URL("../package.json", import.meta.url);
-const packageJson: unknown = JSON.parse(
-  await readFile(packageJsonPath, "utf-8")
-);
-
-if (
-  !(packageJson instanceof Object) ||
-  Array.isArray(packageJson) ||
-  !("catalog" in packageJson)
-) {
-  throw new TypeError("Root package.json must contain an object");
+interface PackageManifest {
+  catalog: Record<string, string>;
 }
 
-const { catalog } = packageJson;
+interface PackageMetadata {
+  version: string;
+}
 
-if (
-  !(catalog instanceof Object) ||
-  Array.isArray(catalog) ||
-  !("@opencode/plugin" in catalog)
-) {
-  throw new TypeError("Root package.json must define a catalog object");
+const packageJsonPath = new URL("../../package.json", import.meta.url);
+const packageJson: PackageManifest = JSON.parse(
+  await readFile(packageJsonPath, "utf-8")
+);
+const currentVersionText = packageJson.catalog["@opencode/plugin"];
+if (!currentVersionText) {
+  throw new TypeError("Root package catalog must define @opencode/plugin.");
 }
 
 const currentVersion = parseSerializedSemVer(
-  JSON.stringify(catalog["@opencode/plugin"]) ?? "",
+  currentVersionText,
   "Root package catalog"
 );
 
@@ -41,25 +35,21 @@ if (!response.ok) {
   );
 }
 
-const metadata: unknown = await response.json();
-
-if (
-  !(metadata instanceof Object) ||
-  Array.isArray(metadata) ||
-  !("version" in metadata)
-) {
-  throw new TypeError("npm registry response must contain package metadata");
+const metadata: PackageMetadata = JSON.parse(await response.text());
+const latestVersionText = metadata.version;
+if (!latestVersionText) {
+  throw new TypeError("npm registry response must contain a version.");
 }
 
 const latestVersion = parseSerializedSemVer(
-  JSON.stringify(metadata.version) ?? "",
+  latestVersionText,
   "npm registry response"
 );
 
 const changed = isNewerSemVer(latestVersion.value, currentVersion.value);
 
 if (changed) {
-  Reflect.set(catalog, "@opencode/plugin", latestVersion.value);
+  packageJson.catalog["@opencode/plugin"] = latestVersion.value;
   await writeFile(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`);
 }
 

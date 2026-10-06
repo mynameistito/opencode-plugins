@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { isNewerSemVer, parseSerializedSemVer } from "../semver";
+import { isNewerSemVer, parseSerializedSemVer } from "@/github/semver.ts";
 
 describe("Semantic version comparison", () => {
   it("returns true only when the candidate is newer", () => {

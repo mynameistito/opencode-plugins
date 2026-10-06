@@ -1,3 +1,5 @@
+# yaml-language-server: $schema=https://www.schemastore.org/github-workflow.json
+
 name: Update @opencode/plugin
 
 on:
@@ -32,7 +34,7 @@ jobs:
 
       - name: Check npm for the latest version
         id: latest
-        run: bun scripts/update-opencode-plugin.ts
+        run: bun .github/scripts/update-opencode-plugin.ts
 
       - name: Install dependencies and update lockfile
         if: steps.latest.outputs.changed == 'true'
@@ -43,8 +45,8 @@ jobs:
         env:
           VERSION: ${{ steps.latest.outputs.version }}
         run: |
-          bun run changeset-add -- usage-limits patch "Update @opencode/plugin to $VERSION"
-          bun run changeset-add -- force-input patch "Update @opencode/plugin to $VERSION"
+          bun run changeset-add usage-limits patch "Update @opencode/plugin to $VERSION"
+          bun run changeset-add force-input patch "Update @opencode/plugin to $VERSION"
 
       - name: Create verified update commit
         if: steps.latest.outputs.changed == 'true'
@@ -52,7 +54,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           MAIN_SHA: ${{ steps.main.outputs.sha }}
           VERSION: ${{ steps.latest.outputs.version }}
-        run: bun scripts/create-signed-github-commit.ts
+        run: bun .github/scripts/create-signed-github-commit.ts
 
       - name: Open or update pull request
         if: steps.latest.outputs.changed == 'true'

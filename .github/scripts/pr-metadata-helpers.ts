@@ -97,7 +97,7 @@ export const getPullRequestFilePageCount = (changedFiles: number): number => {
  */
 export const isChangesetReleasePR = (
   headRef: string,
-  headRepository: string | null | undefined,
+  headRepository: string | null,
   baseRepository: string
 ): boolean =>
   headRepository === baseRepository && headRef.startsWith("changeset-release/");
