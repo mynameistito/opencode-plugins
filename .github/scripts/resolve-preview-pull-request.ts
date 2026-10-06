@@ -12,6 +12,7 @@ import {
   readEvent,
   setOutput,
 } from "@/github/github-api.ts";
+import { isTrustedReleaseBotPullRequest } from "@/github/trusted-preview-author.ts";
 import type { JsonValue } from "@/scripts/shared/json-value.ts";
 import { getJsonField, parseJsonArray } from "@/scripts/shared/json-value.ts";
 
@@ -256,7 +257,15 @@ try {
   );
 }
 
-const trusted = ["admin", "write", "maintain", "push"].includes(permission);
+const trusted =
+  ["admin", "write", "maintain", "push"].includes(permission) ||
+  isTrustedReleaseBotPullRequest({
+    baseRef: pullRequest.base.ref,
+    baseRepositoryId: pullRequest.base.repo?.id ?? null,
+    headRef: pullRequest.head.ref,
+    headRepositoryId: pullRequest.head.repo?.id ?? null,
+    username,
+  });
 console.info(
   `Pull request #${pullRequest.number} author ${username} has ${permission} access.`
 );
