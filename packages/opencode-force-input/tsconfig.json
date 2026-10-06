@@ -5,6 +5,10 @@
     "allowJs": true,
     "jsx": "react-jsx",
     "jsxImportSource": "@opentui/solid",
+    "paths": {
+      "@/package-tarball/*": ["../../scripts/package-tarball/*"],
+      "@/scripts/*": ["../../scripts/*"]
+    },
     "types": ["bun"],
     "noUnusedLocals": false,
     "noUnusedParameters": false,

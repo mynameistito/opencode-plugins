@@ -475,19 +475,24 @@ describe("provider runtime services", () => {
       tmpdir(),
       `oc-usage-limits-command-${crypto.randomUUID()}.txt`
     );
-    temporaryFiles.push(file);
+    const scriptFile = path.join(
+      tmpdir(),
+      `oc-usage-limits-command-${crypto.randomUUID()}.cjs`
+    );
+    temporaryFiles.push(file, scriptFile);
     const script = `
        const { writeFile } = require("node:fs/promises");
-       const file = process.argv[1];
+       const file = process.argv[2];
        const write = () => writeFile(file, String(Date.now())).then(() => setTimeout(write, 10));
        write();
-    `;
+     `;
+    await writeFile(scriptFile, script);
 
     const result = await Effect.runPromiseExit(
       Effect.gen(function* execute() {
         const commands = yield* ProviderCommandExecutor;
         return yield* commands.execute({
-          args: ["-e", script, file],
+          args: [scriptFile, file],
           command: process.execPath,
           providerID: "qwen",
           timeoutMs: 200,

@@ -6,7 +6,10 @@
     "jsxImportSource": "@opentui/solid",
     "lib": ["ESNext", "DOM"],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@/github/*": ["../../.github/scripts/*"],
+      "@/package-tarball/*": ["../../scripts/package-tarball/*"],
+      "@/scripts/*": ["../../scripts/*"]
     },
     "types": ["node", "bun"],
     "strictNullChecks": true

@@ -14,7 +14,7 @@ const summary = summaryParts.join(" ").trim();
 
 if (!packageName || !type || !types.has(type) || !summary) {
   console.error(
-    'Usage: bun run changeset-add -- <docs|force-input|usage-limits> <patch|minor|major> "summary"'
+    'Usage: bun run changeset-add <docs|force-input|usage-limits> <patch|minor|major> "summary"'
   );
   process.exit(1);
 }

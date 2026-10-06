@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { isUnexpectedPackagePath } from "../../../scripts/package-tarball-helpers.ts";
+import { isUnexpectedPackagePath } from "@/package-tarball/package-tarball-helpers.ts";
 
 describe("package tarball paths", () => {
   it("rejects package source, test, and script directories", () => {

@@ -60,7 +60,7 @@ bun run knip
 Use a changeset for user-facing changes:
 
 ```bash
-bun run changeset-add patch "short summary"
+bun run changeset-add usage-limits patch "short summary"
 ```
 
 Use `minor` for new features and `major` for breaking changes.

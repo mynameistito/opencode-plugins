@@ -34,4 +34,4 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: bun scripts/pr-metadata.ts
+        run: bun .github/scripts/update-pr-metadata.ts

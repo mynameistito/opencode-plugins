@@ -1,8 +1,8 @@
 import { appendFile, readFile, writeFile } from "node:fs/promises";
 
-import { isNewerSemVer, parseSerializedSemVer } from "./semver";
+import { isNewerSemVer, parseSerializedSemVer } from "@/github/semver.ts";
 
-const packageJsonPath = new URL("../package.json", import.meta.url);
+const packageJsonPath = new URL("../../package.json", import.meta.url);
 const packageJson: unknown = JSON.parse(
   await readFile(packageJsonPath, "utf-8")
 );

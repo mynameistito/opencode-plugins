@@ -10,6 +10,9 @@ import {
 import { tmpdir } from "node:os";
 import path from "node:path";
 
+import { getNodeExecutablePath } from "@/scripts/shared/node-executable.ts";
+import { getNpmCliPath } from "@/scripts/shared/npm-cli.ts";
+
 type DependencyField =
   | "dependencies"
   | "devDependencies"
@@ -67,22 +70,19 @@ const resolveManifestCatalog = (manifest: PackageManifest): void => {
   }
 };
 
-const npmPath = Bun.which("npm");
-if (!npmPath) {
-  throw new Error("npm is required to stage packages");
-}
-
 const stagePackage = (directory: { name: string }): void => {
   const packageDirectory = path.join("packages", directory.name);
   const manifest: PackageManifest = JSON.parse(
     readFileSync(path.join(packageDirectory, manifestFilename), "utf-8")
   );
   const packageSpec = `${manifest.name}@${manifest.version}`;
+  const npmCliPath = getNpmCliPath();
 
   try {
     execFileSync(
-      npmPath,
+      getNodeExecutablePath(),
       [
+        npmCliPath,
         "view",
         packageSpec,
         "version",
@@ -111,8 +111,9 @@ const stagePackage = (directory: { name: string }): void => {
       "utf-8"
     );
     execFileSync(
-      npmPath,
+      getNodeExecutablePath(),
       [
+        npmCliPath,
         "stage",
         "publish",
         "--access",
@@ -122,7 +123,11 @@ const stagePackage = (directory: { name: string }): void => {
         "--provenance",
         "--ignore-scripts",
       ],
-      { cwd: stagedDirectory, stdio: ["ignore", "inherit", "pipe"] }
+      {
+        cwd: stagedDirectory,
+        encoding: "utf-8",
+        stdio: ["ignore", "inherit", "pipe"],
+      }
     );
   } catch (error) {
     const details =

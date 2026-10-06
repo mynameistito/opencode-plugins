@@ -1,11 +1,20 @@
+import { execFileSync } from "node:child_process";
 import { appendFileSync, readFileSync } from "node:fs";
 import path from "node:path";
 
-import { isUnexpectedPackagePath } from "./package-tarball-helpers.ts";
+import { isUnexpectedPackagePath } from "@/package-tarball/package-tarball-helpers.ts";
+import type { JsonValue } from "@/scripts/shared/json-value.ts";
+import {
+  parseJsonArray,
+  parseJsonNumber,
+  parseJsonObject,
+  parseJsonString,
+} from "@/scripts/shared/json-value.ts";
+import { getNodeExecutablePath } from "@/scripts/shared/node-executable.ts";
+import { getNpmCliPath } from "@/scripts/shared/npm-cli.ts";
 
 interface PackageManifest {
   name: string;
-  files?: string[];
 }
 
 interface PackedFile {
@@ -19,45 +28,70 @@ interface PackResult {
   unpackedSize: number;
 }
 
-const npmPath = Bun.which("npm");
-if (!npmPath) {
-  throw new Error("npm is required to validate package tarballs.");
-}
+const parsePackageManifest = (value: JsonValue): PackageManifest => {
+  const manifest = parseJsonObject(value, "Package manifest");
+  return { name: parseJsonString(manifest.get("name"), "Package name") };
+};
 
-export const checkPackageTarball = async (
-  packageDirectory: string
-): Promise<void> => {
+const parsePackResult = (value: JsonValue): PackResult => {
+  const result = parseJsonObject(value, "npm pack result");
+  const files = parseJsonArray(result.get("files"), "npm pack files").map(
+    (file, index) => {
+      const packedFile = parseJsonObject(file, `npm pack file ${index}`);
+      return {
+        path: parseJsonString(
+          packedFile.get("path"),
+          `npm pack file ${index} path`
+        ),
+        size: parseJsonNumber(
+          packedFile.get("size"),
+          `npm pack file ${index} size`
+        ),
+      };
+    }
+  );
+  return {
+    files,
+    size: parseJsonNumber(result.get("size"), "npm pack size"),
+    unpackedSize: parseJsonNumber(
+      result.get("unpackedSize"),
+      "npm pack unpacked size"
+    ),
+  };
+};
+
+export const checkPackageTarball = (packageDirectory: string): void => {
   const absolutePackageDirectory = path.resolve(
-    import.meta.dir,
+    import.meta.dirname,
+    "..",
     "..",
     packageDirectory
   );
   const manifestPath = path.join(absolutePackageDirectory, "package.json");
-  // SAFETY: Package-specific manifest and required-file checks verify this structure.
-  const manifest = JSON.parse(
+  const manifestValue: JsonValue = JSON.parse(
     readFileSync(manifestPath, "utf-8")
-  ) as PackageManifest;
-  const childProcess = Bun.spawn(
-    [npmPath, "pack", "--dry-run", "--json", "--ignore-scripts"],
-    { cwd: absolutePackageDirectory, stderr: "inherit", stdout: "pipe" }
   );
-  const output = await new Response(childProcess.stdout).text();
-  if ((await childProcess.exited) !== 0) {
-    throw new Error(`npm pack failed for ${manifest.name}.`);
-  }
-  // SAFETY: npm pack --json returns either a result array or a workspace map with the fields declared here.
-  const parsed = JSON.parse(output) as
-    | PackResult[]
-    | Record<string, PackResult>;
-  let pack: PackResult | undefined;
+  const manifest = parsePackageManifest(manifestValue);
+  const output = execFileSync(
+    getNodeExecutablePath(),
+    [getNpmCliPath(), "pack", "--dry-run", "--json", "--ignore-scripts"],
+    {
+      cwd: absolutePackageDirectory,
+      encoding: "utf-8",
+      stdio: ["ignore", "pipe", "inherit"],
+    }
+  );
+  const parsed: JsonValue = JSON.parse(output);
+  let packValue: JsonValue;
   if (Array.isArray(parsed)) {
-    [pack] = parsed;
+    [packValue] = parsed;
   } else {
-    pack = parsed[manifest.name];
+    packValue = parseJsonObject(parsed, "npm pack response").get(manifest.name);
   }
-  if (!pack || !Array.isArray(pack.files)) {
+  if (packValue === undefined) {
     throw new Error(`npm pack returned no result for ${manifest.name}`);
   }
+  const pack = parsePackResult(packValue);
   const packedPaths = new Set(pack.files.map(({ path: filePath }) => filePath));
   const requiredFiles =
     manifest.name === "@mynameistito/opencode-force-input"

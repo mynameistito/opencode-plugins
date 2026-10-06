@@ -29,7 +29,7 @@ Run `bun run fix` to apply Ultracite formatting and lint fixes. Do not change Ox
 Add a Changeset for every user-facing change:
 
 ```powershell
-bun run changeset-add patch "describe the change"
+bun run changeset-add force-input patch "describe the change"
 ```
 
 Changesets live at the repository root and releases are coordinated from `main` with npm `latest`. Never manually edit package versions.

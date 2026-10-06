@@ -1,6 +1,6 @@
 import { createRequire } from "node:module";
 
-import { checkPackageTarball } from "../../../scripts/check-package-tarball.ts";
+import { checkPackageTarball } from "@/package-tarball/check.ts";
 
 const expectedId = "mynameistito.usage-limits";
 const entrypoint = new URL("../dist/index.mjs", import.meta.url);
@@ -57,4 +57,4 @@ if (!isPlugin) {
 }
 
 console.log(`Package smoke test passed: ${expectedId}`);
-await checkPackageTarball("packages/opencode-usage-limits");
+checkPackageTarball("packages/opencode-usage-limits");

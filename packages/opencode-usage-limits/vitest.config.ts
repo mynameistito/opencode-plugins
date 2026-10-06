@@ -12,9 +12,22 @@ export default defineConfig({
     }),
   ],
   resolve: {
-    alias: {
-      "@": fileURLToPath(new URL("src", import.meta.url)),
-    },
+    alias: [
+      {
+        find: "@/github",
+        replacement: fileURLToPath(
+          new URL("../../.github/scripts", import.meta.url)
+        ),
+      },
+      {
+        find: "@/scripts",
+        replacement: fileURLToPath(new URL("../../scripts", import.meta.url)),
+      },
+      {
+        find: "@",
+        replacement: fileURLToPath(new URL("src", import.meta.url)),
+      },
+    ],
     conditions: ["bun"],
     dedupe: ["solid-js"],
   },

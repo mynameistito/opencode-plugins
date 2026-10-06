@@ -28,9 +28,11 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 24
+          node-version-file: .node-version
           registry-url: https://registry.npmjs.org
           package-manager-cache: false
+      - name: Export Node executable path
+        run: echo "NODE_EXECUTABLE=$(node -p 'process.execPath')" >> "$GITHUB_ENV"
       - name: Upgrade npm
         run: npm install --global npm@11.15.0
       - name: Verify npm staged publishing support
@@ -58,17 +60,18 @@ jobs:
       - name: Determine version PR title
         id: version-title
         run: |
-          title=$(bun run version-pr-title)
+          title=$(bun .github/scripts/get-version-pr-title.ts)
           echo "title=$title" >> "$GITHUB_OUTPUT"
       - name: Stage packages on npm
-        run: bun run release:stage
+        run: bun .github/scripts/stage-packages.ts
       - name: Create release pull request or publish
         id: changesets
         uses: changesets/action@ae32849d5ba541f9ae29e40e22a623bc13562f51 # v2.1.2
         with:
           version-script: bunx changeset version
-          publish-script: bun run release:tag
+          publish-script: bun .github/scripts/create-git-tag.ts
           pr-title: ${{ steps.version-title.outputs.title }}
           commit-message: "chore: release packages"
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.CHANGESETS_GITHUB_TOKEN }}
+          GIT_EXECUTABLE: /usr/bin/git
