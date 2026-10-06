@@ -77,26 +77,30 @@ if (!username) {
   throw new Error("The preview pull request author is missing.");
 }
 
+const trustedReleaseBot = isTrustedReleaseBotPullRequest({
+  baseRef: pullRequest.base.ref,
+  baseRepositoryId: pullRequest.base.repo?.id ?? null,
+  headRef: pullRequest.head.ref,
+  headRepositoryId: pullRequest.head.repo?.id ?? null,
+  username,
+});
+
 let permission = "none";
-try {
-  const result = await githubRequest(
-    `/repos/${githubRepository.owner}/${githubRepository.repo}/collaborators/${encodeURIComponent(username)}/permission`,
-    parsePermissionResponse
-  );
-  permission = result.permission ?? result.role_name ?? "none";
-} catch {
-  throw new Error(`Could not verify ${username}'s repository access.`);
+if (!trustedReleaseBot) {
+  try {
+    const result = await githubRequest(
+      `/repos/${githubRepository.owner}/${githubRepository.repo}/collaborators/${encodeURIComponent(username)}/permission`,
+      parsePermissionResponse
+    );
+    permission = result.permission ?? result.role_name ?? "none";
+  } catch {
+    throw new Error(`Could not verify ${username}'s repository access.`);
+  }
 }
 
 const trusted =
   ["admin", "write", "maintain", "push"].includes(permission) ||
-  isTrustedReleaseBotPullRequest({
-    baseRef: pullRequest.base.ref,
-    baseRepositoryId: pullRequest.base.repo?.id ?? null,
-    headRef: pullRequest.head.ref,
-    headRepositoryId: pullRequest.head.repo?.id ?? null,
-    username,
-  });
+  trustedReleaseBot;
 console.info(
   `Pull request #${pullRequest.number} author ${username} currently has ${permission} access.`
 );
