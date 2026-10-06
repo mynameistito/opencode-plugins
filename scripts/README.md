@@ -6,7 +6,7 @@ This directory contains shared repository utilities. Bun's native workspace filt
 
 | Script | Purpose | Used by |
 | --- | --- | --- |
-| [`changeset-add.ts`](changeset-add.ts) | Creates a Changeset for one of the supported packages. | `bun run changeset-add <package> <patch | minor | major> "summary"` |
+| [`changeset-add.ts`](changeset-add.ts) | Creates a Changeset for one of the supported packages. | `bun run changeset-add <package> <patch \| minor \| major> "summary"` |
 | [`check-coverage.ts`](check-coverage.ts) | Checks an LCOV report against a minimum coverage threshold. | Package `test` scripts |
 
 ### Shared script helpers
