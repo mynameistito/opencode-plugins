@@ -44,7 +44,9 @@ const parseApiResponse = (value: JsonValue): ApiResponse => {
   const verificationValue = response.get("verification") ?? null;
   const objectValue = response.get("object") ?? null;
   const tree =
-    treeValue === null ? null : parseJsonObject(treeValue, "Git tree");
+    treeValue === null || Array.isArray(treeValue)
+      ? null
+      : parseJsonObject(treeValue, "Git tree");
   const verification =
     verificationValue === null
       ? null
@@ -118,15 +120,23 @@ const request = async (
     init
   );
 
-  const result: JsonValue = JSON.parse(await response.text());
-  const parsed = parseApiResponse(result);
-
   if (!response.ok) {
-    const message = parsed.message || response.statusText;
-    throw new Error(`GitHub API ${method} ${path} failed: ${message}`);
+    const responseText = await response.text();
+    let message = response.statusText;
+
+    try {
+      const errorResponse = parseApiResponse(JSON.parse(responseText));
+      message = errorResponse.message || message;
+    } catch {
+      // Keep the HTTP error useful when GitHub returns a non-JSON error body.
+    }
+
+    throw new Error(
+      `GitHub API ${method} ${path} failed (${response.status}): ${message}`
+    );
   }
 
-  return parsed;
+  return parseApiResponse(JSON.parse(await response.text()));
 };
 
 const changesetDirectoryEntries = await readdir(".changeset", {
