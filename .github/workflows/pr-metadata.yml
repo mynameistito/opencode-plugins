@@ -1,11 +1,9 @@
 # yaml-language-server: $schema=https://www.schemastore.org/github-workflow.json
 
-name: PR metadata
-
 on:
   pull_request_target:
     types: [opened, reopened, synchronize, ready_for_review, labeled, unlabeled]
-
+name: PR metadata
 concurrency:
   group: pr-metadata-${{ github.event.pull_request.number }}-${{ github.event.action }}-${{ github.event.label.name || 'none' }}
   cancel-in-progress: ${{ github.event.action == 'synchronize' }}

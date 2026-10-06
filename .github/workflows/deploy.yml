@@ -1,14 +1,12 @@
 # yaml-language-server: $schema=https://www.schemastore.org/github-workflow.json
 
-name: Deploy documentation
-
 on:
   workflow_run:
     workflows:
       - Release
     types:
       - completed
-
+name: Deploy documentation
 concurrency: deploy-documentation-prod
 
 permissions:
