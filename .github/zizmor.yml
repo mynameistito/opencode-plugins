@@ -1,3 +1,5 @@
+# yaml-language-server: $schema=https://www.schemastore.org/zizmor.json
+
 # These findings are limited to existing, intentionally reviewed workflow
 # patterns. Keep the ignores line-specific so new findings remain visible.
 rules:
