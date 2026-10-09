@@ -1,6 +1,6 @@
 import { appendFile, readFile, writeFile } from "node:fs/promises";
 
-import { isNewerSemVer, parseSerializedSemVer } from "@/github/semver.ts";
+import { isNewerSemVer, parseSemVer } from "@/github/semver.ts";
 
 interface PackageManifest {
   catalog: Record<string, string>;
@@ -19,10 +19,7 @@ if (!currentVersionText) {
   throw new TypeError("Root package catalog must define @opencode/plugin.");
 }
 
-const currentVersion = parseSerializedSemVer(
-  currentVersionText,
-  "Root package catalog"
-);
+const currentVersion = parseSemVer(currentVersionText, "Root package catalog");
 
 const response = await fetch(
   "https://registry.npmjs.org/@opencode%2fplugin/latest",
@@ -41,10 +38,7 @@ if (!latestVersionText) {
   throw new TypeError("npm registry response must contain a version.");
 }
 
-const latestVersion = parseSerializedSemVer(
-  latestVersionText,
-  "npm registry response"
-);
+const latestVersion = parseSemVer(latestVersionText, "npm registry response");
 
 const changed = isNewerSemVer(latestVersion.value, currentVersion.value);
 
