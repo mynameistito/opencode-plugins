@@ -1,5 +1,11 @@
 # @mynameistito/opencode-usage-limits
 
+## 1.3.1
+
+### Patch Changes
+
+- 7a8ae96: Update @opencode/plugin to 2.0.26
+
 ## 1.3.0
 
 ### Minor Changes
