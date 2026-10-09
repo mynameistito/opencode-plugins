@@ -1,5 +1,5 @@
-const serializedVersionPattern =
-  /^"(?<major>0|[1-9]\d*)\.(?<minor>0|[1-9]\d*)\.(?<patch>0|[1-9]\d*)(?:-(?<prerelease>(?:0|[1-9]\d*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?"$/u;
+const semVerPattern =
+  /^(?<major>0|[1-9]\d*)\.(?<minor>0|[1-9]\d*)\.(?<patch>0|[1-9]\d*)(?:-(?<prerelease>(?:0|[1-9]\d*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/u;
 
 interface ParsedVersion {
   major: bigint;
@@ -9,11 +9,8 @@ interface ParsedVersion {
   value: string;
 }
 
-export const parseSerializedSemVer = (
-  serialized: string,
-  source: string
-): ParsedVersion => {
-  const match = serializedVersionPattern.exec(serialized);
+export const parseSemVer = (value: string, source: string): ParsedVersion => {
+  const match = semVerPattern.exec(value);
 
   if (!match) {
     throw new TypeError(`${source} did not contain a valid package version`);
@@ -30,7 +27,7 @@ export const parseSerializedSemVer = (
     minor: BigInt(minor),
     patch: BigInt(patch),
     prerelease: prerelease?.split(".") ?? [],
-    value: serialized.slice(1, -1),
+    value,
   };
 };
 
@@ -113,14 +110,8 @@ const compareVersions = (left: ParsedVersion, right: ParsedVersion): number => {
 };
 
 export const isNewerSemVer = (candidate: string, current: string): boolean => {
-  const parsedCandidate = parseSerializedSemVer(
-    JSON.stringify(candidate) ?? "",
-    "Candidate version"
-  );
-  const parsedCurrent = parseSerializedSemVer(
-    JSON.stringify(current) ?? "",
-    "Current version"
-  );
+  const parsedCandidate = parseSemVer(candidate, "Candidate version");
+  const parsedCurrent = parseSemVer(current, "Current version");
 
   return compareVersions(parsedCandidate, parsedCurrent) > 0;
 };
