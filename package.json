@@ -73,7 +73,7 @@
     "@types/node": "26.6.3",
     "@effect/platform-bun": "4.0.0",
     "@effect/platform-node": "4.0.0",
-    "@opencode/plugin": "2.0.23",
+    "@opencode/plugin": "2.0.26",
     "@opentui/core": "0.5.12",
     "@opentui/solid": "0.5.12",
     "@typescript/native": "npm:typescript@^7.0.2",
