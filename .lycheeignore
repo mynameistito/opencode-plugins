@@ -1,4 +1,6 @@
 ^https://www\.npmjs\.com/package/@opencode/cli/?$
+^https://www\.npmjs\.com/package/@mynameistito/opencode-force-input/?$
+^https://www\.npmjs\.com/package/@mynameistito/opencode-usage-limits/?$
 ^https://chatgpt\.com/?$
 ^https://github\.com/modelstudioai/cli/blob/main/packages/commands/src/commands/usage/token-plan\.ts$
 ^https://github\.com/mynameistito/opencode-plugins/blob/main/packages/opencode-usage-limits/examples/usage-limits\.jsonc$

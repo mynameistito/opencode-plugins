@@ -51,6 +51,8 @@ export default defineConfig({
   navigation: {
     sidebar: [
       "/",
+      "/project",
+      "/architecture",
       "/force-input",
       "/usage-limits",
       "/development",

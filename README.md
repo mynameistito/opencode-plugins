@@ -43,6 +43,10 @@ opencode2 plugin add "@mynameistito/opencode-usage-limits@latest" -g
 
 See the [usage-limits README](packages/opencode-usage-limits/README.md) for provider credentials, configuration, and troubleshooting.
 
+## Project Documentation
+
+The documentation site source lives in [`apps/web/docs/`](apps/web/docs/). Start with the [project overview](apps/web/docs/project.mdx) for the repository layout and packages, or read the [architecture guide](apps/web/docs/architecture.mdx) for plugin runtime flows and deployment boundaries. The same guides are available on the [documentation site](https://opencode-plugins.mynameistito.com/).
+
 ## Local Development
 
 Build the workspace and load the source entrypoints from `~/.config/opencode/cli.json`:
