@@ -1,0 +1,52 @@
+---
+title: Architecture
+description: Runtime boundaries and data flow for the OpenCode plugins and documentation site.
+sidebar:
+  label: Architecture
+  order: 3
+---
+
+The repository has two separately published TUI plugins and a documentation app. Each plugin runs inside the OpenCode terminal UI and contributes a focused interaction. The website is a separate static site and is not required at plugin runtime.
+
+## Plugin boundaries
+
+```text
+OpenCode v2 TUI
+├── Force Input
+│   ├── keymap layer: Ctrl+Enter / Ctrl+Return
+│   └── prompt-footer slot: state-aware hint
+└── Usage Limits
+    ├── configuration + OpenCode auth
+    ├── provider adapters and runtime services
+    ├── refresh coordinator + latest snapshot
+    └── sidebar and prompt-footer slots
+```
+
+Both packages declare their TUI entrypoint separately from any server plugin interface. OpenCode owns the plugin lifecycle and supplies session, theme, keymap, and UI-slot context.
+
+## Force Input flow
+
+The plugin registers high-priority bindings for both common Ctrl+Enter key names. When invoked, it dispatches OpenCode's guarded `session.interrupt` command three times and then dispatches `prompt.submit`. The host decides whether the submitted prompt steers the active session or starts a new turn. The footer hint follows the session state and is hidden in shell mode or when there is no applicable composer.
+
+## Usage Limits flow
+
+1. The plugin loads its JSONC configuration and OpenCode authentication data.
+2. Enabled providers are fetched through provider-specific adapters. Adapters normalize API or authenticated-CLI results into common usage windows and balances.
+3. A coordinator refreshes on the configured interval, retains successful snapshots, and records provider errors without exposing credentials or response bodies in the UI.
+4. The sidebar renders configured provider results. The prompt footer selects a compact result based on the active session's provider.
+
+Provider adapters are isolated from rendering. This keeps provider-specific response parsing and credential handling out of the UI components. See [Usage Limits](/usage-limits) for provider-specific credential rules and supported windows.
+
+## Documentation and deployment
+
+The site under `apps/web/` reads its Markdown/MDX content from `apps/web/docs/`. Blume builds the site into `apps/web/dist/`, while Alchemy's `Website.StaticSite` deploys those assets to Cloudflare. The production custom domain is configured in `apps/web/alchemy.run.ts`; content and build settings are configured in `apps/web/blume.config.ts`.
+
+The website and plugins have independent release/deployment paths: Changesets describe package releases, and the deployment workflow publishes the documentation site. Documentation content should be checked with the web app's test/build scripts and accompanied by a `docs` Changeset when it is user-facing site content.
+
+## Source map
+
+- `packages/opencode-force-input/src/`: keybinding registration, hint state, and TUI entrypoint.
+- `packages/opencode-usage-limits/src/`: plugin lifecycle, UI components, configuration, coordinator, provider adapters, and shared types.
+- `apps/web/docs/`: website content.
+- `apps/web/blume.config.ts`: content sources, navigation, site metadata, and generated agent docs.
+- `apps/web/alchemy.run.ts`: static-site build and Cloudflare deployment declaration.

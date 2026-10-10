@@ -1,0 +1,49 @@
+---
+title: Project overview
+description: How the OpenCode Plugins repository and its packages are organized.
+sidebar:
+  label: Project overview
+  order: 2
+---
+
+This repository contains focused [OpenCode v2](https://opencode.ai/v2) TUI plugins and the documentation site that explains how to install and use them. The plugins extend the terminal interface; they do not replace models, prompts, or OpenCode server configuration.
+
+## Packages
+
+| Package | Purpose | Published entrypoints |
+| --- | --- | --- |
+| [`@mynameistito/opencode-force-input`](https://www.npmjs.com/package/@mynameistito/opencode-force-input) | Interrupt an active run and submit the current prompt with `Ctrl+Enter` or `Ctrl+Return`. | `./tui` |
+| [`@mynameistito/opencode-usage-limits`](https://www.npmjs.com/package/@mynameistito/opencode-usage-limits) | Show supported provider usage windows and balances in the sidebar and prompt footer. | `./tui`, `./schema` |
+
+The package READMEs and the [plugin guides](/force-input) and [usage guide](/usage-limits) are the detailed user-facing references. Package versions are released independently.
+
+## Repository layout
+
+```text
+packages/
+  opencode-force-input/   Force Input plugin source, tests, and package metadata
+  opencode-usage-limits/  Usage Limits plugin source, tests, schema, and examples
+apps/
+  web/                    Blume documentation site and Cloudflare deployment
+.changeset/               Pending package release and documentation notes
+```
+
+The root `package.json` defines the Bun workspace and common checks. Each package owns its runtime dependencies, build, tests, and published files. The website content is sourced from `apps/web/docs/` and its release history is generated from GitHub releases.
+
+## Technology and compatibility
+
+- **OpenCode v2 TUI plugin API** provides keybindings, session context, and UI slots.
+- **TypeScript** is used for plugin implementations; Usage Limits uses Effect for provider runtime workflows.
+- **Bun workspaces** manage installation and run the repository's scripts.
+- **Blume** builds the documentation site, including searchable and agent-oriented documentation outputs.
+- **Alchemy** deploys the static site to Cloudflare Workers assets.
+
+The plugins target OpenCode v2 and are distributed through npm. Consult each package's README for current installation instructions, configuration, provider support, and troubleshooting.
+
+## Start here
+
+- [Force Input](/force-input): keybinding behavior and configuration.
+- [Usage Limits](/usage-limits): providers, credentials, display, and configuration.
+- [Architecture](/architecture): runtime boundaries and data flow.
+- [Development and releases](/development): local commands, checks, and deployment.
+- [Source repository](https://github.com/mynameistito/opencode-plugins)
