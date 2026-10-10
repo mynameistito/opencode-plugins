@@ -1,5 +1,11 @@
 # @mynameistito/opencode-plugins-docs
 
+## 0.0.11
+
+### Patch Changes
+
+- 2c3b652: Add project and architecture documentation
+
 ## 0.0.10
 
 ### Patch Changes
