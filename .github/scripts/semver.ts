@@ -1,5 +1,60 @@
-const serializedVersionPattern =
-  /^"(?<major>0|[1-9]\d*)\.(?<minor>0|[1-9]\d*)\.(?<patch>0|[1-9]\d*)(?:-(?<prerelease>(?:0|[1-9]\d*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?"$/u;
+const serializedVersionPattern = /^"(?<version>[^"]+)"$/u;
+
+const versionPattern =
+  /^(?<major>0|[1-9]\d*)\.(?<minor>0|[1-9]\d*)\.(?<patch>0|[1-9]\d*)/u;
+
+const numericPrereleasePattern = /^(?:0|[1-9]\d*)$/u;
+
+const alphanumericPrereleasePattern = /^\d*[A-Za-z-][\dA-Za-z-]*$/u;
+
+const buildIdentifierPattern = /^[\dA-Za-z-]+$/u;
+
+const invalidVersion = (source: string): never => {
+  throw new TypeError(`${source} did not contain a valid package version`);
+};
+
+const isValidPrereleaseIdentifier = (identifier: string): boolean =>
+  numericPrereleasePattern.test(identifier) ||
+  alphanumericPrereleasePattern.test(identifier);
+
+const parseSuffix = (suffix: string, source: string): string[] => {
+  const separatorIndex = suffix.indexOf("+");
+  const hasBuild = separatorIndex !== -1;
+  const prereleasePart = hasBuild ? suffix.slice(0, separatorIndex) : suffix;
+  const buildPart = hasBuild ? suffix.slice(separatorIndex + 1) : undefined;
+
+  if (hasBuild && suffix.includes("+", separatorIndex + 1)) {
+    return invalidVersion(source);
+  }
+
+  if (prereleasePart !== "" && !prereleasePart.startsWith("-")) {
+    return invalidVersion(source);
+  }
+
+  if (hasBuild && !buildPart) {
+    return invalidVersion(source);
+  }
+
+  const prerelease = prereleasePart.startsWith("-")
+    ? prereleasePart.slice(1)
+    : undefined;
+
+  const identifiers = prerelease?.split(".") ?? [];
+  const buildIdentifiers = buildPart?.split(".") ?? [];
+
+  if (
+    (prerelease !== undefined &&
+      !identifiers.every(isValidPrereleaseIdentifier)) ||
+    (buildPart !== undefined &&
+      !buildIdentifiers.every((identifier) =>
+        buildIdentifierPattern.test(identifier)
+      ))
+  ) {
+    return invalidVersion(source);
+  }
+
+  return identifiers;
+};
 
 interface ParsedVersion {
   major: bigint;
@@ -13,23 +68,29 @@ export const parseSerializedSemVer = (
   serialized: string,
   source: string
 ): ParsedVersion => {
-  const match = serializedVersionPattern.exec(serialized);
+  const serializedMatch = serializedVersionPattern.exec(serialized);
 
-  if (!match) {
-    throw new TypeError(`${source} did not contain a valid package version`);
+  if (!serializedMatch?.groups?.version) {
+    return invalidVersion(source);
   }
 
-  const { major, minor, patch, prerelease } = match.groups ?? {};
+  const versionMatch = versionPattern.exec(serializedMatch.groups.version);
+  const { major, minor, patch } = versionMatch?.groups ?? {};
 
-  if (!major || !minor || !patch) {
-    throw new TypeError(`${source} did not contain a valid package version`);
+  if (!major || !minor || !patch || !versionMatch) {
+    return invalidVersion(source);
   }
+
+  const prereleaseIdentifiers = parseSuffix(
+    serializedMatch.groups.version.slice(versionMatch[0].length),
+    source
+  );
 
   return {
     major: BigInt(major),
     minor: BigInt(minor),
     patch: BigInt(patch),
-    prerelease: prerelease?.split(".") ?? [],
+    prerelease: prereleaseIdentifiers,
     value: serialized.slice(1, -1),
   };
 };
@@ -117,6 +178,7 @@ export const isNewerSemVer = (candidate: string, current: string): boolean => {
     JSON.stringify(candidate) ?? "",
     "Candidate version"
   );
+
   const parsedCurrent = parseSerializedSemVer(
     JSON.stringify(current) ?? "",
     "Current version"
