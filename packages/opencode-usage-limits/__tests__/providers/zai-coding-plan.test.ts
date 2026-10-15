@@ -29,9 +29,11 @@ describe("ZAI provider", () => {
         tmpdir(),
         `oc-usage-limits-${crypto.randomUUID()}.json`
       );
+
       if (contents !== undefined) {
         await writeFile(authPath, contents);
       }
+
       try {
         const fetchMock = installFetchMock(
           Response.json({
@@ -58,6 +60,7 @@ describe("ZAI provider", () => {
 
   it("prefers auth data, sends bearer tokens when configured, and infers Max tier", async () => {
     const nextResetTime = Date.now() + 90_000;
+
     const fetchMock = installFetchMock(
       Response.json({
         data: {
@@ -131,6 +134,7 @@ describe("ZAI provider", () => {
 
   it("uses configured environment references when auth does not contain a key", async () => {
     process.env.OC_USAGE_LIMITS_ZAI_KEY = "env-key";
+
     const fetchMock = installFetchMock(
       Response.json({
         data: {

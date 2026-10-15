@@ -15,25 +15,31 @@ import { ConfigDecodeError, ConfigReadError } from "@/errors.ts";
 import type { JsonValue } from "@/utils.ts";
 
 type ReadJsonFile = (filePath: string) => Promise<JsonValue>;
+
 const readJsonFile = vi.fn<ReadJsonFile>();
 
 const testXdgConfigHome = path.join(homedir(), ".opencode-test-config");
 const testXdgDataHome = path.join(homedir(), ".opencode-test-data");
 const originalXdgConfigHome = process.env.XDG_CONFIG_HOME;
 const originalXdgDataHome = process.env.XDG_DATA_HOME;
+
 process.env.XDG_CONFIG_HOME = testXdgConfigHome;
+
 process.env.XDG_DATA_HOME = testXdgDataHome;
+
 const {
   defaultOpenCodeAuthPath,
   loadConfig,
   loadOpenCodeAuth,
   resolveXdgPath,
 } = await import("@/config.ts");
+
 if (originalXdgConfigHome === undefined) {
   delete process.env.XDG_CONFIG_HOME;
 } else {
   process.env.XDG_CONFIG_HOME = originalXdgConfigHome;
 }
+
 if (originalXdgDataHome === undefined) {
   delete process.env.XDG_DATA_HOME;
 } else {
@@ -93,6 +99,7 @@ describe("configuration parsing", () => {
     const commonFields = Object.keys(
       publishedSchema.$defs.commonDisplayFields.properties
     ).toSorted();
+
     const providerFields = {
       codex: Object.keys(
         publishedSchema.$defs.codexProvider.properties
@@ -160,6 +167,7 @@ describe("configuration parsing", () => {
         "baseUrl",
       ].toSorted()
     );
+
     const apiKeyProviders = [
       providerFields.commandcode,
       providerFields.deepseek,
@@ -170,6 +178,7 @@ describe("configuration parsing", () => {
       providerFields["opencode-go"],
       providerFields.synthetic,
     ];
+
     for (const fields of apiKeyProviders) {
       expect(fields).toStrictEqual(
         [...commonFields, "apiKey", "authPath", "baseUrl"].toSorted()
@@ -328,6 +337,7 @@ describe("configuration parsing", () => {
 
   it("redacts malformed credential values from diagnostics", () => {
     const credential = { secret: "never-render-this" };
+
     const result = parseUsageLimitsConfig({
       providers: { synthetic: { apiKey: credential } },
     });
@@ -396,17 +406,21 @@ describe("configuration loading", () => {
   it("returns typed read and JSONC decode failures", async () => {
     readJsonFile.mockRejectedValueOnce(new Error("permission denied"));
     const readResult = await loadConfig(readJsonFile);
+
     const readFailure = Result.isFailure(readResult)
       ? readResult.failure
       : undefined;
+
     expect(Result.isFailure(readResult)).toBeTruthy();
     expect(readFailure).toBeInstanceOf(ConfigReadError);
 
     readJsonFile.mockRejectedValueOnce(new SyntaxError("malformed"));
     const decodeResult = await loadConfig(readJsonFile);
+
     const decodeFailure = Result.isFailure(decodeResult)
       ? decodeResult.failure
       : undefined;
+
     expect(Result.isFailure(decodeResult)).toBeTruthy();
     expect(decodeFailure).toBeInstanceOf(ConfigDecodeError);
   });

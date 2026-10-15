@@ -55,6 +55,7 @@ const parsePullRequest = (value: JsonValue): PullRequest => {
   const user = asOptionalRecord(getJsonField(item, "user"));
   const baseRepo = asOptionalRecord(getJsonField(base, "repo"));
   const headRepo = asOptionalRecord(getJsonField(head, "repo"));
+
   return {
     base: {
       ref: asString(getJsonField(base, "ref")),
@@ -80,16 +81,21 @@ const parsePayload = (value: JsonValue): EventPayload => {
   const item = asRecord(value);
   const repository = asOptionalRecord(getJsonField(item, "repository"));
   const workflowRun = asOptionalRecord(getJsonField(item, "workflow_run"));
+
   const headRepository = workflowRun
     ? asOptionalRecord(getJsonField(workflowRun, "head_repository"))
     : null;
+
   const headOwner = headRepository
     ? asOptionalRecord(getJsonField(headRepository, "owner"))
     : null;
+
   const pullRequest = asOptionalRecord(getJsonField(item, "pull_request"));
+
   const workflowPullRequests = workflowRun
     ? getJsonField(workflowRun, "pull_requests")
     : null;
+
   return {
     pull_request: pullRequest
       ? { number: asNumber(getJsonField(pullRequest, "number")) }
@@ -132,6 +138,7 @@ const parsePayload = (value: JsonValue): EventPayload => {
 
 const parsePermissionResponse = (value: JsonValue): PermissionResponse => {
   const item = asRecord(value);
+
   return {
     permission: asOptionalString(getJsonField(item, "permission")),
     role_name: asOptionalString(getJsonField(item, "role_name")),
@@ -140,6 +147,7 @@ const parsePermissionResponse = (value: JsonValue): PermissionResponse => {
 
 const payload = parsePayload(await readEvent());
 const defaultBranch = payload.repository?.default_branch ?? null;
+
 if (!defaultBranch) {
   throw new Error(
     "The repository default branch is missing from the event payload."
@@ -165,11 +173,13 @@ let pullRequest: PullRequest | null = null;
 
 if (eventName() === "pull_request_target") {
   const number = payload.pull_request?.number ?? null;
+
   if (!number) {
     throw new Error(
       "The pull request number is missing from the event payload."
     );
   }
+
   pullRequest = await githubRequest(
     `/repos/${githubRepository.owner}/${githubRepository.repo}/pulls/${number}`,
     parsePullRequest
@@ -182,6 +192,7 @@ if (eventName() === "pull_request_target") {
   const candidates = (
     Array.isArray(workflowRun?.pull_requests) ? workflowRun.pull_requests : []
   ).filter(matchesWorkflowRun);
+
   if (candidates.length > 1) {
     throw new Error(
       `Expected one pull request for ${headBranch} at ${headSha}, found ${candidates.length}.`
@@ -195,20 +206,24 @@ if (eventName() === "pull_request_target") {
     );
   } else {
     const headOwner = workflowRun?.head_repository?.owner?.login ?? null;
+
     if (!headOwner) {
       throw new Error(
         "The workflow run is missing pull request head repository data."
       );
     }
+
     const query = new URLSearchParams({
       base: defaultBranch,
       head: `${headOwner}:${headBranch}`,
       state: "all",
     });
+
     const pullRequests = await githubPaginate(
       `/repos/${githubRepository.owner}/${githubRepository.repo}/pulls?${query}`,
       parsePullRequest
     );
+
     const matches = pullRequests.filter(matchesWorkflowRun);
 
     if (matches.length > 1) {
@@ -216,12 +231,14 @@ if (eventName() === "pull_request_target") {
         `Expected one pull request for ${headOwner}:${headBranch} at ${headSha}, found ${matches.length}.`
       );
     }
+
     if (matches.length === 0) {
       console.info(
         `No pull request currently sits at head ${headSha} for ${headOwner}:${headBranch}; the branch moved on, so there is nothing to deploy for this run.`
       );
       process.exit(0);
     }
+
     pullRequest = matches[0] ?? null;
   }
 }
@@ -231,6 +248,7 @@ if (pullRequest === null || pullRequest.base.ref !== defaultBranch) {
     "The preview pull request does not target the default branch."
   );
 }
+
 if (eventName() === "workflow_run" && !matchesWorkflowRun(pullRequest)) {
   console.info(
     `The pull request head moved past ${headSha} while resolving; there is nothing to deploy for this run.`
@@ -239,16 +257,19 @@ if (eventName() === "workflow_run" && !matchesWorkflowRun(pullRequest)) {
 }
 
 const username = pullRequest.user?.login ?? null;
+
 if (!username) {
   throw new Error("The preview pull request author is missing.");
 }
 
 let permission = "none";
+
 try {
   const result = await githubRequest(
     `/repos/${githubRepository.owner}/${githubRepository.repo}/collaborators/${encodeURIComponent(username)}/permission`,
     parsePermissionResponse
   );
+
   permission = result.permission ?? result.role_name ?? "none";
 } catch (error) {
   const message = error instanceof Error ? error.message : String(error);
@@ -266,8 +287,11 @@ const trusted =
     headRepositoryId: pullRequest.head.repo?.id ?? null,
     username,
   });
+
 console.info(
   `Pull request #${pullRequest.number} author ${username} has ${permission} access.`
 );
+
 await setOutput("pull_request_number", String(pullRequest.number));
+
 await setOutput("trusted", String(trusted));

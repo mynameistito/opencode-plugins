@@ -34,12 +34,15 @@ export interface ForceHintProps {
  */
 export const ForceHint = (props: ForceHintProps): JSX.Element => {
   const [tick, setTick] = createSignal(0);
+
   const bump = (): void => {
     setTick((value) => value + 1);
   };
+
   const unsubscribes = SESSION_EXECUTION_EVENTS.map((event) =>
     props.data.on(event, bump)
   );
+
   onCleanup(() => {
     for (const unsubscribe of unsubscribes) {
       unsubscribe();
@@ -51,8 +54,10 @@ export const ForceHint = (props: ForceHintProps): JSX.Element => {
   const status = createMemo(() => {
     tick();
     const { sessionID } = props;
+
     return sessionID ? props.data.session.status(sessionID) : undefined;
   });
+
   // `"running"` is the data layer's active state: it covers busy sessions and
   // automatic retries, so the steer hint stays until the run settles.
   const running = createMemo(() => status() === "running");

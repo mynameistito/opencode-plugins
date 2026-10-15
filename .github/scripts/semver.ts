@@ -1,5 +1,3 @@
-const serializedVersionPattern = /^"(?<version>[^"]+)"$/u;
-
 const versionPattern =
   /^(?<major>0|[1-9]\d*)\.(?<minor>0|[1-9]\d*)\.(?<patch>0|[1-9]\d*)/u;
 
@@ -64,17 +62,8 @@ interface ParsedVersion {
   value: string;
 }
 
-export const parseSerializedSemVer = (
-  serialized: string,
-  source: string
-): ParsedVersion => {
-  const serializedMatch = serializedVersionPattern.exec(serialized);
-
-  if (!serializedMatch?.groups?.version) {
-    return invalidVersion(source);
-  }
-
-  const versionMatch = versionPattern.exec(serializedMatch.groups.version);
+export const parseSemVer = (value: string, source: string): ParsedVersion => {
+  const versionMatch = versionPattern.exec(value);
   const { major, minor, patch } = versionMatch?.groups ?? {};
 
   if (!major || !minor || !patch || !versionMatch) {
@@ -82,7 +71,7 @@ export const parseSerializedSemVer = (
   }
 
   const prereleaseIdentifiers = parseSuffix(
-    serializedMatch.groups.version.slice(versionMatch[0].length),
+    value.slice(versionMatch[0].length),
     source
   );
 
@@ -91,7 +80,7 @@ export const parseSerializedSemVer = (
     minor: BigInt(minor),
     patch: BigInt(patch),
     prerelease: prereleaseIdentifiers,
-    value: serialized.slice(1, -1),
+    value,
   };
 };
 
@@ -174,15 +163,8 @@ const compareVersions = (left: ParsedVersion, right: ParsedVersion): number => {
 };
 
 export const isNewerSemVer = (candidate: string, current: string): boolean => {
-  const parsedCandidate = parseSerializedSemVer(
-    JSON.stringify(candidate) ?? "",
-    "Candidate version"
-  );
-
-  const parsedCurrent = parseSerializedSemVer(
-    JSON.stringify(current) ?? "",
-    "Current version"
-  );
+  const parsedCandidate = parseSemVer(candidate, "Candidate version");
+  const parsedCurrent = parseSemVer(current, "Current version");
 
   return compareVersions(parsedCandidate, parsedCurrent) > 0;
 };

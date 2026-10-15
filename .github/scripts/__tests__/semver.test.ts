@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { isNewerSemVer, parseSerializedSemVer } from "@/github/semver.ts";
+import { isNewerSemVer, parseSemVer } from "@/github/semver.ts";
 
 describe("Semantic version comparison", () => {
   it("returns true only when the candidate is newer", () => {
@@ -20,9 +20,11 @@ describe("Semantic version comparison", () => {
   });
 
   it("rejects malformed versions", () => {
-    expect(() => parseSerializedSemVer('"1.0"', "test")).toThrow(TypeError);
-    expect(() => parseSerializedSemVer('"1.0.0-01"', "test")).toThrow(
-      TypeError
-    );
+    expect(() => parseSemVer("1.0", "test")).toThrow(TypeError);
+    expect(() => parseSemVer("1.0.0-01", "test")).toThrow(TypeError);
+  });
+
+  it("parses unquoted package version strings", () => {
+    expect(parseSemVer("2.0.23", "test").value).toBe("2.0.23");
   });
 });

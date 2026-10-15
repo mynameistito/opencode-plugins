@@ -19,9 +19,11 @@ export class ProviderTransportError extends schemaTaggedError<ProviderTransportE
     if (this.cause === "unauthorized") {
       return "provider credentials were rejected";
     }
+
     if (this.cause === "forbidden") {
       return "provider access was forbidden";
     }
+
     return this.status === undefined
       ? "provider request failed"
       : `provider request failed (HTTP ${this.status})`;

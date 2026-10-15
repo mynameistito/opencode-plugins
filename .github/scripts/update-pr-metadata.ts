@@ -58,13 +58,17 @@ const api = async (
       ...init?.headers,
     },
   });
+
   if (!response.ok) {
     throw new GitHubApiError(response.status, await response.text());
   }
+
   if (response.status === 204) {
     return null;
   }
+
   const result: JsonValue = JSON.parse(await response.text());
+
   return result;
 };
 
@@ -91,12 +95,15 @@ interface PullRequestContents {
 
 const parsePullRequest = (value: JsonValue): PullRequest => {
   const pullRequest = parseJsonObject(value, "Pull request response");
+
   const head = parseJsonObject(
     pullRequest.get("head") ?? null,
     "Pull request head"
   );
+
   const repositoryValue = head.get("repo") ?? null;
   let repo: PullRequest["head"]["repo"];
+
   if (repositoryValue === null) {
     repo = null;
   } else {
@@ -104,6 +111,7 @@ const parsePullRequest = (value: JsonValue): PullRequest => {
       repositoryValue,
       "Pull request head repository"
     );
+
     const fullName = headRepositoryDetails.get("full_name") ?? null;
     repo = {
       full_name:
@@ -118,14 +126,17 @@ const parsePullRequest = (value: JsonValue): PullRequest => {
     "Pull request labels"
   ).map((label, index) => {
     const parsedLabel = parseJsonObject(label, `Pull request label ${index}`);
+
     return {
       name: parseJsonString(parsedLabel.get("name") ?? null, "Label name"),
     };
   });
+
   const changedFiles = parseJsonNumber(
     pullRequest.get("changed_files") ?? null,
     "Pull request changed file count"
   );
+
   assert.ok(
     Number.isInteger(changedFiles),
     "Pull request changed file count must be an integer"
@@ -149,6 +160,7 @@ const parsePullRequest = (value: JsonValue): PullRequest => {
 const parsePullRequestFiles = (value: JsonValue): PullRequestFile[] =>
   parseJsonArray(value, "Pull request file list").map((file, index) => {
     const parsedFile = parseJsonObject(file, `Pull request file ${index}`);
+
     return {
       additions: parseJsonNumber(
         parsedFile.get("additions") ?? null,
@@ -169,6 +181,7 @@ const parseContentsResponse = (value: JsonValue): PullRequestContents => {
   const contents = parseJsonObject(value, "GitHub contents response");
   const content = contents.get("content") ?? null;
   const encoding = contents.get("encoding") ?? null;
+
   return {
     content:
       content === null
@@ -184,13 +197,16 @@ const parseContentsResponse = (value: JsonValue): PullRequestContents => {
 const pullRequest = parsePullRequest(
   await api(`/repos/${owner}/${repository}/pulls/${pullRequestNumber}`)
 );
+
 if (headSha && pullRequest.head.sha !== headSha) {
   console.log(
     `Skipping stale event for ${headSha}; pull request now points to ${pullRequest.head.sha}.`
   );
   process.exit(0);
 }
+
 const pageCount = getPullRequestFilePageCount(pullRequest.changed_files);
+
 const filePages = await Promise.all(
   Array.from({ length: pageCount }, (_, index) =>
     api(
@@ -198,9 +214,11 @@ const filePages = await Promise.all(
     )
   )
 );
+
 const files = filePages.flatMap(parsePullRequestFiles);
 
 const componentLabels = new Set(packageLabels.values());
+
 const managedLabels = new Set([
   ...componentLabels,
   "release",
@@ -216,40 +234,51 @@ const managedLabels = new Set([
 const changesetFiles = files.filter(({ filename }) =>
   /^\.changeset\/(?!README\.md$)[^/]+\.md$/u.test(filename)
 );
+
 const headRepository =
   pullRequest.head.repo?.full_name ?? `${owner}/${repository}`;
+
 const changesetContents = await Promise.all(
   changesetFiles.map(async ({ filename }) => {
     try {
       const encodedPath = filename.split("/").map(encodeURIComponent).join("/");
+
       const file = parseContentsResponse(
         await api(
           `/repos/${headRepository}/contents/${encodedPath}?ref=${encodeURIComponent(headSha ?? pullRequest.head.sha)}`
         )
       );
+
       if (file.encoding !== "base64" || !file.content) {
         return [];
       }
+
       const content = Buffer.from(file.content, "base64").toString("utf-8");
+
       return parseChangesetEntries(content);
     } catch (error) {
       console.warn(
         `Could not read Changeset ${filename}; ignoring it: ${String(error)}`
       );
+
       return [];
     }
   })
 );
+
 const changesetNames = new Set(changesetContents.flat());
+
 const components = getComponentLabels(
   files.map(({ filename }) => filename),
   changesetNames
 );
 
 const labelSet = new Set<string>(components);
+
 if (files.some(({ filename }) => filename.startsWith(".changeset/"))) {
   labelSet.add("release");
 }
+
 if (
   files.some(
     ({ filename }) =>
@@ -260,36 +289,46 @@ if (
 ) {
   labelSet.add("dependencies");
 }
+
 if (files.some(({ filename }) => filename.startsWith(".github/"))) {
   labelSet.add("github-actions");
 }
 
 const sizeLabel = getSizeLabel(files);
+
 labelSet.add(sizeLabel);
 
 const currentLabels = pullRequest.labels.map(({ name }) => name);
 const skipChangesetLabel = "skip-changeset";
+
 const ensureLabels = new Set([
   ...labelSet,
   ...(currentLabels.includes(skipChangesetLabel) ? [] : [skipChangesetLabel]),
 ]);
+
 const labelsEndpoint = `/repos/${owner}/${repository}/labels`;
+
 const getLabelColor = (name: string): string => {
   if (name === skipChangesetLabel) {
     return "d4c5f9";
   }
+
   if (name.startsWith("size/")) {
     return "ededed";
   }
+
   return "1d76db";
 };
+
 await Promise.all(
   [...ensureLabels].map(async (name) => {
     const color = getLabelColor(name);
+
     const description =
       name === skipChangesetLabel
         ? "Use only for justified changes that do not require a release."
         : "Automatically managed pull request metadata";
+
     try {
       await api(labelsEndpoint, {
         body: JSON.stringify({
@@ -306,6 +345,7 @@ await Promise.all(
       ) {
         throw error;
       }
+
       await api(`${labelsEndpoint}/${encodeURIComponent(name)}`, {
         body: JSON.stringify({ color, description, name }),
         method: "PATCH",
@@ -319,6 +359,7 @@ const { add: labelsToAdd, remove: labelsToRemove } = reconcileLabels(
   labelSet,
   managedLabels
 );
+
 if (labelsToAdd.length > 0) {
   await api(
     `/repos/${owner}/${repository}/issues/${pullRequestNumber}/labels`,
@@ -328,6 +369,7 @@ if (labelsToAdd.length > 0) {
     }
   );
 }
+
 if (labelsToRemove.length > 0) {
   await Promise.all(
     labelsToRemove.map((name) =>
@@ -340,6 +382,7 @@ if (labelsToRemove.length > 0) {
 }
 
 const skipChangeset = currentLabels.includes(skipChangesetLabel);
+
 const requiredPackages =
   skipChangeset ||
   isChangesetReleasePR(
@@ -351,6 +394,7 @@ const requiredPackages =
     : getRequiredChangesets(files.map(({ filename }) => filename));
 
 const missingPackages = getMissingChangesets(requiredPackages, changesetNames);
+
 if (missingPackages.length > 0) {
   throw new Error(
     `Changeset required for changed published/deployed package(s):\n${missingPackages

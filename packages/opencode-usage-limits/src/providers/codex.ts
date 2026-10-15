@@ -65,6 +65,7 @@ const parseCodexAuth = (value: JsonObject): CodexAuthPayload | null => {
   if (!isRecord(value.tokens)) {
     return null;
   }
+
   return {
     tokens: {
       access_token: value.tokens.access_token,
@@ -77,6 +78,7 @@ const parseCodexWindow = (window: JsonObject): CodexRateLimitWindow | null => {
   if (window.used_percent !== undefined && !isJsonNumber(window.used_percent)) {
     return null;
   }
+
   return {
     limit_window_seconds: isJsonNumber(window.limit_window_seconds)
       ? window.limit_window_seconds
@@ -90,6 +92,7 @@ const parseCodexWindow = (window: JsonObject): CodexRateLimitWindow | null => {
 
 const parseCodexPayload = (value: JsonObject): CodexPayload => {
   const rateLimit = isRecord(value.rate_limit) ? value.rate_limit : undefined;
+
   return {
     plan_type: isJsonString(value.plan_type) ? value.plan_type : undefined,
     rate_limit: rateLimit
@@ -113,6 +116,7 @@ const parseCodexPayload = (value: JsonObject): CodexPayload => {
 const resetCreditsFromPayload = (payload: CodexPayload): number | null => {
   const credits = payload.rate_limit_reset_credits;
   const availableCount = credits?.available_count;
+
   return availableCount !== undefined &&
     Number.isFinite(availableCount) &&
     availableCount >= 0
@@ -140,25 +144,31 @@ const readCodexAuthFile = (
   Effect.gen(function* loadCodexAuthFile() {
     const files = yield* ProviderFileSystem;
     const environment = yield* ProviderEnvironment;
+
     const auth = yield* files.readJson({
       path: authPath ?? "~/.codex/auth.json",
       providerID: "codex",
     });
+
     const parsedAuth = isRecord(auth) ? parseCodexAuth(auth) : null;
+
     if (!parsedAuth) {
       return yield* new MissingProviderCredentialsError({
         operation: "read-auth",
         providerID: "codex",
       });
     }
+
     const access = environment.credential(parsedAuth.tokens.access_token);
     const accountId = environment.credential(parsedAuth.tokens.account_id);
+
     if (!access || !accountId) {
       return yield* new MissingProviderCredentialsError({
         operation: "read-auth",
         providerID: "codex",
       });
     }
+
     return { access, accountId };
   });
 
@@ -179,6 +189,7 @@ const loadCodexFallbackCredentials = (
     if (config?.authPath) {
       return yield* readCodexAuthFile(config.authPath);
     }
+
     if (configuredAccess) {
       return {
         access: configuredAccess,
@@ -187,6 +198,7 @@ const loadCodexFallbackCredentials = (
           : Redacted.make("configured"),
       };
     }
+
     return yield* readCodexAuthFile(globalThis.undefined);
   });
 
@@ -204,9 +216,11 @@ const loadCodexCredentials = (
         providerID: "codex",
       });
     }
+
     if (isOfficialHost && openCodeAccess && openCodeAccountId) {
       return { access: openCodeAccess, accountId: openCodeAccountId };
     }
+
     return yield* loadCodexFallbackCredentials(
       config,
       isOfficialHost,
@@ -232,11 +246,14 @@ const codexWindow = (
   }
 
   const parsedUsed = parseUsagePercentage(value.used_percent);
+
   if (value.used_percent !== undefined && Result.isFailure(parsedUsed)) {
     return null;
   }
+
   const used = Result.isSuccess(parsedUsed) ? parsedUsed.success : null;
   const windowSeconds = value.limit_window_seconds ?? 0;
+
   const resetAt = resetInstantOrNull(
     value.reset_at !== undefined && value.reset_at > 0
       ? new Date(value.reset_at * 1000)
@@ -278,22 +295,28 @@ const requestCodexUsage = (
       onFailure: (error) => ({ error }),
       onSuccess: (data) => ({ data }),
     });
+
     if ("data" in firstAttempt) {
       return firstAttempt.data;
     }
+
     const unauthorizedResponse =
       firstAttempt.error instanceof ProviderTransportError &&
       firstAttempt.error.cause === "unauthorized";
+
     if (!canFallbackToCodexAuth || !unauthorizedResponse) {
       return yield* firstAttempt.error;
     }
+
     const fallback = yield* Effect.match(fallbackCredentials, {
       onFailure: () => ({ credentials: null }),
       onSuccess: (nextCredentials) => ({ credentials: nextCredentials }),
     });
+
     if (fallback.credentials === null) {
       return yield* firstAttempt.error;
     }
+
     return yield* requestUsage(fallback.credentials);
   });
 
@@ -318,16 +341,21 @@ const fetchCodexUsageEffect = (
   Effect.gen(function* runFetchCodexUsage() {
     const environment = yield* ProviderEnvironment;
     const http = yield* ProviderHttpClient;
+
     const baseUrl = resolveHttpsBaseUrl(
       config?.baseUrl,
       DEFAULT_CODEX_BASE_URL
     );
+
     const isOfficialHost = new URL(baseUrl).hostname === "chatgpt.com";
     const openCodeAccess = environment.credential(openCodeAuth.openai?.access);
+
     const openCodeAccountId = environment.credential(
       openCodeAuth.openai?.accountId
     );
+
     const configuredAccess = environment.resolveCredential(config?.apiKey);
+
     const credentials = yield* loadCodexCredentials(
       config,
       isOfficialHost,
@@ -335,6 +363,7 @@ const fetchCodexUsageEffect = (
       openCodeAccountId,
       configuredAccess
     );
+
     const canFallbackToCodexAuth =
       isOfficialHost &&
       openCodeAccess !== undefined &&
@@ -352,6 +381,7 @@ const fetchCodexUsageEffect = (
         timeoutMs,
         url: `${baseUrl}/wham/usage`,
       });
+
     const payload = yield* requestCodexUsage(
       requestUsage,
       credentials,
@@ -365,6 +395,7 @@ const fetchCodexUsageEffect = (
     );
 
     const parsedPayload = isRecord(payload) ? parseCodexPayload(payload) : null;
+
     if (!parsedPayload) {
       return yield* new ProviderResponseDecodeError({
         cause: "schema",
@@ -375,10 +406,12 @@ const fetchCodexUsageEffect = (
 
     const rateLimit = parsedPayload.rate_limit;
     const primaryWindow = codexWindow(rateLimit?.primary_window, "usage");
+
     const windows = [
       primaryWindow,
       codexWindow(rateLimit?.secondary_window, "secondary"),
     ].filter((item): item is UsageWindow => item !== null);
+
     if (!primaryWindow || reportedWindowsAreInvalid(rateLimit, windows)) {
       return yield* new ProviderResponseDecodeError({
         cause: "schema",
@@ -386,6 +419,7 @@ const fetchCodexUsageEffect = (
         providerID: "codex",
       });
     }
+
     const resetCredits = resetCreditsFromPayload(parsedPayload);
 
     return {

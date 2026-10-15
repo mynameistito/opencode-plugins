@@ -13,6 +13,7 @@ import type { UsageLimitsContext } from "@/plugin.tsx";
 import type { ResolvedUsageLimitsConfig } from "@/types.ts";
 
 const color = RGBA.fromValues(1, 2, 3, 255);
+
 const theme: UsageTheme = {
   text: {
     default: color,
@@ -34,19 +35,25 @@ describe("production plugin dependencies", () => {
       requestTimeoutMs: 1000,
       showErrors: true,
     };
+
     let configLoads = 0;
     let authLoads = 0;
+
     const dependencies = makeProductionDependencies({
       loadConfig: () => {
         configLoads += 1;
+
         return Promise.resolve(Result.succeed(config));
       },
       loadOpenCodeAuth: () => {
         authLoads += 1;
+
         return Promise.resolve({ auth: {} });
       },
     });
+
     const claims: string[] = [];
+
     const context: UsageLimitsContext = {
       data: {
         session: {
@@ -58,6 +65,7 @@ describe("production plugin dependencies", () => {
       ui: {
         slot: (claim) => {
           claims.push(claim.append);
+
           return () => {};
         },
       },

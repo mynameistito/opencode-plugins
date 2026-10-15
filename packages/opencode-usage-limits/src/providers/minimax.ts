@@ -67,46 +67,60 @@ const keyFromMiniMaxAuth = (
   ) => Redacted.Redacted<string> | undefined
 ): Redacted.Redacted<string> | undefined => {
   const directKey = credential(value.key);
+
   if (directKey) {
     return directKey;
   }
 
   const directApiKey = credential(value.apiKey);
+
   if (directApiKey) {
     return directApiKey;
   }
 
   const minimaxCodingPlan = value["minimax-coding-plan"];
+
   if (isRecord(minimaxCodingPlan)) {
     const key = credential(minimaxCodingPlan.key);
+
     if (key) {
       return key;
     }
+
     const apiKey = credential(minimaxCodingPlan.apiKey);
+
     if (apiKey) {
       return apiKey;
     }
   }
 
   const { minimax } = value;
+
   if (isRecord(minimax)) {
     const key = credential(minimax.key);
+
     if (key) {
       return key;
     }
+
     const apiKey = credential(minimax.apiKey);
+
     if (apiKey) {
       return apiKey;
     }
   }
 
   const minimaxTokenPlan = value["minimax-token-plan"];
+
   if (isRecord(minimaxTokenPlan)) {
     const key = credential(minimaxTokenPlan.key);
+
     if (key) {
       return key;
     }
+
     const apiKey = credential(minimaxTokenPlan.apiKey);
+
     if (apiKey) {
       return apiKey;
     }
@@ -129,6 +143,7 @@ const selectMiniMaxEntry = (
   entries: readonly MiniMaxModelEntry[]
 ): MiniMaxModelEntry | null => {
   const general = entries.find((entry) => entry.model_name === "general");
+
   if (general) {
     return general;
   }
@@ -160,17 +175,21 @@ const minimaxFiveHourWindow = (
   if (entry.current_interval_status === 3) {
     return null;
   }
+
   const remainingPercent = entry.current_interval_remaining_percent;
   const parsedRemaining = parseUsagePercentage(remainingPercent);
+
   if (Result.isFailure(parsedRemaining)) {
     return null;
   }
 
   const parsedUsed = parseUsagePercentage(100 - parsedRemaining.success);
   const remainsMs = entry.remains_time;
+
   const resetsAt = resetInstantOrNull(
     remainsMs === undefined ? null : new Date(now.getTime() + remainsMs)
   );
+
   return {
     kind: "rolling",
     label: "5h",
@@ -197,17 +216,21 @@ const minimaxWeeklyWindow = (
   if (entry.current_weekly_status === 3) {
     return null;
   }
+
   const remainingPercent = entry.current_weekly_remaining_percent;
   const parsedRemaining = parseUsagePercentage(remainingPercent);
+
   if (Result.isFailure(parsedRemaining)) {
     return null;
   }
 
   const parsedUsed = parseUsagePercentage(100 - parsedRemaining.success);
   const remainsMs = entry.weekly_remains_time;
+
   const resetsAt = resetInstantOrNull(
     remainsMs === undefined ? null : new Date(now.getTime() + remainsMs)
   );
+
   return {
     kind: "weekly",
     label: "weekly",
@@ -233,19 +256,24 @@ const parseMiniMaxModelRemains = (payload: JsonObject): MiniMaxPayload => {
   const baseResp = isRecord(payload.base_resp) ? payload.base_resp : undefined;
   const statusCode = isRecord(baseResp) ? baseResp.status_code : undefined;
   const statusMsg = isRecord(baseResp) ? baseResp.status_msg : undefined;
+
   const baseRespOk =
     (statusCode === 0 || statusCode === null || statusCode === undefined) &&
     statusMsg === "success";
+
   if (!baseRespOk) {
     throw new Error(INVALID_MINIMAX_USAGE);
   }
+
   if (!Array.isArray(payload.model_remains)) {
     throw new TypeError(INVALID_MINIMAX_USAGE);
   }
+
   const entries = payload.model_remains.flatMap((entry) => {
     if (!isRecord(entry)) {
       return [];
     }
+
     return [
       {
         current_interval_remaining_percent: isJsonNumber(
@@ -276,6 +304,7 @@ const parseMiniMaxModelRemains = (payload: JsonObject): MiniMaxPayload => {
       },
     ];
   });
+
   return {
     base_resp: baseResp
       ? {
@@ -312,24 +341,30 @@ const fetchMiniMaxTokenPlanUsageEffect = (
   Effect.gen(function* runFetchMiniMaxTokenPlanUsage() {
     const environment = yield* ProviderEnvironment;
     const http = yield* ProviderHttpClient;
+
     const baseUrl = resolveHttpsBaseUrl(
       config?.baseUrl,
       DEFAULT_MINIMAX_BASE_URL
     );
+
     const officialHosts = new Set(["www.minimax.io", "api.minimaxi.com"]);
     const isOfficialHost = officialHosts.has(new URL(baseUrl).hostname);
     const configuredKey = environment.resolveCredential(config?.apiKey);
+
     const configuredFileKey = yield* readProviderAuthFileCredential(
       config?.authPath,
       "minimax",
       keyFromMiniMaxAuth
     );
+
     const authKey = isRecord(openCodeAuth)
       ? keyFromMiniMaxAuth(openCodeAuth, environment.credential)
       : undefined;
+
     const apiKey =
       configuredFileKey ??
       (isOfficialHost ? (authKey ?? configuredKey) : configuredKey);
+
     if (!apiKey) {
       return yield* new MissingProviderCredentialsError({
         operation: "fetch-usage",
@@ -360,10 +395,13 @@ const fetchMiniMaxTokenPlanUsageEffect = (
         if (!isRecord(payload)) {
           throw new TypeError(INVALID_MINIMAX_USAGE);
         }
+
         return parseMiniMaxModelRemains(payload);
       },
     });
+
     const selected = selectMiniMaxEntry(response.model_remains);
+
     if (!selected) {
       return yield* new ProviderResponseDecodeError({
         cause: "schema",
@@ -375,10 +413,13 @@ const fetchMiniMaxTokenPlanUsageEffect = (
     const capturedAt = new Date(yield* Clock.currentTimeMillis);
     const windows: UsageWindow[] = [];
     const fiveHour = minimaxFiveHourWindow(selected, capturedAt);
+
     if (fiveHour) {
       windows.push(fiveHour);
     }
+
     const weekly = minimaxWeeklyWindow(selected, capturedAt);
+
     if (weekly) {
       windows.push(weekly);
     }

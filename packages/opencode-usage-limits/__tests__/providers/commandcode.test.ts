@@ -38,17 +38,22 @@ const credits = () => creditsWith(defaultWindowLimits, defaultCredits);
 
 const installResponses = (responses: readonly Response[]) => {
   let index = 0;
+
   const fetchMock = vi.fn<FetchMock>(() => {
     const response = responses[index];
     index += 1;
+
     if (!response) {
       throw new Error("Unexpected Command Code request");
     }
+
     return Promise.resolve(response);
   });
+
   globalThis.fetch = Object.assign(fetchMock, {
     preconnect: globalThis.fetch.preconnect,
   });
+
   return fetchMock;
 };
 
@@ -314,6 +319,7 @@ describe("Command Code provider", () => {
     const fetchMock = installResponses([
       Response.json({ message: "unauthenticated", success: false }),
     ]);
+
     await expect(
       fetchCommandCodeUsage(
         undefined,

@@ -1,6 +1,7 @@
 import { vi } from "vitest";
 
 const originalFetch = globalThis.fetch;
+
 type FetchMock = (
   url: string | URL | Request,
   init?: RequestInit
@@ -11,6 +12,7 @@ export const installFetchMock = (response: Response) => {
   globalThis.fetch = Object.assign(fetchMock, {
     preconnect: originalFetch.preconnect,
   });
+
   return fetchMock;
 };
 

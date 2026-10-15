@@ -42,6 +42,7 @@ const execute = (
       stdio: ["ignore", "pipe", "pipe"],
       windowsHide: true,
     });
+
     const stdout: Buffer[] = [];
     let stdoutBytes = 0;
     let stderrBytes = 0;
@@ -51,6 +52,7 @@ const execute = (
       if (settled) {
         return;
       }
+
       settled = true;
       child.kill();
       resume(
@@ -73,14 +75,18 @@ const execute = (
 
     child.stdout.on("data", (chunk: Buffer) => {
       stdoutBytes += chunk.byteLength;
+
       if (stdoutBytes > MAX_COMMAND_OUTPUT_BYTES) {
         fail("output-limit");
+
         return;
       }
+
       stdout.push(chunk);
     });
     child.stderr.on("data", (chunk: Buffer) => {
       stderrBytes += chunk.byteLength;
+
       if (stderrBytes > MAX_COMMAND_OUTPUT_BYTES) {
         fail("output-limit");
       }
@@ -90,10 +96,13 @@ const execute = (
       if (settled) {
         return;
       }
+
       settled = true;
       const exitCode = code ?? -1;
+
       const accepted =
         exitCode === 0 || input.acceptedExitCodes?.has(exitCode) === true;
+
       resume(
         accepted
           ? Effect.succeed(Buffer.concat(stdout).toString("utf-8").trim())

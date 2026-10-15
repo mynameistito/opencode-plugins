@@ -26,10 +26,12 @@ import {
 } from "@/usage.ts";
 
 const NOW = new Date("2026-06-23T11:00:00.000Z");
+
 const percentage = (usedPercent: number | null): UsageQuota =>
   usedPercent === null
     ? { _tag: "Unknown" }
     : percentageQuota(Result.getOrThrow(parseUsagePercentage(usedPercent)));
+
 const usageWindow = (overrides: Partial<UsageWindow> = {}): UsageWindow => ({
   kind: "rolling",
   label: "5h",
@@ -97,6 +99,7 @@ describe("format helpers", () => {
 
   it("formats zero balances and preserves generic units", () => {
     const zero = balanceQuota(Result.getOrThrow(parseUsageBalance(0)), "CNY");
+
     const credits = balanceQuota(
       Result.getOrThrow(parseUsageBalance(12.5)),
       "credits"
@@ -124,6 +127,7 @@ describe("format helpers", () => {
       Result.getOrThrow(parseUsageBalanceAmount(-0.004)),
       "USD"
     );
+
     const debt = balanceQuota(
       Result.getOrThrow(parseUsageBalanceAmount(-12.5)),
       "CNY"
@@ -149,6 +153,7 @@ describe("format helpers", () => {
   ] as const)("formats a %s second reset duration", (seconds, expected) => {
     const resetsAt =
       seconds === null ? null : new Date(NOW.getTime() + seconds * 1000);
+
     expect(windowResetText(usageWindow({ resetsAt }), NOW)).toBe(expected);
   });
 

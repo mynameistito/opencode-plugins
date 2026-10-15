@@ -6,14 +6,17 @@ import { isRecord } from "@/utils.ts";
 import type { JsonValue } from "@/utils.ts";
 
 type ParsedCredential = Redacted.Redacted<string> | string;
+
 interface ParsedAuthEntry {
   apiKey?: ParsedCredential;
   key?: ParsedCredential;
 }
+
 interface ParsedOpenAIEntry {
   access?: ParsedCredential;
   accountId?: ParsedCredential;
 }
+
 type OpenCodeAuthBuilder = {
   -readonly [Key in keyof OpenCodeAuth]?: OpenCodeAuth[Key];
 };
@@ -181,10 +184,12 @@ const decodeConfig = Schema.decodeUnknownResult(configSchema, {
   errors: "all",
   onExcessProperty: "error",
 });
+
 const decodeCredential = Schema.decodeUnknownResult(secret);
 
 const parseCredential = (input: JsonValue | undefined) => {
   const result = decodeCredential(input);
+
   return Result.isSuccess(result) ? result.success : undefined;
 };
 
@@ -194,18 +199,24 @@ const parseAuthEntry = (
   if (!isRecord(input)) {
     return;
   }
+
   const apiKey = parseCredential(input.apiKey);
   const key = parseCredential(input.key);
+
   if (!(apiKey || key)) {
     return undefined;
   }
+
   const entry: ParsedAuthEntry = {};
+
   if (apiKey) {
     entry.apiKey = apiKey;
   }
+
   if (key) {
     entry.key = key;
   }
+
   return entry;
 };
 
@@ -215,18 +226,24 @@ const parseOpenAIEntry = (
   if (!isRecord(input)) {
     return;
   }
+
   const access = parseCredential(input.access);
   const accountId = parseCredential(input.accountId);
+
   if (!(access || accountId)) {
     return undefined;
   }
+
   const entry: ParsedOpenAIEntry = {};
+
   if (access) {
     entry.access = access;
   }
+
   if (accountId) {
     entry.accountId = accountId;
   }
+
   return entry;
 };
 
@@ -240,6 +257,7 @@ export const parseUsageLimitsConfig = (
   input: JsonValue
 ): Result.Result<ResolvedUsageLimitsConfig, ConfigDecodeError> => {
   const result = decodeConfig(input);
+
   if (Result.isFailure(result)) {
     return Result.fail(
       new ConfigDecodeError({
@@ -248,8 +266,10 @@ export const parseUsageLimitsConfig = (
       })
     );
   }
+
   const config = { ...result.success };
   delete config.$schema;
+
   return Result.succeed(config);
 };
 
@@ -285,51 +305,67 @@ export const parseOpenCodeAuth = (input: JsonValue): OpenCodeAuth => {
   const direct = parseAuthEntry(input);
 
   const auth: OpenCodeAuthBuilder = direct ?? {};
+
   if (minimax) {
     auth.minimax = minimax;
   }
+
   if (moonshotai) {
     auth.moonshotai = moonshotai;
   }
+
   if (moonshotaiCn) {
     auth["moonshotai-cn"] = moonshotaiCn;
   }
+
   if (novitaAi) {
     auth["novita-ai"] = novitaAi;
   }
+
   if (openrouter) {
     auth.openrouter = openrouter;
   }
+
   if (deepseek) {
     auth.deepseek = deepseek;
   }
+
   if (minimaxCodingPlan) {
     auth["minimax-coding-plan"] = minimaxCodingPlan;
   }
+
   if (minimaxTokenPlan) {
     auth["minimax-token-plan"] = minimaxTokenPlan;
   }
+
   if (openai) {
     auth.openai = openai;
   }
+
   if (synthetic) {
     auth.synthetic = synthetic;
   }
+
   if (zai) {
     auth.zai = zai;
   }
+
   if (zaiCodingPlan) {
     auth["zai-coding-plan"] = zaiCodingPlan;
   }
+
   if (openCodeGo) {
     auth["opencode-go"] = openCodeGo;
   }
+
   if (commandCode) {
     auth.commandcode = commandCode;
   }
+
   if (opencode) {
     auth.opencode = opencode;
   }
+
   return auth;
 };
 
@@ -345,10 +381,14 @@ export const credentialValue = (
   const value = Redacted.isRedacted(credential)
     ? Redacted.value(credential)
     : credential;
+
   const result = decodeCredential(value);
+
   if (Result.isFailure(result)) {
     return undefined;
   }
+
   const trimmed = Redacted.value(result.success).trim();
+
   return trimmed === "" ? undefined : trimmed;
 };

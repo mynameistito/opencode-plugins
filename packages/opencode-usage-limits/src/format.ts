@@ -18,24 +18,29 @@ const duration = (seconds: number | null): string => {
   }
 
   const minutes = Math.ceil(seconds / 60);
+
   if (minutes < 60) {
     return `${minutes}m`;
   }
 
   const hours = Math.floor(minutes / 60);
   const remainder = minutes % 60;
+
   if (hours < 24) {
     if (remainder === 0) {
       return `${hours}h`;
     }
+
     if (remainder === 30) {
       return `${hours}.5h`;
     }
+
     return `${hours}h ${remainder}m`;
   }
 
   const days = Math.floor(hours / 24);
   const hourRemainder = hours % 24;
+
   return hourRemainder === 0 ? `${days}d` : `${days}d ${hourRemainder}h`;
 };
 
@@ -68,13 +73,16 @@ const formatBalance = (quota: BalanceQuota): string => {
   const symbol = CURRENCY_SYMBOLS.get(quota.unit.toUpperCase());
   const sign = quota.remaining < 0 ? "-" : "";
   const rounded = symbol ? Math.abs(quota.remaining).toFixed(2) : "";
+
   const displayAmount =
     symbol && quota.remaining !== 0 && Number(rounded) === 0
       ? "<0.01"
       : rounded;
+
   const amount = symbol
     ? `${sign}${symbol}${displayAmount}`
     : `${quota.remaining} ${quota.unit}`;
+
   return `${amount} remaining`;
 };
 
@@ -83,8 +91,10 @@ const formatCountQuota = (
   quota: Extract<UsageQuota, { _tag: "Count" }>
 ): string => {
   const symbol = CURRENCY_SYMBOLS.get(quota.unit?.toUpperCase() ?? "");
+
   const amount = (value: number): string =>
     symbol ? `${symbol}${value.toFixed(2)}` : `${value} ${quota.unit}`;
+
   return `${amount(quota.current)} / ${amount(quota.total)} used`;
 };
 
@@ -95,10 +105,13 @@ export const formatQuotaText = (
   if (quota._tag === "Balance") {
     return formatBalance(quota);
   }
+
   if (quota._tag === "Count" && quota.unit) {
     return formatCountQuota(quota);
   }
+
   const text = formatPercent(quotaUsedPercent(quota));
+
   return appendUsedSuffix ? `${text} used` : text;
 };
 
@@ -148,12 +161,16 @@ export const percentBar = (usedPercent: number | null, width = 12): string => {
   if (usedPercent === null) {
     return `[${"░".repeat(width)}]`;
   }
+
   const ratio = usedPercent / 100;
   let filled = Math.round(ratio * width);
+
   if (usedPercent > 0 && filled === 0) {
     filled = 1;
   }
+
   filled = Math.max(0, Math.min(width, filled));
+
   return `[${"█".repeat(filled)}${"░".repeat(width - filled)}]`;
 };
 
@@ -167,13 +184,17 @@ export const formatTokenCount = (count: number): string => {
   if (count < 1000) {
     return count.toString();
   }
+
   if (count < 1_000_000) {
     const thousands = count / 1000;
+
     return thousands % 1 === 0
       ? `${thousands.toFixed(0)}K`
       : `${thousands.toFixed(1)}K`;
   }
+
   const millions = count / 1_000_000;
+
   return millions % 1 === 0
     ? `${millions.toFixed(0)}M`
     : `${millions.toFixed(1)}M`;
@@ -188,6 +209,7 @@ export const formatTokenCount = (count: number): string => {
 export const formatTimestamp = (date: Date): string => {
   const h = date.getHours().toString().padStart(2, "0");
   const m = date.getMinutes().toString().padStart(2, "0");
+
   return `${h}:${m}`;
 };
 
@@ -211,6 +233,7 @@ export const tokenCountText = (window: UsageWindow): string => {
   if (window.quota._tag === "Count") {
     return ` (${formatTokenCount(window.quota.current)}/${formatTokenCount(window.quota.total)})`;
   }
+
   return "";
 };
 
@@ -230,22 +253,28 @@ export const limitLabelForWindow = (
   fallback: string
 ): string => {
   const minutes = Math.ceil(seconds / 60);
+
   const roughly = (expected: number) =>
     minutes >= expected * 0.95 && minutes <= expected * 1.05;
+
   const hour = 60;
   const day = 24 * hour;
 
   if (roughly(5 * hour)) {
     return "5h";
   }
+
   if (roughly(day)) {
     return "daily";
   }
+
   if (roughly(7 * day)) {
     return "weekly";
   }
+
   if (roughly(30 * day)) {
     return "monthly";
   }
+
   return fallback;
 };

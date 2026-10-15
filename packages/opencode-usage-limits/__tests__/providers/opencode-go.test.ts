@@ -26,9 +26,11 @@ describe("OpenCode GO provider", () => {
         tmpdir(),
         `oc-usage-limits-${crypto.randomUUID()}.json`
       );
+
       if (contents !== undefined) {
         await writeFile(authPath, contents);
       }
+
       try {
         const fetchMock = installFetchMock(
           Response.json({ usage: { rolling: { percent: 1 } } })
@@ -97,6 +99,7 @@ describe("OpenCode GO provider", () => {
     const fetchMock = installFetchMock(
       Response.json({ usage: { rolling: { percent: 1 } } })
     );
+
     const previous = process.env.OPENCODE_API_KEY;
     process.env.OPENCODE_API_KEY = "env-token";
 

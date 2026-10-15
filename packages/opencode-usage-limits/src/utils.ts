@@ -26,6 +26,7 @@ const isJsonValue = <T>(value: T): value is T & JsonValue => {
   if (value === null || value === undefined) {
     return true;
   }
+
   if (
     typeof value === "boolean" ||
     (typeof value === "number" && Number.isFinite(value)) ||
@@ -33,12 +34,15 @@ const isJsonValue = <T>(value: T): value is T & JsonValue => {
   ) {
     return true;
   }
+
   if (Array.isArray(value)) {
     return value.every(isJsonValue);
   }
+
   if (Object.prototype.toString.call(value) !== "[object Object]") {
     return false;
   }
+
   return Object.values(value).every(isJsonValue);
 };
 
@@ -51,9 +55,11 @@ const isJsonValue = <T>(value: T): value is T & JsonValue => {
  */
 export const parseJsonValue = (input: string): JsonValue => {
   const parsed: unknown = JSON.parse(input);
+
   if (!isJsonValue(parsed)) {
     throw new SyntaxError("invalid JSON value");
   }
+
   return parsed;
 };
 
@@ -92,9 +98,11 @@ export const isString = <T>(value: T): value is T & string =>
 
 const isTrailingComma = (input: string, index: number): boolean => {
   let lookahead = index + 1;
+
   while (/\s/u.test(input[lookahead] ?? "")) {
     lookahead += 1;
   }
+
   return input[lookahead] === "}" || input[lookahead] === "]";
 };
 
@@ -105,11 +113,13 @@ const stripTrailingCommas = (input: string): string => {
   let escaped = false;
 
   let index = 0;
+
   while (index < input.length) {
     const char = input[index];
 
     if (inString) {
       output += char;
+
       if (escaped) {
         escaped = false;
       } else if (char === "\\") {
@@ -127,6 +137,7 @@ const stripTrailingCommas = (input: string): string => {
     } else {
       output += char;
     }
+
     index += 1;
   }
 
@@ -135,23 +146,28 @@ const stripTrailingCommas = (input: string): string => {
 
 const skipLineComment = (input: string, start: number): number => {
   let index = start;
+
   while (index < input.length && input[index] !== "\n") {
     index += 1;
   }
+
   return index;
 };
 
 const skipBlockComment = (input: string, start: number): number => {
   let index = start + 2;
+
   while (
     index < input.length &&
     !(input[index] === "*" && input[index + 1] === "/")
   ) {
     index += 1;
   }
+
   if (index >= input.length) {
     throw new SyntaxError("Unterminated JSONC block comment");
   }
+
   return index + 2;
 };
 
@@ -172,12 +188,14 @@ const stripJsonComments = (input: string): string => {
   let escaped = false;
 
   let index = 0;
+
   while (index < input.length) {
     const char = input[index];
     const next = input[index + 1];
 
     if (inString) {
       output += char;
+
       if (escaped) {
         escaped = false;
       } else if (char === "\\") {
@@ -197,6 +215,7 @@ const stripJsonComments = (input: string): string => {
     } else {
       output += char;
     }
+
     index += 1;
   }
 
@@ -225,5 +244,6 @@ const expandHome = (value: string): string =>
  */
 export const readJsonFile = async (filePath: string): Promise<JsonValue> => {
   const raw = await readFile(expandHome(filePath), "utf-8");
+
   return parseJsonValue(stripJsonComments(raw.replace(/^\uFEFF/u, "")));
 };

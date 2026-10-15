@@ -22,12 +22,14 @@ describe("Codex provider", () => {
       tmpdir(),
       `oc-usage-limits-${crypto.randomUUID()}.json`
     );
+
     await writeFile(
       authPath,
       JSON.stringify({
         tokens: { access_token: "file-access", account_id: "file-account" },
       })
     );
+
     try {
       const fetchMock = installFetchMock(
         Response.json({ rate_limit: { primary_window: { used_percent: 0 } } })
@@ -51,19 +53,24 @@ describe("Codex provider", () => {
       tmpdir(),
       `oc-usage-limits-${crypto.randomUUID()}.json`
     );
+
     await writeFile(
       authPath,
       JSON.stringify({
         tokens: { access_token: "codex-access", account_id: "codex-account" },
       })
     );
+
     try {
       let attempts = 0;
+
       const fetchMock = installFetchMock(
         Response.json({ rate_limit: { primary_window: { used_percent: 0 } } })
       );
+
       fetchMock.mockImplementation(() => {
         attempts += 1;
+
         return Promise.resolve(
           attempts === 1
             ? new Response(null, { status: 401 })
@@ -100,11 +107,14 @@ describe("Codex provider", () => {
 
   it("preserves a configured API key during the auth fallback", async () => {
     let attempts = 0;
+
     const fetchMock = installFetchMock(
       Response.json({ rate_limit: { primary_window: { used_percent: 13 } } })
     );
+
     fetchMock.mockImplementation(() => {
       attempts += 1;
+
       return Promise.resolve(
         attempts === 1
           ? new Response(null, { status: 401 })
@@ -141,6 +151,7 @@ describe("Codex provider", () => {
 
   it("uses the default Codex auth path when no fallback credential is configured", async () => {
     const paths: string[] = [];
+
     const files = Layer.succeed(ProviderFileSystem, {
       readJson: (input) =>
         Effect.sync(() => {
@@ -171,6 +182,7 @@ describe("Codex provider", () => {
           )
         ),
     });
+
     const exit = await Effect.runPromiseExit(
       codexProvider
         .fetch(undefined, {}, 1000)
@@ -195,10 +207,12 @@ describe("Codex provider", () => {
       tmpdir(),
       `oc-usage-limits-${crypto.randomUUID()}.json`
     );
+
     await writeFile(
       authPath,
       JSON.stringify({ tokens: { access_token: "token" } })
     );
+
     try {
       await expect(fetchCodexUsage({ authPath }, {}, 1000)).rejects.toThrow(
         "missing Codex auth"
@@ -215,7 +229,9 @@ describe("Codex provider", () => {
         tmpdir(),
         `oc-usage-limits-${crypto.randomUUID()}.json`
       );
+
       await writeFile(authPath, contents);
+
       try {
         await expect(fetchCodexUsage({ authPath }, {}, 1000)).rejects.toThrow(
           "missing Codex auth"
@@ -322,6 +338,7 @@ describe("Codex provider", () => {
       tmpdir(),
       `oc-usage-limits-${crypto.randomUUID()}.json`
     );
+
     const fetchMock = installFetchMock(new Response(null, { status: 401 }));
 
     await expect(

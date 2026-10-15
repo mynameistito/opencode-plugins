@@ -13,9 +13,11 @@ import type {
 
 /** OpenCode v2 TUI plugin identifier. */
 const PLUGIN_ID = "mynameistito.opencode-force-input";
+
 /** OpenCode command registered by this plugin for Ctrl+Enter force-submit. */
 const FORCE_SUBMIT_COMMAND = "oc-ctrl-enter.force-submit";
 const INTERRUPT_COMMAND = "session.interrupt";
+
 /** Key sequences commonly emitted for Ctrl+Enter across terminal environments. */
 const FORCE_SUBMIT_COMMANDS = [
   { bind: "ctrl+return", id: `${FORCE_SUBMIT_COMMAND}.return` },
@@ -38,6 +40,7 @@ export const forceSubmit = (dispatch: (command: string) => void): void => {
 };
 
 type ForceSubmitKeymap = Pick<Context["keymap"], "dispatch" | "layer">;
+
 export interface ForceSubmitContext {
   /** Session data used to update the hint as execution state changes. */
   readonly data: ForceHintData;
@@ -88,6 +91,7 @@ const promptFooterContribution = (
   props: PromptFooterContributionProps
 ): JSX.Element => {
   registerForceSubmitLayer(props.context.keymap);
+
   return createComponent(ForceHint, {
     data: props.context.data,
     enabled: hintEnabled(props.context.options),

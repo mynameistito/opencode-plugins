@@ -2,6 +2,7 @@ const isUnexpectedRootFile = (filePath: string): boolean => {
   if (filePath.includes("/")) {
     return false;
   }
+
   return (
     ["build", "script", "scripts", "test"].some(
       (prefix) => filePath === prefix || filePath.startsWith(`${prefix}.`)

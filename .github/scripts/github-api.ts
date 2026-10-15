@@ -48,6 +48,7 @@ export const githubRequest = async function githubRequest<T>(
   }
 
   const value: JsonValue = JSON.parse(await response.text());
+
   return decode(value);
 };
 
@@ -57,14 +58,17 @@ export const githubPaginate = function githubPaginate<T>(
 ): Promise<T[]> {
   const readPage = async (page: number, results: T[]): Promise<T[]> => {
     const separator = path.includes("?") ? "&" : "?";
+
     const pageResults = await githubRequest(
       `${path}${separator}per_page=100&page=${page}`,
       (value) =>
         parseJsonArray(value, "GitHub API pagination response").map(decode)
     );
+
     if (pageResults.length < 100) {
       return [...results, ...pageResults];
     }
+
     return readPage(page + 1, [...results, ...pageResults]);
   };
 
@@ -73,10 +77,13 @@ export const githubPaginate = function githubPaginate<T>(
 
 export const readEvent = async function readEvent(): Promise<JsonValue> {
   const eventPath = process.env.GITHUB_EVENT_PATH;
+
   if (!eventPath) {
     throw new Error("GITHUB_EVENT_PATH is required.");
   }
+
   const event: JsonValue = JSON.parse(await readFile(eventPath, "utf-8"));
+
   return event;
 };
 
@@ -95,6 +102,7 @@ export const asOptionalRecord = (
   if (value === null) {
     return null;
   }
+
   return asRecord(value);
 };
 
@@ -102,6 +110,7 @@ export const asOptionalString = (value: JsonValue | null): string | null => {
   if (value === null) {
     return null;
   }
+
   return asString(value);
 };
 
@@ -109,21 +118,26 @@ export const asOptionalNumber = (value: JsonValue | null): number | null => {
   if (value === null) {
     return null;
   }
+
   return asNumber(value);
 };
 
 export const setOutput = async (name: string, value: string): Promise<void> => {
   const outputPath = process.env.GITHUB_OUTPUT;
+
   if (!outputPath) {
     throw new Error("GITHUB_OUTPUT is required.");
   }
+
   await appendFile(outputPath, `${name}=${value}\n`);
 };
 
 export const eventName = (): string => {
   const name = process.env.GITHUB_EVENT_NAME;
+
   if (!name) {
     throw new Error("GITHUB_EVENT_NAME is required.");
   }
+
   return name;
 };

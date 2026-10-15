@@ -20,15 +20,18 @@ const authenticated = JSON.stringify({
 
 const createRuntime = (auth: CommandResult, usage: CommandResult = "") => {
   const calls: ProviderCommandInput[] = [];
+
   const commands = Layer.succeed(ProviderCommandExecutor, {
     execute: (input) => {
       calls.push(input);
       const result = input.args[0] === "auth" ? auth : usage;
+
       return result instanceof Error
         ? Effect.fail(result)
         : Effect.succeed(result);
     },
   });
+
   const clock = Layer.succeed(Clock.Clock, {
     currentTimeMillis: Effect.succeed(NOW.getTime()),
     currentTimeMillisUnsafe: () => NOW.getTime(),
@@ -76,6 +79,7 @@ const expectFailure = <ErrorTag extends string>(
 
   const serialized = JSON.stringify(exit.cause);
   expect(serialized).toContain(`"_tag":"${tag}"`);
+
   return serialized;
 };
 

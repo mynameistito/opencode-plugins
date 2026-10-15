@@ -38,13 +38,16 @@ interface ZaiLimit {
   readonly usage?: number;
   readonly currentValue?: number;
 }
+
 interface ZaiPayload {
   readonly data: { readonly limits: readonly ZaiLimit[] };
 }
+
 interface ZaiWindowResult {
   readonly promptTotal: number | null;
   readonly window: UsageWindow | null;
 }
+
 interface ZaiLimitsResult {
   readonly promptTotal: number | null;
   readonly windows: UsageWindow[];
@@ -54,10 +57,12 @@ const parseZaiPayload = (value: JsonObject): ZaiPayload | null => {
   if (!isRecord(value.data) || !Array.isArray(value.data.limits)) {
     return null;
   }
+
   const limits = value.data.limits.flatMap((limit) => {
     if (!isRecord(limit)) {
       return [];
     }
+
     return [
       {
         currentValue: isJsonNumber(limit.currentValue)
@@ -74,6 +79,7 @@ const parseZaiPayload = (value: JsonObject): ZaiPayload | null => {
       },
     ];
   });
+
   return { data: { limits } };
 };
 
@@ -87,15 +93,19 @@ const inferZaiTier = (total: number | null): string | undefined => {
   if (total === null) {
     return undefined;
   }
+
   if (total >= 1400) {
     return "Max";
   }
+
   if (total >= 300) {
     return "Pro";
   }
+
   if (total > 0) {
     return "Lite";
   }
+
   return undefined;
 };
 
@@ -105,11 +115,14 @@ const zaiQuota = (
   usedPercent: number | null
 ) => {
   const parsedUsed = parseUsagePercentage(usedPercent);
+
   if (Result.isFailure(parsedUsed)) {
     return unknownQuota;
   }
+
   const parsedCurrent = parseUsageCount(current);
   const parsedTotal = parseUsageCount(total);
+
   if (
     Result.isSuccess(parsedCurrent) &&
     Result.isSuccess(parsedTotal) &&
@@ -121,6 +134,7 @@ const zaiQuota = (
       parsedUsed.success
     );
   }
+
   return percentageQuota(parsedUsed.success);
 };
 
@@ -140,18 +154,22 @@ const keyFromZaiAuth = (
   ) => Redacted.Redacted<string> | undefined
 ): Redacted.Redacted<string> | undefined => {
   const directKey = credential(value.key);
+
   if (directKey) {
     return directKey;
   }
 
   const directApiKey = credential(value.apiKey);
+
   if (directApiKey) {
     return directApiKey;
   }
 
   const zaiCodingPlan = value["zai-coding-plan"];
+
   if (isRecord(zaiCodingPlan)) {
     const key = credential(zaiCodingPlan.key);
+
     if (key) {
       return key;
     }
@@ -176,19 +194,24 @@ const keyFromZaiAuth = (
 const zaiWindowFromLimit = (limit: ZaiLimit): ZaiWindowResult => {
   const parsedUsed = parseUsagePercentage(limit.percentage);
   const usedPercent = Result.isSuccess(parsedUsed) ? parsedUsed.success : null;
+
   const resetsAt = resetInstantOrNull(
     limit.nextResetTime === undefined ? null : new Date(limit.nextResetTime)
   );
+
   const usageTotal = limit.usage;
 
   if (limit.type === "TOKENS_LIMIT") {
     const rawCurrentValue = limit.currentValue;
+
     const currentValue =
       rawCurrentValue === undefined ? undefined : Math.round(rawCurrentValue);
+
     const computedTotal =
       rawCurrentValue === undefined || usedPercent === null || usedPercent <= 0
         ? undefined
         : Math.round(rawCurrentValue / (usedPercent / 100));
+
     return {
       promptTotal: null,
       window: {
@@ -221,12 +244,15 @@ const parseZaiLimits = (limits: readonly ZaiLimit[]): ZaiLimitsResult => {
     }
 
     const usage = zaiWindowFromLimit(limit);
+
     if (limit.type === "TOKENS_LIMIT") {
       sawTokenLimit = true;
     }
+
     if (usage.window) {
       windows.push(usage.window);
     }
+
     if (usage.promptTotal !== null) {
       ({ promptTotal } = usage);
     }
@@ -262,6 +288,7 @@ const fetchZaiCodingPlanUsageEffect = (
   Effect.gen(function* runFetchZaiCodingPlanUsage() {
     const environment = yield* ProviderEnvironment;
     const http = yield* ProviderHttpClient;
+
     const apiKey =
       (yield* readProviderAuthFileCredential(
         config?.authPath,
@@ -272,6 +299,7 @@ const fetchZaiCodingPlanUsageEffect = (
         ? keyFromZaiAuth(openCodeAuth, environment.credential)
         : undefined) ??
       environment.resolveCredential(config?.apiKey);
+
     if (!apiKey) {
       return yield* new MissingProviderCredentialsError({
         operation: "fetch-usage",
@@ -281,6 +309,7 @@ const fetchZaiCodingPlanUsageEffect = (
 
     const scheme = config?.authorizationScheme ?? "raw";
     const rawKey = Redacted.value(apiKey);
+
     const payload = yield* http.requestJson({
       headers: {
         "Accept-Language": "en-US,en",
@@ -294,6 +323,7 @@ const fetchZaiCodingPlanUsageEffect = (
     });
 
     const parsedPayload = isRecord(payload) ? parseZaiPayload(payload) : null;
+
     if (!parsedPayload) {
       return yield* new ProviderResponseDecodeError({
         cause: "schema",
@@ -303,6 +333,7 @@ const fetchZaiCodingPlanUsageEffect = (
     }
 
     const { limits } = parsedPayload.data;
+
     const parsed = yield* Effect.try({
       catch: () =>
         new ProviderResponseDecodeError({
@@ -312,7 +343,9 @@ const fetchZaiCodingPlanUsageEffect = (
         }),
       try: () => parseZaiLimits(limits),
     });
+
     const { promptTotal, windows } = parsed;
+
     if (!windows.some((window) => window.kind === "rolling")) {
       return yield* new ProviderResponseDecodeError({
         cause: "schema",

@@ -56,13 +56,17 @@ const keyFromMoonshotAuth = (
   ) => Redacted.Redacted<string> | undefined
 ): Redacted.Redacted<string> | undefined => {
   const direct = credential(value.key) ?? credential(value.apiKey);
+
   if (direct) {
     return direct;
   }
+
   const entry = value[providerID];
+
   if (!isRecord(entry)) {
     return undefined;
   }
+
   return credential(entry.key) ?? credential(entry.apiKey);
 };
 
@@ -74,9 +78,11 @@ const keyFromOpenCodeAuth = (
   ) => Redacted.Redacted<string> | undefined
 ): Redacted.Redacted<string> | undefined => {
   const entry = value[providerID];
+
   if (!isRecord(entry)) {
     return undefined;
   }
+
   return credential(entry.key) ?? credential(entry.apiKey);
 };
 
@@ -84,6 +90,7 @@ const balanceUrl = (baseUrl: string): string => {
   const url = new URL(baseUrl);
   url.pathname = `${url.pathname.replace(/\/$/u, "")}${BALANCE_PATH}`;
   url.hash = "";
+
   return url.toString();
 };
 
@@ -91,11 +98,14 @@ const parseMoonshotBalance = (value: JsonValue): BalanceAmount | null => {
   if (!isRecord(value) || value.code !== 0 || value.status !== true) {
     return null;
   }
+
   if (!isRecord(value.data)) {
     return null;
   }
+
   const amount = value.data.available_balance;
   const parsed = parseUsageBalanceAmount(amount);
+
   return Result.isSuccess(parsed) ? parsed.success : null;
 };
 
@@ -122,20 +132,25 @@ const fetchMoonshotBalanceUsageEffect = <
     const http = yield* ProviderHttpClient;
     const baseUrl = resolveHttpsBaseUrl(config?.baseUrl, region.baseUrl);
     const isOfficialOrigin = new URL(baseUrl).origin === region.baseUrl;
+
     const authFileKey = yield* readProviderAuthFileCredential(
       config?.authPath,
       region.id,
       (value, credential) => keyFromMoonshotAuth(region.id, value, credential)
     );
+
     const configuredKey = environment.resolveCredential(config?.apiKey);
+
     const authKey = keyFromOpenCodeAuth(
       region.id,
       openCodeAuth,
       environment.credential
     );
+
     const apiKey =
       authFileKey ??
       (isOfficialOrigin ? (authKey ?? configuredKey) : configuredKey);
+
     if (!apiKey) {
       return yield* new MissingProviderCredentialsError({
         operation: "fetch-usage",
@@ -153,7 +168,9 @@ const fetchMoonshotBalanceUsageEffect = <
       timeoutMs,
       url: balanceUrl(baseUrl),
     });
+
     const amount = parseMoonshotBalance(payload);
+
     if (amount === null) {
       return yield* new ProviderResponseDecodeError({
         cause: "schema",
@@ -183,6 +200,7 @@ const createMoonshotProvider = <ID extends "moonshotai" | "moonshotai-cn">(
 });
 
 export const moonshotAiProvider = createMoonshotProvider(regions.moonshotai);
+
 export const moonshotAiCnProvider = createMoonshotProvider(
   regions["moonshotai-cn"]
 );

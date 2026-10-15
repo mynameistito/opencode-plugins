@@ -38,6 +38,7 @@ export type ProviderID =
 
 /** Sensitive string accepted by parsed config and legacy provider boundaries. */
 type Credential = Redacted.Redacted<string> | string;
+
 type OpenCodeAuthCredential = Credential | null;
 
 interface OpenCodeAuthEntry {

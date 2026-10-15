@@ -29,6 +29,7 @@ const readFileContents = async (
     buffer.byteLength - offset,
     offset
   );
+
   return result.bytesRead === 0
     ? offset
     : readFileContents(file, buffer, offset + result.bytesRead);
@@ -70,14 +71,17 @@ const readText = (
       }),
     try: async () => {
       const file = await open(expandHome(input.path), "r");
+
       try {
         const stats = await file.stat();
+
         if (stats.size > MAX_AUTH_FILE_BYTES) {
           return null;
         }
 
         const buffer = Buffer.alloc(MAX_AUTH_FILE_BYTES + 1);
         const bytesRead = await readFileContents(file, buffer);
+
         return bytesRead > MAX_AUTH_FILE_BYTES
           ? null
           : buffer.subarray(0, bytesRead).toString("utf-8");

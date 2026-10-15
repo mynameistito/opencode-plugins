@@ -51,6 +51,7 @@ export const currentProviderID = (
 ): string | undefined => {
   for (let index = messages.length - 1; index >= 0; index -= 1) {
     const providerID = getProviderFromMessage(messages[index]);
+
     if (providerID) {
       return providerID;
     }
@@ -65,12 +66,15 @@ const windowFromState = (
   if (!state) {
     return undefined;
   }
+
   if (state.status === "ready") {
     return state.data;
   }
+
   if (state.status === "error") {
     return state.previous;
   }
+
   return undefined;
 };
 
@@ -98,28 +102,37 @@ const selectUsageForProvider = (
   const resolveWindow = (id: ProviderID): UsageWindow | null => {
     const state = states.find((item) => item.id === id);
     const data = windowFromState(state);
+
     if (!data) {
       return null;
     }
+
     const displayConfig = providerDisplays[id];
     const requestedWindow: FooterWindow = displayConfig?.footerWindow ?? "auto";
     const footerWindowKind = PROVIDER_REGISTRY[id]?.footerWindowKind;
+
     const findForKind = (kind: UsageWindowKind) =>
       (kind === "rolling"
         ? data.windows.find((window) => window.label === "5h")
         : undefined) ?? data.windows.find((window) => window.kind === kind);
+
     const requestedKind =
       requestedWindow === "auto" ? footerWindowKind : requestedWindow;
+
     const requested = findForKind(requestedKind);
+
     if (requested) {
       return requested;
     }
+
     if (requestedWindow !== "auto") {
       const footer = findForKind(footerWindowKind);
+
       if (footer) {
         return footer;
       }
     }
+
     return data.windows[0] ?? null;
   };
 
@@ -128,6 +141,7 @@ const selectUsageForProvider = (
   }
 
   const window = resolveWindow(usageID);
+
   return window ? { providerID: usageID, window } : null;
 };
 

@@ -115,6 +115,7 @@ describe("utility helpers", () => {
   ])("rejects malformed JSONC with an %s", async (input) => {
     const directory = await mkdtemp(path.join(tmpdir(), "oc-usage-limits-"));
     const filePath = path.join(directory, "config.jsonc");
+
     try {
       await writeFile(filePath, input, "utf-8");
       await expect(readJsonFile(filePath)).rejects.toBeInstanceOf(SyntaxError);

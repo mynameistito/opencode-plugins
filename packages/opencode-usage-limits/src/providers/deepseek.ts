@@ -45,12 +45,15 @@ const keyFromDeepSeekAuth = (
   ) => Redacted.Redacted<string> | undefined
 ): Redacted.Redacted<string> | undefined => {
   const direct = credential(value.key) ?? credential(value.apiKey);
+
   if (direct) {
     return direct;
   }
+
   if (!isRecord(value.deepseek)) {
     return undefined;
   }
+
   return credential(value.deepseek.key) ?? credential(value.deepseek.apiKey);
 };
 
@@ -63,6 +66,7 @@ const keyFromOpenCodeAuth = (
   if (!isRecord(value.deepseek)) {
     return undefined;
   }
+
   return credential(value.deepseek.key) ?? credential(value.deepseek.apiKey);
 };
 
@@ -72,7 +76,9 @@ const parseDecimalBalance = (
   if (!isJsonString(value) || !DECIMAL_STRING.test(value)) {
     return null;
   }
+
   const parsed = Number(value);
+
   if (
     !Number.isFinite(parsed) ||
     parsed < 0 ||
@@ -80,7 +86,9 @@ const parseDecimalBalance = (
   ) {
     return null;
   }
+
   const result = parseUsageBalance(parsed);
+
   return Result.isSuccess(result) ? result.success : null;
 };
 
@@ -90,10 +98,12 @@ const parseDeepSeekBalanceInfo = (
   if (!isRecord(value) || !isJsonString(value.currency)) {
     return null;
   }
+
   const currency = value.currency.trim();
   const totalBalance = parseDecimalBalance(value.total_balance);
   const grantedBalance = parseDecimalBalance(value.granted_balance);
   const toppedUpBalance = parseDecimalBalance(value.topped_up_balance);
+
   if (
     currency === "" ||
     totalBalance === null ||
@@ -102,6 +112,7 @@ const parseDeepSeekBalanceInfo = (
   ) {
     return null;
   }
+
   return { currency, totalBalance };
 };
 
@@ -112,10 +123,13 @@ const parseDeepSeekPayload = (value: JsonObject): DeepSeekPayload | null => {
   ) {
     return null;
   }
+
   const balances = value.balance_infos.flatMap((entry) => {
     const parsed = parseDeepSeekBalanceInfo(entry);
+
     return parsed ? [parsed] : [];
   });
+
   return { balances, isAvailable: value.is_available };
 };
 
@@ -123,6 +137,7 @@ const deepSeekBalanceUrl = (baseUrl: string): string => {
   const url = new URL(baseUrl);
   url.pathname = `${url.pathname.replace(/\/$/u, "")}${DEEPSEEK_BALANCE_PATH}`;
   url.hash = "";
+
   return url.toString();
 };
 
@@ -142,24 +157,31 @@ const fetchDeepSeekBalanceUsageEffect = (
   Effect.gen(function* runFetchDeepSeekBalanceUsage() {
     const environment = yield* ProviderEnvironment;
     const http = yield* ProviderHttpClient;
+
     const baseUrl = resolveHttpsBaseUrl(
       config?.baseUrl,
       DEFAULT_DEEPSEEK_BASE_URL
     );
+
     const isOfficialOrigin =
       new URL(baseUrl).origin === DEFAULT_DEEPSEEK_BASE_URL;
+
     const authFileKey = yield* readProviderAuthFileCredential(
       config?.authPath,
       PROVIDER_ID,
       keyFromDeepSeekAuth
     );
+
     const configuredKey = environment.resolveCredential(config?.apiKey);
+
     const authKey = isRecord(openCodeAuth)
       ? keyFromOpenCodeAuth(openCodeAuth, environment.credential)
       : undefined;
+
     const apiKey =
       authFileKey ??
       (isOfficialOrigin ? (authKey ?? configuredKey) : configuredKey);
+
     if (!apiKey) {
       return yield* new MissingProviderCredentialsError({
         operation: "fetch-usage",
@@ -177,9 +199,11 @@ const fetchDeepSeekBalanceUsageEffect = (
       timeoutMs,
       url: deepSeekBalanceUrl(baseUrl),
     });
+
     const parsedPayload = isRecord(payload)
       ? parseDeepSeekPayload(payload)
       : null;
+
     if (!parsedPayload || parsedPayload.balances.length === 0) {
       return yield* new ProviderResponseDecodeError({
         cause: "schema",

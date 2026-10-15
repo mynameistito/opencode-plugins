@@ -44,10 +44,12 @@ export const readProviderAuthFileCredential = (
   if (!authPath) {
     return Effect.undefined;
   }
+
   return Effect.gen(function* loadProviderAuthFileCredential() {
     const files = yield* ProviderFileSystem;
     const environment = yield* ProviderEnvironment;
     const auth = yield* files.readJson({ path: authPath, providerID });
+
     return isRecord(auth) ? extractor(auth, environment.credential) : undefined;
   }).pipe(Effect.catchCause(() => Effect.undefined));
 };

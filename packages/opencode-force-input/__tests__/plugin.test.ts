@@ -30,6 +30,7 @@ describe("force submit", () => {
 
   it("registers both terminal Ctrl+Enter bindings", () => {
     const layers: (() => KeymapLayer)[] = [];
+
     const keymap = {
       dispatch: () => {},
       layer: (layer: () => KeymapLayer) => {
@@ -56,6 +57,7 @@ describe("force submit", () => {
     const claims: SlotClaim[] = [];
     const layers: (() => KeymapLayer)[] = [];
     const dispatched: string[] = [];
+
     const context = {
       data: {
         on: () => () => {},
@@ -70,6 +72,7 @@ describe("force submit", () => {
       ui: {
         slot: (claim: SlotClaim) => {
           claims.push(claim);
+
           return () => {};
         },
       },
@@ -81,34 +84,44 @@ describe("force submit", () => {
       (candidate): candidate is SlotClaim<"prompt.footer.status"> =>
         candidate.append === "prompt.footer.status"
     );
+
     expect(claim).toBeDefined();
 
     if (!claim) {
       throw new Error("expected prompt footer slot claim");
     }
+
     const renderSetup = await testRender(
       () => {
         claim.render({ mode: "normal", showDetails: false });
+
         return claim.render({ mode: "normal", showDetails: false });
       },
       { height: 3, width: 70 }
     );
+
     try {
       await renderSetup.flush();
 
       expect(layers).toHaveLength(2);
       const [layer] = layers;
+
       if (!layer) {
         throw new Error("expected force-submit keymap layer");
       }
+
       const { commands } = layer();
+
       if (!commands) {
         throw new Error("expected force-submit keymap commands");
       }
+
       const [command] = commands;
+
       if (!command) {
         throw new Error("expected force-submit command");
       }
+
       command.run();
 
       expect(dispatched).toStrictEqual([

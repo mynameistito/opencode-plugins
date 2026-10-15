@@ -40,9 +40,11 @@ describe("MiniMax provider", () => {
         tmpdir(),
         `oc-usage-limits-${crypto.randomUUID()}.json`
       );
+
       if (contents !== undefined) {
         await writeFile(authPath, contents);
       }
+
       try {
         const fetchMock = installFetchMock(
           Response.json(
@@ -101,9 +103,11 @@ describe("MiniMax provider", () => {
     );
 
     const [request] = fetchMock.mock.calls;
+
     const resetTimes = usage.windows.map((window) =>
       window.resetsAt?.getTime()
     );
+
     expect({
       init: request?.[1],
       url: request?.[0],
@@ -310,6 +314,7 @@ describe("MiniMax provider", () => {
 
   it("resolves environment references when no other credential is available", async () => {
     process.env.OC_USAGE_LIMITS_MINIMAX_KEY = "env-mm-key";
+
     const fetchMock = installFetchMock(
       Response.json(
         successEnvelope([
@@ -581,6 +586,7 @@ describe("MiniMax provider", () => {
         {},
         1000
       );
+
       expect(usage.windows.map(({ label }) => label)).toStrictEqual(labels);
       expect(
         usage.windows

@@ -84,5 +84,6 @@ export const pluginProviderForOpenCode = (
       return provider.id;
     }
   }
+
   return null;
 };

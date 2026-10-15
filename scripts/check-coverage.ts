@@ -10,9 +10,11 @@ if (!coveragePath || !Number.isFinite(threshold)) {
 }
 
 const report = await readFile(coveragePath, "utf-8");
+
 const hits = [...report.matchAll(/^DA:\d+,(?<hits>\d+)$/gmu)].map((match) =>
   Number(match.groups?.hits)
 );
+
 const covered = hits.filter((hit) => hit > 0).length;
 const coverage = hits.length === 0 ? 0 : covered / hits.length;
 

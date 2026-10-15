@@ -24,6 +24,7 @@ describe("Synthetic provider", () => {
   afterEach(resetFetchMock);
 
   const nextTickAt = new Date(Date.now() + 90 * 60 * 1000).toISOString();
+
   const nextRegenAt = new Date(
     Date.now() + 3 * 24 * 60 * 60 * 1000
   ).toISOString();
@@ -39,9 +40,11 @@ describe("Synthetic provider", () => {
         tmpdir(),
         `oc-usage-limits-${crypto.randomUUID()}.json`
       );
+
       if (contents !== undefined) {
         await writeFile(authPath, contents);
       }
+
       try {
         const fetchMock = installFetchMock(
           Response.json({ rollingFiveHourLimit: { max: 1, remaining: 1 } })
@@ -86,9 +89,11 @@ describe("Synthetic provider", () => {
     );
 
     const [request] = fetchMock.mock.calls;
+
     const resetTimes = usage.windows.map((window) =>
       window.resetsAt?.getTime()
     );
+
     expect({
       init: request?.[1],
       url: request?.[0],
@@ -277,6 +282,7 @@ describe("Synthetic provider", () => {
 
   it("resolves environment references when no other credential is available", async () => {
     process.env.OC_USAGE_LIMITS_SYNTHETIC_KEY = "env-syn-key";
+
     const fetchMock = installFetchMock(
       Response.json({
         rollingFiveHourLimit: {

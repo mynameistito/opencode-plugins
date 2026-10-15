@@ -91,6 +91,7 @@ describe("OpenRouter provider", () => {
           usage: 25.5,
         })
       );
+
       const auth = parseOpenCodeAuth({ openrouter: { key: "key" } });
 
       const usage = await fetchOpenRouterUsage(undefined, auth, 1000);
@@ -166,6 +167,7 @@ describe("OpenRouter provider", () => {
 
   it("uses explicit environment-backed credentials", async () => {
     process.env.OPENROUTER_API_KEY = "environment-key";
+
     const fetchMock = installFetchMock(
       keyResponse({ limit: 100, limit_remaining: 74.5, limit_reset: "monthly" })
     );
@@ -186,10 +188,12 @@ describe("OpenRouter provider", () => {
       tmpdir(),
       `oc-usage-limits-openrouter-${crypto.randomUUID()}.json`
     );
+
     await writeFile(
       authPath,
       JSON.stringify({ openrouter: { key: "file-key" } })
     );
+
     try {
       const fetchMock = installFetchMock(
         keyResponse({
@@ -225,6 +229,7 @@ describe("OpenRouter provider", () => {
     const fetchMock = installFetchMock(
       keyResponse({ limit: 100, limit_remaining: 74.5, limit_reset: "monthly" })
     );
+
     await fetchOpenRouterUsage(
       {
         apiKey: "explicit-key",
@@ -244,7 +249,9 @@ describe("OpenRouter provider", () => {
       tmpdir(),
       `oc-usage-limits-openrouter-custom-${crypto.randomUUID()}.json`
     );
+
     await writeFile(authPath, JSON.stringify({ key: "auth-file-key" }));
+
     try {
       const fetchMock = installFetchMock(
         keyResponse({ limit: 100, limit_remaining: 74.5 })

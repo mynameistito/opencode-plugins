@@ -79,12 +79,15 @@ const dotColor = (usedPercent: number | null, theme: ThemeColors): RGBA => {
   if (usedPercent === null) {
     return theme.subdued;
   }
+
   if (usedPercent >= 90) {
     return theme.error;
   }
+
   if (usedPercent >= 70) {
     return theme.warning;
   }
+
   return theme.success;
 };
 
@@ -98,6 +101,7 @@ const UsageWindowRows = (props: {
       const usedPercent = quotaUsedPercent(window.quota);
       const showBar = props.showBar && window.quota._tag !== "Balance";
       const quotaText = formatQuotaText(window.quota, true);
+
       return (
         <box flexDirection="column">
           <text>
@@ -150,9 +154,11 @@ export const shouldRenderProviderState = (
   if (state.status === "disabled") {
     return false;
   }
+
   if (state.status !== "error") {
     return true;
   }
+
   if (state.previous) {
     return true;
   }
@@ -183,6 +189,7 @@ export const UsageLimitsPanel = (props: {
   >;
 }) => {
   const colors = resolveTheme(props.theme);
+
   const displayConfigFor = (state: ProviderState): ProviderDisplayConfig =>
     props.providerDisplays[state.id] ?? {
       footerWindow: "auto",
@@ -190,11 +197,13 @@ export const UsageLimitsPanel = (props: {
       showSidebarBar: true,
       sidebarWindow: "all",
     };
+
   const filteredWindowsFor = (
     state: ProviderState,
     windows: readonly UsageWindow[]
   ): UsageWindow[] => {
     const sidebarWindow: SidebarWindow = displayConfigFor(state).sidebarWindow;
+
     return sidebarWindow === "all"
       ? [...windows]
       : windows.filter(
@@ -203,22 +212,27 @@ export const UsageLimitsPanel = (props: {
             (sidebarWindow === "rolling" && window.label === "5h")
         );
   };
+
   const visibleStates = createMemo(() =>
     props.states.filter((state) => {
       if (!shouldRenderProviderState(state, props.showErrors)) {
         return false;
       }
+
       if (state.status === "ready") {
         return filteredWindowsFor(state, state.data.windows).length > 0;
       }
+
       if (state.status === "error" && state.previous) {
         return filteredWindowsFor(state, state.previous.windows).length > 0;
       }
+
       return true;
     })
   );
 
   const diagnostics = props.diagnostics ?? [];
+
   if (visibleStates().length === 0 && diagnostics.length === 0) {
     return null;
   }
@@ -234,12 +248,15 @@ export const UsageLimitsPanel = (props: {
       <For each={visibleStates()}>
         {(state) => {
           let tierName: string | undefined;
+
           if (state.status === "ready") {
             ({ tierName } = state.data);
           } else if (state.status === "error" && state.previous) {
             ({ tierName } = state.previous);
           }
+
           const isStale = state.status === "ready" && state.stale;
+
           const isCached =
             state.status === "error" && state.previous !== undefined;
 
@@ -309,9 +326,11 @@ export const BottomUsage = (props: {
   theme: UsageTheme;
 }) => {
   const colors = resolveTheme(props.theme);
+
   if (!props.window) {
     return null;
   }
+
   const usedPercent = quotaUsedPercent(props.window.quota);
   const showBar = props.showBar && props.window.quota._tag !== "Balance";
 
