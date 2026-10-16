@@ -43,9 +43,11 @@ const chunksFromReader = (
   [Symbol.asyncIterator]: () => ({
     next: async () => {
       const result = await reader.read();
+
       if (result.done) {
         return { done: true as const, value: null };
       }
+
       return { done: false as const, value: result.value };
     },
   }),
@@ -58,19 +60,24 @@ const readChunks = async (
 ): Promise<number> => {
   let totalLength = length;
   let exceeded = false;
+
   for await (const chunk of chunksFromReader(reader)) {
     const nextLength = totalLength + chunk.byteLength;
+
     if (nextLength > MAX_RESPONSE_BYTES) {
       exceeded = true;
       break;
     }
+
     chunks.push(chunk);
     totalLength = nextLength;
   }
+
   if (exceeded) {
     await cancelReader(reader);
     throw new RangeError("response limit exceeded");
   }
+
   return totalLength;
 };
 
@@ -106,6 +113,7 @@ export class ProviderHttpClient extends Context.Service<
 
 const retryAfterMilliseconds = (response: Response): number | undefined => {
   const seconds = Number(response.headers.get("retry-after"));
+
   return Number.isFinite(seconds) && seconds >= 0 ? seconds * 1000 : undefined;
 };
 
@@ -114,10 +122,12 @@ const readBoundedBody = async (
   signal: AbortSignal
 ): Promise<Uint8Array> => {
   const declaredLength = Number(response.headers.get("content-length"));
+
   if (Number.isFinite(declaredLength) && declaredLength > MAX_RESPONSE_BYTES) {
     await cancelBody(response);
     throw new RangeError("response limit exceeded");
   }
+
   if (!response.body) {
     return new Uint8Array();
   }
@@ -125,10 +135,13 @@ const readBoundedBody = async (
   const reader = response.body.getReader();
   const chunks: Uint8Array[] = [];
   let length = 0;
+
   const abort = () => {
     void cancelReader(reader);
   };
+
   signal.addEventListener("abort", abort, { once: true });
+
   try {
     length = await readChunks(reader, chunks, length);
   } finally {
@@ -137,10 +150,12 @@ const readBoundedBody = async (
 
   const body = new Uint8Array(length);
   let offset = 0;
+
   for (const chunk of chunks) {
     body.set(chunk, offset);
     offset += chunk.byteLength;
   }
+
   return body;
 };
 
@@ -165,6 +180,7 @@ export const makeProviderHttpClient = (fetchImplementation: ProviderFetch) =>
           ) {
             return error;
           }
+
           return error instanceof RangeError
             ? new ProviderResponseDecodeError({
                 cause: "output-limit",
@@ -183,28 +199,34 @@ export const makeProviderHttpClient = (fetchImplementation: ProviderFetch) =>
             method: request.method,
             signal,
           });
+
           if (response.status === 429) {
             await cancelBody(response);
             const retryAfterMs = retryAfterMilliseconds(response);
+
             if (retryAfterMs === undefined) {
               throw new ProviderRateLimitError({
                 operation: FETCH_OPERATION,
                 providerID: request.providerID,
               });
             }
+
             throw new ProviderRateLimitError({
               operation: FETCH_OPERATION,
               providerID: request.providerID,
               retryAfterMs,
             });
           }
+
           if (!response.ok) {
             let cause: "forbidden" | "http" | "unauthorized" = "http";
+
             if (response.status === 401) {
               cause = "unauthorized";
             } else if (response.status === 403) {
               cause = "forbidden";
             }
+
             await cancelBody(response);
             throw new ProviderTransportError({
               cause,
@@ -213,7 +235,9 @@ export const makeProviderHttpClient = (fetchImplementation: ProviderFetch) =>
               status: response.status,
             });
           }
+
           const body = await readBoundedBody(response, signal);
+
           try {
             return parseJsonValue(new TextDecoder().decode(body));
           } catch {

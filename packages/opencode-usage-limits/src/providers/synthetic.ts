@@ -36,15 +36,18 @@ interface SyntheticRollingLimit {
   readonly max?: number;
   readonly nextTickAt?: string;
 }
+
 interface SyntheticSubscription {
   readonly limit?: number;
   readonly requests?: number;
   readonly renewsAt?: string;
 }
+
 interface SyntheticWeeklyLimit {
   readonly percentRemaining?: number;
   readonly nextRegenAt?: string;
 }
+
 interface SyntheticPayload {
   readonly rollingFiveHourLimit?: SyntheticRollingLimit;
   readonly subscription?: SyntheticSubscription;
@@ -57,6 +60,7 @@ const parseSyntheticRolling = (
   if (!isRecord(value)) {
     return undefined;
   }
+
   return {
     max: isJsonNumber(value.max) ? value.max : undefined,
     nextTickAt: isJsonString(value.nextTickAt) ? value.nextTickAt : undefined,
@@ -70,6 +74,7 @@ const parseSyntheticSubscription = (
   if (!isRecord(value)) {
     return undefined;
   }
+
   return {
     limit: isJsonNumber(value.limit) ? value.limit : undefined,
     renewsAt: isJsonString(value.renewsAt) ? value.renewsAt : undefined,
@@ -83,6 +88,7 @@ const parseSyntheticWeekly = (
   if (!isRecord(value)) {
     return undefined;
   }
+
   return {
     nextRegenAt: isJsonString(value.nextRegenAt)
       ? value.nextRegenAt
@@ -125,21 +131,26 @@ const keyFromSyntheticAuth = (
   ) => Redacted.Redacted<string> | undefined
 ): Redacted.Redacted<string> | undefined => {
   const directKey = credential(value.key);
+
   if (directKey) {
     return directKey;
   }
 
   const directApiKey = credential(value.apiKey);
+
   if (directApiKey) {
     return directApiKey;
   }
 
   if (isRecord(value.synthetic)) {
     const key = credential(value.synthetic.key);
+
     if (key) {
       return key;
     }
+
     const apiKey = credential(value.synthetic.apiKey);
+
     if (apiKey) {
       return apiKey;
     }
@@ -158,7 +169,9 @@ const parseIsoDate = (value: string | undefined): Date | null => {
   if (value === undefined) {
     return null;
   }
+
   const parsed = new Date(value);
+
   return resetInstantOrNull(parsed);
 };
 
@@ -175,11 +188,13 @@ const syntheticFiveHourWindow = (
   payload: SyntheticPayload
 ): UsageWindow | null => {
   const rolling = payload.rollingFiveHourLimit;
+
   if (rolling) {
     const { remaining } = rolling;
     const { max } = rolling;
     const parsedRemaining = parseUsageCount(remaining);
     const parsedMax = parseUsageCount(max);
+
     if (
       Result.isSuccess(parsedRemaining) &&
       Result.isSuccess(parsedMax) &&
@@ -189,10 +204,13 @@ const syntheticFiveHourWindow = (
       const parsedUsed = parseUsagePercentage(
         (1 - parsedRemaining.success / parsedMax.success) * 100
       );
+
       const parsedCurrent = parseUsageCount(
         parsedMax.success - parsedRemaining.success
       );
+
       const resetsAt = parseIsoDate(rolling.nextTickAt);
+
       return {
         kind: "rolling",
         label: "5h",
@@ -207,11 +225,13 @@ const syntheticFiveHourWindow = (
   }
 
   const { subscription } = payload;
+
   if (subscription) {
     const { limit } = subscription;
     const { requests } = subscription;
     const parsedLimit = parseUsageCount(limit);
     const parsedRequests = parseUsageCount(requests);
+
     if (
       Result.isSuccess(parsedLimit) &&
       Result.isSuccess(parsedRequests) &&
@@ -221,7 +241,9 @@ const syntheticFiveHourWindow = (
       const parsedUsed = parseUsagePercentage(
         (parsedRequests.success / parsedLimit.success) * 100
       );
+
       const resetsAt = parseIsoDate(subscription.renewsAt);
+
       return {
         kind: "rolling",
         label: "5h",
@@ -251,18 +273,21 @@ const syntheticWeeklyWindow = (
   payload: SyntheticPayload
 ): UsageWindow | null => {
   const weekly = payload.weeklyTokenLimit;
+
   if (!weekly) {
     return null;
   }
 
   const { percentRemaining } = weekly;
   const parsedRemaining = parseUsagePercentage(percentRemaining);
+
   if (Result.isFailure(parsedRemaining)) {
     return null;
   }
 
   const parsedUsed = parseUsagePercentage(100 - parsedRemaining.success);
   const resetsAt = parseIsoDate(weekly.nextRegenAt);
+
   return {
     kind: "weekly",
     label: "weekly",
@@ -291,23 +316,29 @@ const fetchSyntheticUsageEffect = (
   Effect.gen(function* runFetchSyntheticUsage() {
     const environment = yield* ProviderEnvironment;
     const http = yield* ProviderHttpClient;
+
     const baseUrl = resolveHttpsBaseUrl(
       config?.baseUrl,
       DEFAULT_SYNTHETIC_BASE_URL
     );
+
     const isOfficialHost = new URL(baseUrl).hostname === "api.synthetic.new";
     const configuredKey = environment.resolveCredential(config?.apiKey);
+
     const configuredFileKey = yield* readProviderAuthFileCredential(
       config?.authPath,
       "synthetic",
       keyFromSyntheticAuth
     );
+
     const authKey = isRecord(openCodeAuth)
       ? keyFromSyntheticAuth(openCodeAuth, environment.credential)
       : undefined;
+
     const apiKey =
       configuredFileKey ??
       (isOfficialHost ? (authKey ?? configuredKey) : configuredKey);
+
     if (!apiKey) {
       return yield* new MissingProviderCredentialsError({
         operation: "fetch-usage",
@@ -329,6 +360,7 @@ const fetchSyntheticUsageEffect = (
     const parsedPayload = isRecord(payload)
       ? parseSyntheticPayload(payload)
       : null;
+
     if (!parsedPayload) {
       return yield* new ProviderResponseDecodeError({
         cause: "schema",
@@ -339,10 +371,13 @@ const fetchSyntheticUsageEffect = (
 
     const windows: UsageWindow[] = [];
     const fiveHour = syntheticFiveHourWindow(parsedPayload);
+
     if (fiveHour) {
       windows.push(fiveHour);
     }
+
     const weekly = syntheticWeeklyWindow(parsedPayload);
+
     if (weekly) {
       windows.push(weekly);
     }

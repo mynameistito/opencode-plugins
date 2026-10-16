@@ -16,8 +16,10 @@ export const isTrustedReleaseBotPullRequest = ({
   if (username !== "tito-release-bot[bot]") {
     return false;
   }
+
   if (baseRef !== "main" || headRef !== "changeset-release/main") {
     return false;
   }
+
   return baseRepositoryId !== null && headRepositoryId === baseRepositoryId;
 };

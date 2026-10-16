@@ -33,6 +33,7 @@ interface OpenCodeGoUsageWindow {
   readonly percent?: number;
   readonly resetsAt?: string;
 }
+
 interface OpenCodeGoPayload {
   readonly usage: {
     readonly rolling?: OpenCodeGoUsageWindow;
@@ -52,6 +53,7 @@ const parseOpenCodeGoPayload = (
   if (!isRecord(value.usage)) {
     return null;
   }
+
   return {
     usage: {
       monthly: isRecord(value.usage.monthly)
@@ -77,11 +79,14 @@ const keyFromAuth = (
     if (!isRecord(entry)) {
       continue;
     }
+
     const key = credential(entry.key) ?? credential(entry.apiKey);
+
     if (key) {
       return key;
     }
   }
+
   return credential(value.key) ?? credential(value.apiKey);
 };
 
@@ -93,10 +98,13 @@ const usageWindow = (
   if (!value) {
     return null;
   }
+
   const percent = parseUsagePercentage(value.percent);
+
   if (Result.isFailure(percent)) {
     return null;
   }
+
   return {
     kind,
     label,
@@ -116,23 +124,30 @@ const fetchOpenCodeGoUsageEffect = (
   Effect.gen(function* runFetchOpenCodeGoUsage() {
     const environment = yield* ProviderEnvironment;
     const http = yield* ProviderHttpClient;
+
     const baseUrl = resolveHttpsBaseUrl(
       config?.baseUrl,
       DEFAULT_OPEN_CODE_GO_BASE_URL
     );
+
     const officialHost = new URL(baseUrl).hostname === "opencode.ai";
+
     const authPathKey = yield* readProviderAuthFileCredential(
       config?.authPath,
       PROVIDER_ID,
       keyFromAuth
     );
+
     const configuredKey = environment.resolveCredential(config?.apiKey);
+
     const authKey = isRecord(openCodeAuth)
       ? keyFromAuth(openCodeAuth, environment.credential)
       : undefined;
+
     const apiKey =
       authPathKey ??
       (officialHost ? (authKey ?? configuredKey) : configuredKey);
+
     if (!apiKey) {
       return yield* new MissingProviderCredentialsError({
         operation: "fetch-usage",
@@ -150,9 +165,11 @@ const fetchOpenCodeGoUsageEffect = (
       timeoutMs,
       url: `${baseUrl}/usage`,
     });
+
     const parsedPayload = isRecord(payload)
       ? parseOpenCodeGoPayload(payload)
       : null;
+
     if (!parsedPayload) {
       return yield* new ProviderResponseDecodeError({
         cause: "schema",
@@ -166,6 +183,7 @@ const fetchOpenCodeGoUsageEffect = (
       usageWindow(parsedPayload.usage.weekly, "weekly", "weekly"),
       usageWindow(parsedPayload.usage.monthly, "monthly", "monthly"),
     ].filter((window): window is UsageWindow => window !== null);
+
     if (windows.length === 0) {
       return yield* new ProviderResponseDecodeError({
         cause: "schema",

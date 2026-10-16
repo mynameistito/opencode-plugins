@@ -14,6 +14,7 @@ import type {
 } from "../src/hint.ts";
 
 type SessionExecutionEvent = (typeof SESSION_EXECUTION_EVENTS)[number];
+
 type FiredEvent = SessionExecutionEvent | "session.retry.scheduled";
 
 const v2Theme = {
@@ -32,21 +33,26 @@ const mountHint = async (options: {
 }) => {
   const sessionID =
     "sessionID" in options ? (options.sessionID ?? undefined) : "ses_1";
+
   const [status, setStatus] = createSignal<SessionStatus>(
     options.initialStatus ?? "idle"
   );
+
   const handlers = new Map<FiredEvent, Set<() => void>>();
+
   const data: ForceHintData = {
     on: (type, handler) => {
       const listeners = handlers.get(type) ?? new Set<() => void>();
       listeners.add(handler);
       handlers.set(type, listeners);
+
       return () => listeners.delete(handler);
     },
     session: {
       status: () => status(),
     },
   };
+
   const setup = await testRender(
     () => (
       <box flexDirection="column" height={3} width={70}>
@@ -69,7 +75,9 @@ const mountHint = async (options: {
     ),
     { height: 3, width: 70 }
   );
+
   await setup.flush();
+
   /**
    * Emits a host event: the fake applies the real session-status transition
    * and then notifies subscribers. The transition only runs when the event
@@ -78,18 +86,22 @@ const mountHint = async (options: {
    */
   const fire = (type: FiredEvent): void => {
     const listeners = handlers.get(type);
+
     if (!listeners?.size) {
       return;
     }
+
     if (type === "session.execution.started") {
       setStatus("running");
     } else if (type !== "session.retry.scheduled") {
       setStatus("idle");
     }
+
     for (const listener of listeners) {
       listener();
     }
   };
+
   return { fire, setup };
 };
 
@@ -110,6 +122,7 @@ const idleInfoAfterExecutionEvent = async (
   await setup.flush();
   fire(event);
   await setup.flush();
+
   return infoRow(setup);
 };
 
@@ -131,6 +144,7 @@ describe("hint options and colors", () => {
       textMuted: RGBA.fromInts(4, 5, 6),
       warning: RGBA.fromInts(7, 8, 9),
     };
+
     const flat = resolveHintColors(legacy);
 
     const bareColor = RGBA.fromInts(9, 9, 9);
@@ -199,9 +213,11 @@ describe("hint rendering", () => {
     const failed = await idleInfoAfterExecutionEvent(
       "session.execution.failed"
     );
+
     const interrupted = await idleInfoAfterExecutionEvent(
       "session.execution.interrupted"
     );
+
     expect(failed).toContain("⏎ send");
     expect(interrupted).toContain("⏎ send");
   });

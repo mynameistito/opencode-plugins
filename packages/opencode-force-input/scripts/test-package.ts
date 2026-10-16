@@ -15,4 +15,5 @@ if (!hasValidTuiPlugin) {
 }
 
 console.log(`Package smoke test passed: ${tuiPlugin.id}`);
+
 checkPackageTarball("packages/opencode-force-input");

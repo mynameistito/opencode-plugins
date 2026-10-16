@@ -38,6 +38,7 @@ export const resolveHttpsBaseUrl = (
 ): string => {
   const fallback = defaultUrl.replace(/\/$/u, "");
   let parsed: URL;
+
   try {
     parsed = new URL((baseUrl ?? defaultUrl).trim());
   } catch {
@@ -51,5 +52,6 @@ export const resolveHttpsBaseUrl = (
   const allowed =
     parsed.protocol === "https:" ||
     (isLoopbackHost(parsed.hostname) && parsed.protocol === "http:");
+
   return allowed ? parsed.toString().replace(/\/$/u, "") : fallback;
 };

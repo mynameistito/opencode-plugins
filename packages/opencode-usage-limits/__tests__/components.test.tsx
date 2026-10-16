@@ -72,6 +72,7 @@ const renderPanelText = async (
 
   try {
     await setup.flush();
+
     return setup.captureCharFrame();
   } finally {
     setup.renderer.destroy();
@@ -93,6 +94,7 @@ describe(UsageLimitsPanel, () => {
       ),
       { height: 8, width: 80 }
     );
+
     try {
       await diagnosticSetup.flush();
       expect(diagnosticSetup.captureCharFrame()).toContain(
@@ -114,6 +116,7 @@ describe(UsageLimitsPanel, () => {
       ),
       { height: 8, width: 80 }
     );
+
     try {
       await emptySetup.flush();
       expect(emptySetup.captureCharFrame()).not.toContain("Usage Limits");
@@ -442,6 +445,7 @@ describe(UsageLimitsPanel, () => {
       textMuted: color,
       warning: color,
     };
+
     const setup = await testRender(
       () => (
         <BottomUsage
@@ -452,6 +456,7 @@ describe(UsageLimitsPanel, () => {
       ),
       { height: 4, width: 80 }
     );
+
     try {
       await setup.flush();
       expect(setup.captureCharFrame()).toContain("5h ?");
@@ -476,6 +481,7 @@ describe(UsageLimitsPanel, () => {
       ),
       { height: 4, width: 80 }
     );
+
     try {
       await setup.flush();
       const text = setup.captureCharFrame();

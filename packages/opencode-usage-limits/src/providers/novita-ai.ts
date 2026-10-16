@@ -28,6 +28,7 @@ const NOVITA_AI_BALANCE_PATH = "/openapi/v1/billing/balance/detail";
 const PROVIDER_ID = "novita-ai" as const;
 const MINOR_UNIT_STRING = /^\d+$/u;
 const MAX_SAFE_MINOR_UNITS = BigInt(Number.MAX_SAFE_INTEGER);
+
 type CredentialInput = JsonValue | Redacted.Redacted<string> | undefined;
 
 const keyFromNovitaAiAuth = (
@@ -37,12 +38,15 @@ const keyFromNovitaAiAuth = (
   ) => Redacted.Redacted<string> | undefined
 ): Redacted.Redacted<string> | undefined => {
   const direct = credential(value.key) ?? credential(value.apiKey);
+
   if (direct) {
     return direct;
   }
+
   if (!isRecord(value[PROVIDER_ID])) {
     return undefined;
   }
+
   return (
     credential(value[PROVIDER_ID].key) ?? credential(value[PROVIDER_ID].apiKey)
   );
@@ -53,9 +57,11 @@ const keyFromOpenCodeAuth = (
   credential: (value: CredentialInput) => Redacted.Redacted<string> | undefined
 ): Redacted.Redacted<string> | undefined => {
   const auth = isRecord(value) ? value : undefined;
+
   if (!auth || !isRecord(auth[PROVIDER_ID])) {
     return undefined;
   }
+
   return (
     credential(auth[PROVIDER_ID].key) ?? credential(auth[PROVIDER_ID].apiKey)
   );
@@ -68,15 +74,21 @@ const parseAvailableBalance = (
   if (!isJsonString(value) || !MINOR_UNIT_STRING.test(value)) {
     return null;
   }
+
   const normalized = value.replace(/^0+/u, "") || "0";
+
   if (normalized.length > String(Number.MAX_SAFE_INTEGER).length) {
     return null;
   }
+
   const minorUnits = BigInt(normalized);
+
   if (minorUnits > MAX_SAFE_MINOR_UNITS) {
     return null;
   }
+
   const parsed = parseUsageBalance(Number(minorUnits) / 10_000);
+
   return Result.isSuccess(parsed) ? parsed.success : null;
 };
 
@@ -84,6 +96,7 @@ const novitaAiBalanceUrl = (baseUrl: string): string => {
   const url = new URL(baseUrl);
   url.pathname = `${url.pathname.replace(/\/$/u, "")}${NOVITA_AI_BALANCE_PATH}`;
   url.hash = "";
+
   return url.toString();
 };
 
@@ -103,22 +116,28 @@ const fetchNovitaAiBalanceUsageEffect = (
   Effect.gen(function* runFetchNovitaAiBalanceUsage() {
     const environment = yield* ProviderEnvironment;
     const http = yield* ProviderHttpClient;
+
     const baseUrl = resolveHttpsBaseUrl(
       config?.baseUrl,
       DEFAULT_NOVITA_AI_BASE_URL
     );
+
     const isOfficialOrigin =
       new URL(baseUrl).origin === DEFAULT_NOVITA_AI_BASE_URL;
+
     const authFileKey = yield* readProviderAuthFileCredential(
       config?.authPath,
       PROVIDER_ID,
       keyFromNovitaAiAuth
     );
+
     const configuredKey = environment.resolveCredential(config?.apiKey);
     const authKey = keyFromOpenCodeAuth(openCodeAuth, environment.credential);
+
     const apiKey =
       authFileKey ??
       (isOfficialOrigin ? (authKey ?? configuredKey) : configuredKey);
+
     if (!apiKey) {
       return yield* new MissingProviderCredentialsError({
         operation: "fetch-usage",
@@ -136,9 +155,11 @@ const fetchNovitaAiBalanceUsageEffect = (
       timeoutMs,
       url: novitaAiBalanceUrl(baseUrl),
     });
+
     const amount = isRecord(payload)
       ? parseAvailableBalance(payload.availableBalance)
       : null;
+
     if (amount === null) {
       return yield* new ProviderResponseDecodeError({
         cause: "schema",

@@ -120,6 +120,7 @@ describe("provider manifest", () => {
         1000
       ).pipe(Effect.provide(ProviderRuntimeLive))
     );
+
     await expect(result).resolves.toMatchObject({ id: "codex" });
   });
 

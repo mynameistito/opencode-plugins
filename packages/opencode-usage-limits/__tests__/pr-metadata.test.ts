@@ -15,6 +15,7 @@ import {
 const forceInput = "@mynameistito/opencode-force-input";
 const usageLimits = "@mynameistito/opencode-usage-limits";
 const docs = "@mynameistito/opencode-plugins-docs";
+
 const changeset = (entries: string): string =>
   `---\n${entries}\n---\nSummary\n`;
 

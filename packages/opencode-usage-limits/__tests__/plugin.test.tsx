@@ -28,6 +28,7 @@ import { parseUsagePercentage, percentageQuota } from "@/usage.ts";
 
 const NOW = new Date("2026-08-14T12:34:00.000Z");
 const color = RGBA.fromValues(1, 2, 3, 255);
+
 const theme: UsageTheme = {
   text: {
     default: color,
@@ -95,11 +96,13 @@ const createHarness = (
   const fetches: ProviderID[] = [];
   const auth: OpenCodeAuth = {};
   let currentSessionModelProviderID = sessionProviderID;
+
   const state: HarnessState = {
     config: initialConfig,
     configError: null,
     fetchError: null,
   };
+
   let dispose: (() => void) | undefined;
   let slotDisposals = 0;
   let registered: Partial<CharacterizedSlots> | undefined;
@@ -112,9 +115,11 @@ const createHarness = (
       _timeoutMs: number
     ) => {
       fetches.push(id);
+
       if (state.fetchError) {
         return Effect.fail(state.fetchError);
       }
+
       return Effect.succeed(usage(id));
     },
     loadConfig: () =>
@@ -128,6 +133,7 @@ const createHarness = (
     sleep: (delayMs) =>
       Effect.gen(function* sleep() {
         const deferred = yield* Deferred.make<boolean>();
+
         const scheduledRefresh: ScheduledRefresh = {
           callback: async () => {
             await Effect.runPromise(Deferred.succeed(deferred, true));
@@ -135,6 +141,7 @@ const createHarness = (
           cancelled: false,
           delayMs,
         };
+
         scheduled.push(scheduledRefresh);
         yield* Effect.ensuring(
           Deferred.await(deferred).pipe(Effect.asVoid),
@@ -156,6 +163,7 @@ const createHarness = (
     ui: {
       slot: (claim) => {
         registered = { ...registered, [claim.append]: claim.render };
+
         return () => {
           slotDisposals += 1;
         };
@@ -190,8 +198,10 @@ const renderSlot = async (
     height: 12,
     width: 80,
   });
+
   try {
     await setup.flush();
+
     return setup.captureCharFrame();
   } finally {
     setup.renderer.destroy();
@@ -221,14 +231,18 @@ const initialize = async (harness: ReturnType<typeof createHarness>) => {
   );
   await delay(0);
   const registered = harness.getRegistered();
+
   if (!registered) {
     throw new Error("plugin did not register slots");
   }
+
   const sidebar = registered["sidebar.content"];
   const footer = registered["prompt.footer.status"];
+
   if (!sidebar || !footer) {
     throw new Error("plugin did not register both slots");
   }
+
   return { "prompt.footer.status": footer, "sidebar.content": sidebar };
 };
 
@@ -295,6 +309,7 @@ describe("usage-limits TUI lifecycle", () => {
         },
       })
     );
+
     const registered = await initialize(harness);
 
     expect(harness.fetches).toStrictEqual(["codex"]);
@@ -394,6 +409,7 @@ describe("usage-limits TUI lifecycle", () => {
     const harness = createHarness();
     await initialize(harness);
     const dispose = harness.getDispose();
+
     if (!dispose) {
       throw new Error("plugin did not register disposal");
     }

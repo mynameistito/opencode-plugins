@@ -43,18 +43,22 @@ const parseApiResponse = (value: JsonValue): ApiResponse => {
   const treeValue = response.get("tree") ?? null;
   const verificationValue = response.get("verification") ?? null;
   const objectValue = response.get("object") ?? null;
+
   const tree =
     treeValue === null || Array.isArray(treeValue)
       ? null
       : parseJsonObject(treeValue, "Git tree");
+
   const verification =
     verificationValue === null
       ? null
       : parseJsonObject(verificationValue, "Commit verification");
+
   const refObject =
     objectValue === null
       ? null
       : parseJsonObject(objectValue, "Git ref object");
+
   return {
     data: response.get("data") ?? null,
     errors: response.get("errors") ?? null,
@@ -83,7 +87,9 @@ const hasUpdateRefs = (response: ApiResponse | null): boolean => {
   if (response === null || response.data === null) {
     return false;
   }
+
   const data = parseJsonObject(response.data, "GraphQL response data");
+
   return data.has("updateRefs") && data.get("updateRefs") !== null;
 };
 
@@ -108,6 +114,7 @@ const request = async (
     Authorization: `Bearer ${token}`,
     "X-GitHub-Api-Version": "2022-11-28",
   });
+
   const init: RequestInit = { headers, method };
 
   if (body !== null) {
@@ -142,9 +149,11 @@ const request = async (
 const changesetDirectoryEntries = await readdir(".changeset", {
   withFileTypes: true,
 });
+
 const changesetFiles = changesetDirectoryEntries
   .filter((entry) => entry.isFile() && entry.name.endsWith(".md"))
   .map((entry) => `.changeset/${entry.name}`);
+
 const changedFiles = ["package.json", "bun.lock", ...changesetFiles];
 
 const baseSha = mainSha;
@@ -227,9 +236,11 @@ const refUpdateResponse = await fetch("https://api.github.com/graphql", {
   },
   method: "POST",
 });
+
 const graphQLResult = parseApiResponse(
   JSON.parse(await refUpdateResponse.text())
 );
+
 const hasGraphQLErrors =
   graphQLResult.errors !== null && Array.isArray(graphQLResult.errors)
     ? graphQLResult.errors.length > 0

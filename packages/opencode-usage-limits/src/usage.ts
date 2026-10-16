@@ -57,6 +57,7 @@ const PercentageSchema = Schema.Finite.check(
 const QuotaCountSchema = Schema.Finite.check(
   Schema.isGreaterThanOrEqualTo(0)
 ).pipe(Schema.brand("QuotaCount"));
+
 const BalanceAmountSchema = Schema.Finite.pipe(Schema.brand("BalanceAmount"));
 
 /** Schema for valid absolute reset instants. */
@@ -131,6 +132,7 @@ export const resetInstantOrNull = (
   value: JsonValue | Date
 ): ResetInstant | null => {
   const result = parseResetInstant(value);
+
   return Result.isFailure(result) ? null : result.success;
 };
 
@@ -143,6 +145,7 @@ export const resetInstantOrNull = (
  */
 export const percentageQuota = (usedPercent: Percentage): UsageQuota => {
   const parsedUsed = PercentageSchema.make(usedPercent);
+
   return {
     _tag: "Percentage",
     remainingPercent: PercentageSchema.make(100 - parsedUsed),
@@ -169,9 +172,11 @@ export const countQuota = (
   const parsedCurrent = QuotaCountSchema.make(current);
   const parsedTotal = QuotaCountSchema.make(total);
   const parsedUsed = PercentageSchema.make(usedPercent);
+
   if (parsedCurrent > parsedTotal) {
     throw new RangeError("quota current count cannot exceed total count");
   }
+
   const quota = {
     _tag: "Count",
     current: parsedCurrent,
@@ -179,6 +184,7 @@ export const countQuota = (
     total: parsedTotal,
     usedPercent: parsedUsed,
   } as const;
+
   return unit === undefined
     ? quota
     : { ...quota, unit: Schema.String.make(unit) };

@@ -11,10 +11,13 @@ interface PackageMetadata {
 }
 
 const packageJsonPath = new URL("../../package.json", import.meta.url);
+
 const packageJson: PackageManifest = JSON.parse(
   await readFile(packageJsonPath, "utf-8")
 );
+
 const currentVersionText = packageJson.catalog["@opencode/plugin"];
+
 if (!currentVersionText) {
   throw new TypeError("Root package catalog must define @opencode/plugin.");
 }
@@ -34,6 +37,7 @@ if (!response.ok) {
 
 const metadata: PackageMetadata = JSON.parse(await response.text());
 const latestVersionText = metadata.version;
+
 if (!latestVersionText) {
   throw new TypeError("npm registry response must contain a version.");
 }

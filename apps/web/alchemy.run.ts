@@ -7,6 +7,7 @@ export default Stack(
   { providers: providers(), state: state() },
   gen(function* docsStack() {
     const stage = yield* Stage;
+
     const site = yield* Website.StaticSite("Docs", {
       assets: {
         htmlHandling: "drop-trailing-slash",

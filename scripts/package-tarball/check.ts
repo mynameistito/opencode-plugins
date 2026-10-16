@@ -30,6 +30,7 @@ interface PackResult {
 
 const parsePackageManifest = (value: JsonValue): PackageManifest => {
   const manifest = parseJsonObject(value, "Package manifest");
+
   return {
     name: parseJsonString(manifest.get("name") ?? null, "Package name"),
   };
@@ -37,11 +38,13 @@ const parsePackageManifest = (value: JsonValue): PackageManifest => {
 
 const parsePackResult = (value: JsonValue): PackResult => {
   const result = parseJsonObject(value, "npm pack result");
+
   const files = parseJsonArray(
     result.get("files") ?? null,
     "npm pack files"
   ).map((file, index) => {
     const packedFile = parseJsonObject(file, `npm pack file ${index}`);
+
     return {
       path: parseJsonString(
         packedFile.get("path") ?? null,
@@ -53,6 +56,7 @@ const parsePackResult = (value: JsonValue): PackResult => {
       ),
     };
   });
+
   return {
     files,
     size: parseJsonNumber(result.get("size") ?? null, "npm pack size"),
@@ -70,11 +74,15 @@ export const checkPackageTarball = (packageDirectory: string): void => {
     "..",
     packageDirectory
   );
+
   const manifestPath = path.join(absolutePackageDirectory, "package.json");
+
   const manifestValue: JsonValue = JSON.parse(
     readFileSync(manifestPath, "utf-8")
   );
+
   const manifest = parsePackageManifest(manifestValue);
+
   const output = execFileSync(
     getNodeExecutablePath(),
     [getNpmCliPath(), "pack", "--dry-run", "--json", "--ignore-scripts"],
@@ -84,15 +92,20 @@ export const checkPackageTarball = (packageDirectory: string): void => {
       stdio: ["ignore", "pipe", "inherit"],
     }
   );
+
   const parsed: JsonValue = JSON.parse(output);
+
   const packValue: JsonValue | null = Array.isArray(parsed)
     ? (parsed[0] ?? null)
     : (parseJsonObject(parsed, "npm pack response").get(manifest.name) ?? null);
+
   if (packValue === null) {
     throw new Error(`npm pack returned no result for ${manifest.name}`);
   }
+
   const pack = parsePackResult(packValue);
   const packedPaths = new Set(pack.files.map(({ path: filePath }) => filePath));
+
   const requiredFiles =
     manifest.name === "@mynameistito/opencode-force-input"
       ? ["README.md", "LICENSE", "dist/index.mjs", "dist/index.d.mts"]
@@ -104,8 +117,10 @@ export const checkPackageTarball = (packageDirectory: string): void => {
           "usage-limits.schema.json",
           "examples/usage-limits.jsonc",
         ];
+
   const missingFiles = requiredFiles.filter((file) => !packedPaths.has(file));
   const unexpectedFiles = [...packedPaths].filter(isUnexpectedPackagePath);
+
   if (missingFiles.length > 0 || unexpectedFiles.length > 0) {
     throw new Error(
       [
@@ -125,6 +140,7 @@ export const checkPackageTarball = (packageDirectory: string): void => {
     `npm pack validation passed: ${manifest.name}, ${pack.files.length} files, ${(pack.size / 1024).toFixed(1)} KB packed.`
   );
   const summaryPath = process.env.GITHUB_STEP_SUMMARY;
+
   if (summaryPath) {
     if (readFileSync(summaryPath, "utf-8").length === 0) {
       appendFileSync(
@@ -132,6 +148,7 @@ export const checkPackageTarball = (packageDirectory: string): void => {
         "| Package | Files | Packed | Unpacked |\n| --- | ---: | ---: | ---: |\n"
       );
     }
+
     appendFileSync(summaryPath, `${summary}\n`);
   }
 };

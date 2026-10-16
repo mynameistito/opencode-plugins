@@ -8,8 +8,10 @@ for (const file of readdirSync(".changeset")) {
   }
 
   const content = readFileSync(`.changeset/${file}`, "utf-8");
+
   for (const match of content.matchAll(/^['"](?<name>[^'"]+)['"]\s*:/gmu)) {
     const name = match.groups?.name;
+
     if (name) {
       packageNames.add(name);
     }
@@ -17,4 +19,5 @@ for (const file of readdirSync(".changeset")) {
 }
 
 const names = [...packageNames].toSorted();
+
 console.log(`Version Package - ${names.join(", ") || "workspace"}`);

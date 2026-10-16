@@ -30,9 +30,11 @@ export const parseJsonObject = (
   );
 
   const result = new Map<string, JsonValue>();
+
   for (const [key, entry] of Object.entries(object)) {
     result.set(key, entry);
   }
+
   return result;
 };
 
@@ -43,6 +45,7 @@ export const parseJsonString = (value: JsonValue, context: string): string => {
     "[object String]",
     `${context} must be a string`
   );
+
   return String(value);
 };
 
@@ -55,6 +58,7 @@ export const parseJsonNumber = (value: JsonValue, context: string): number => {
   );
   const number = Number(value);
   assert.ok(Number.isFinite(number), `${context} must be finite`);
+
   return number;
 };
 
@@ -64,5 +68,6 @@ export const parseJsonArray = (
   context: string
 ): JsonValue[] => {
   assert.ok(Array.isArray(value), `${context} must be an array`);
+
   return value;
 };

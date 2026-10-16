@@ -175,6 +175,7 @@ describe("Moonshot/Kimi API balance providers", () => {
       tmpdir(),
       `oc-usage-limits-moonshot-${crypto.randomUUID()}.json`
     );
+
     await writeFile(
       authPath,
       JSON.stringify({
@@ -182,6 +183,7 @@ describe("Moonshot/Kimi API balance providers", () => {
         "moonshotai-cn": { apiKey: "auth-file-china" },
       })
     );
+
     try {
       const globalMock = installFetchMock(response(1));
       await fetchMoonshotAiBalanceUsage({ authPath }, {}, 1000);
@@ -204,7 +206,9 @@ describe("Moonshot/Kimi API balance providers", () => {
       tmpdir(),
       `oc-usage-limits-moonshot-direct-${crypto.randomUUID()}.json`
     );
+
     await writeFile(authPath, JSON.stringify({ apiKey: "direct-file-key" }));
+
     try {
       const fetchMock = installFetchMock(response(1));
       await fetchMoonshotAiBalanceUsage({ authPath }, {}, 1000);
@@ -219,7 +223,9 @@ describe("Moonshot/Kimi API balance providers", () => {
       tmpdir(),
       `oc-usage-limits-moonshot-malformed-${crypto.randomUUID()}.json`
     );
+
     await writeFile(malformedPath, JSON.stringify({ moonshotai: null }));
+
     try {
       const fetchMock = installFetchMock(response(1));
       await fetchMoonshotAiBalanceUsage(

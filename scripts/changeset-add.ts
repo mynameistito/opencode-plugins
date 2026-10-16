@@ -7,10 +7,13 @@ const packages = new Map([
   ["force-input", "@mynameistito/opencode-force-input"],
   ["usage-limits", "@mynameistito/opencode-usage-limits"],
 ]);
+
 const types = new Set(["patch", "minor", "major"]);
 const [packageSelector, type, ...summaryParts] = process.argv.slice(2);
+
 const packageName =
   (packageSelector ? packages.get(packageSelector) : null) ?? null;
+
 const summary = summaryParts.join(" ").trim();
 
 if (!packageName || !type || !types.has(type) || !summary) {
@@ -22,10 +25,13 @@ if (!packageName || !type || !types.has(type) || !summary) {
 
 const filename = `${randomBytes(4).toString("hex")}.md`;
 const changesetDirectory = path.resolve(".changeset");
+
 await mkdir(changesetDirectory, { recursive: true });
+
 await writeFile(
   path.resolve(changesetDirectory, filename),
   `---\n"${packageName}": ${type}\n---\n\n${summary}\n`,
   "utf-8"
 );
+
 console.log(`Created .changeset/${filename} for ${packageName}`);

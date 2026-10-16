@@ -30,6 +30,7 @@ import { resolveHttpsBaseUrl } from "@/utils/url.ts";
 const OFFICIAL_ORIGIN = "https://openrouter.ai";
 const KEY_PATH = "/api/v1/key";
 const PROVIDER_ID = "openrouter" as const;
+
 type CredentialInput = JsonValue | Redacted.Redacted<string> | undefined;
 
 interface KeyLimit {
@@ -45,6 +46,7 @@ const keyFromAuth = (
   ) => Redacted.Redacted<string> | undefined
 ): Redacted.Redacted<string> | undefined => {
   const entry = isRecord(value.openrouter) ? value.openrouter : value;
+
   return credential(entry.key) ?? credential(entry.apiKey);
 };
 
@@ -55,6 +57,7 @@ const keyFromOpenCodeAuth = (
   if (!isRecord(value) || !isRecord(value.openrouter)) {
     return undefined;
   }
+
   return (
     credential(value.openrouter.key) ?? credential(value.openrouter.apiKey)
   );
@@ -64,12 +67,14 @@ const resetKind = (value: JsonValue | undefined): UsageWindow["kind"] => {
   if (!isJsonString(value)) {
     return "credits";
   }
+
   switch (value) {
     case "daily":
     case "weekly":
     case "monthly": {
       return value;
     }
+
     default: {
       return "credits";
     }
@@ -82,31 +87,40 @@ const optionalLimitNumber = (
   if (value === undefined || value === null) {
     return value;
   }
+
   if (!isJsonNumber(value) || !Number.isFinite(value) || value < 0) {
     return undefined;
   }
+
   const parsed = parseUsageCount(value);
+
   return Result.isSuccess(parsed) ? parsed.success : undefined;
 };
 
 const parseKeyLimit = (value: JsonObject): KeyLimit | null | undefined => {
   const limit = optionalLimitNumber(value.limit);
   const remaining = optionalLimitNumber(value.limit_remaining);
+
   const invalidLimit =
     value.limit !== undefined && value.limit !== null && limit === undefined;
+
   const invalidRemaining =
     value.limit_remaining !== undefined &&
     value.limit_remaining !== null &&
     remaining === undefined;
+
   if (invalidLimit || invalidRemaining) {
     return undefined;
   }
+
   if (limit === undefined || limit === null || limit === 0) {
     return null;
   }
+
   if (remaining === undefined || remaining === null) {
     return null;
   }
+
   return {
     limit,
     remaining: Result.getOrThrow(parseUsageCount(Math.min(limit, remaining))),
@@ -123,12 +137,15 @@ const keyLimitWindow = (keyLimit: KeyLimit | null): UsageWindow => {
       resetsAt: null,
     };
   }
+
   const current = Result.getOrThrow(
     parseUsageCount(keyLimit.limit - keyLimit.remaining)
   );
+
   const percentage = Result.getOrThrow(
     parseUsagePercentage((current / keyLimit.limit) * 100)
   );
+
   return {
     kind: keyLimit.resetKind,
     label: "spend",
@@ -142,6 +159,7 @@ const keyUrl = (baseUrl: string): string => {
   url.pathname = KEY_PATH;
   url.search = "";
   url.hash = "";
+
   return url.toString();
 };
 
@@ -155,18 +173,23 @@ const fetchOpenRouterUsageEffect = (
     const http = yield* ProviderHttpClient;
     const baseUrl = resolveHttpsBaseUrl(config?.baseUrl, OFFICIAL_ORIGIN);
     const isOfficialOrigin = new URL(baseUrl).origin === OFFICIAL_ORIGIN;
+
     const authFileKey = yield* readProviderAuthFileCredential(
       config?.authPath,
       PROVIDER_ID,
       keyFromAuth
     );
+
     const configuredKey = environment.resolveCredential(config?.apiKey);
+
     const openCodeKey = isRecord(openCodeAuth)
       ? keyFromOpenCodeAuth(openCodeAuth, environment.credential)
       : undefined;
+
     const apiKey =
       authFileKey ??
       (isOfficialOrigin ? (openCodeKey ?? configuredKey) : configuredKey);
+
     if (!apiKey) {
       return yield* new MissingProviderCredentialsError({
         operation: "fetch-usage",
@@ -184,9 +207,12 @@ const fetchOpenRouterUsageEffect = (
       timeoutMs,
       url: keyUrl(baseUrl),
     });
+
     const data =
       isRecord(payload) && isRecord(payload.data) ? payload.data : null;
+
     const parsed = data ? parseKeyLimit(data) : undefined;
+
     if (parsed === undefined) {
       return yield* new ProviderResponseDecodeError({
         cause: "schema",

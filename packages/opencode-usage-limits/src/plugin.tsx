@@ -90,6 +90,7 @@ export const makeProductionDependencies = (
   loaders?: Pick<UsageLimitsTuiDependencies, "loadConfig" | "loadOpenCodeAuth">
 ): UsageLimitsTuiDependencies => {
   const selectedLoaders = loaders ?? { loadConfig, loadOpenCodeAuth };
+
   return {
     fetchProvider: (id, config, auth, timeoutMs) =>
       fetchProviderEffect(id, config, auth, timeoutMs).pipe(
@@ -123,6 +124,7 @@ export const createUsageLimitsPlugin =
       showErrors: true,
       states: [],
     });
+
     const disposeSidebar = context.ui.slot({
       append: SIDEBAR_SLOT,
       render: () => (
@@ -136,21 +138,26 @@ export const createUsageLimitsPlugin =
         />
       ),
     });
+
     const disposeFooter = context.ui.slot({
       append: FOOTER_SLOT,
       render: (slot) => {
         if (!slot.sessionID || slot.mode === "shell") {
           return null;
         }
+
         const session = context.data.session.get(slot.sessionID);
+
         const providerID =
           session?.model?.providerID ??
           currentProviderID(context.data.session.message.list(slot.sessionID));
+
         const selectedProviderID = usageProviderFor(
           snapshot().states,
           providerID,
           snapshot().providerDisplays
         );
+
         return (
           <BottomUsage
             theme={context.theme}
@@ -179,7 +186,9 @@ export const createUsageLimitsPlugin =
       sleep: (milliseconds) =>
         dependencies.sleep?.(milliseconds) ?? Effect.sleep(milliseconds),
     });
+
     const fiber = Effect.runFork(Effect.scoped(coordinator));
+
     return () => {
       disposeSidebar();
       disposeFooter();

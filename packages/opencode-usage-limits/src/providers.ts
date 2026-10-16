@@ -106,8 +106,10 @@ export const getProviderConfigs = (
 ): [ProviderID, ProviderConfigMap[ProviderID]][] =>
   PROVIDER_ORDER.flatMap((id) => {
     const provider = config.providers[id];
+
     if (provider?.enabled !== true) {
       return [];
     }
+
     return [[id, provider]];
   });

@@ -45,14 +45,17 @@ const rejectDeepSeekRequest = async (status: number): Promise<Error> => {
       }
     )
   );
+
   try {
     await fetchDeepSeekBalanceUsage({ apiKey: regressionApiKey }, {}, 1000);
   } catch (error) {
     if (error instanceof Error) {
       return error;
     }
+
     return new Error(String(error));
   }
+
   return new Error(`expected DeepSeek request to reject with HTTP ${status}`);
 };
 
@@ -189,6 +192,7 @@ describe("DeepSeek provider", () => {
         {},
         1000
       );
+
       await expect(result).rejects.toBeInstanceOf(ProviderResponseDecodeError);
       await expect(result).rejects.toThrow("invalid DeepSeek usage");
     }
@@ -212,9 +216,11 @@ describe("DeepSeek provider", () => {
       const error = await rejectDeepSeekRequest(status);
 
       expect(error).toBeInstanceOf(ProviderTransportError);
+
       if (!(error instanceof ProviderTransportError)) {
         return;
       }
+
       expect(error.cause).toBe(cause);
       expect(error.operation).toBe("fetch-usage");
       expect(error.providerID).toBe("deepseek");
@@ -227,9 +233,11 @@ describe("DeepSeek provider", () => {
     const error = await rejectDeepSeekRequest(429);
 
     expect(error).toBeInstanceOf(ProviderRateLimitError);
+
     if (!(error instanceof ProviderRateLimitError)) {
       return;
     }
+
     expect(error.operation).toBe("fetch-usage");
     expect(error.providerID).toBe("deepseek");
     expect(error.retryAfterMs).toBeUndefined();
@@ -241,10 +249,12 @@ describe("DeepSeek provider", () => {
       tmpdir(),
       `oc-usage-limits-deepseek-${crypto.randomUUID()}.json`
     );
+
     await writeFile(
       authPath,
       JSON.stringify({ deepseek: { key: "file-key" } })
     );
+
     try {
       const fetchMock = installFetchMock(response([balance()]));
 

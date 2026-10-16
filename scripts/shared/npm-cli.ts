@@ -6,6 +6,7 @@ import { getNodeExecutablePath } from "@/scripts/shared/node-executable.ts";
 /** Resolve the npm CLI shipped alongside the active Node executable. */
 export const getNpmCliPath = (): string => {
   const nodeDirectory = path.dirname(getNodeExecutablePath());
+
   const candidates = [
     path.join(nodeDirectory, "node_modules", "npm", "bin", "npm-cli.js"),
     path.resolve(
@@ -18,6 +19,7 @@ export const getNpmCliPath = (): string => {
       "npm-cli.js"
     ),
   ];
+
   const npmCliPath = candidates.find(existsSync);
 
   if (!npmCliPath) {

@@ -25,6 +25,7 @@ interface QwenAuthPayload {
   readonly authenticated?: boolean;
   readonly server_verified?: boolean;
 }
+
 interface QwenTokenPlan {
   readonly planName?: string;
   readonly remainingCredits?: number;
@@ -34,9 +35,11 @@ interface QwenTokenPlan {
   readonly totalCredits?: number;
   readonly usedPct?: number;
 }
+
 interface QwenUsagePayload {
   readonly token_plan?: QwenTokenPlanPayload;
 }
+
 interface QwenTokenPlanPayload {
   readonly planName?: string;
   readonly remainingCredits?: number;
@@ -56,11 +59,14 @@ interface QwenTokenPlanPayload {
  */
 const parseAuthStatus = (raw: string): boolean => {
   let data: QwenAuthPayload;
+
   try {
     const parsed: unknown = JSON.parse(raw);
+
     if (!isRecord(parsed)) {
       throw new Error("not an object");
     }
+
     data = {
       authenticated:
         isJsonBoolean(parsed.authenticated) && parsed.authenticated,
@@ -91,14 +97,18 @@ const parseAuthStatus = (raw: string): boolean => {
  */
 const parseTokenPlan = (raw: string): QwenTokenPlan => {
   let data: QwenUsagePayload;
+
   try {
     const parsed: unknown = JSON.parse(raw);
+
     if (!isRecord(parsed)) {
       throw new Error("not an object");
     }
+
     const tokenPlan = isRecord(parsed.token_plan)
       ? parsed.token_plan
       : undefined;
+
     data = {
       token_plan: tokenPlan
         ? {
@@ -127,7 +137,9 @@ const parseTokenPlan = (raw: string): QwenTokenPlan => {
   } catch {
     throw new Error("Failed to parse qwencloud usage response");
   }
+
   const tp = data.token_plan;
+
   if (!isRecord(tp)) {
     return { subscribed: false as const };
   }
@@ -152,13 +164,16 @@ const buildQwenWindow = (tp: QwenTokenPlan): UsageWindow | null => {
   }
 
   const parsedUsed = parseUsagePercentage(tp.usedPct);
+
   if (Result.isFailure(parsedUsed)) {
     return null;
   }
 
   let resetsAt: Date | null = null;
+
   if (tp.resetDate) {
     const parsed = new Date(tp.resetDate);
+
     if (!Number.isNaN(parsed.getTime())) {
       resetsAt = resetInstantOrNull(parsed);
     }
@@ -166,6 +181,7 @@ const buildQwenWindow = (tp: QwenTokenPlan): UsageWindow | null => {
 
   const parsedTotal = parseUsageCount(tp.totalCredits);
   const parsedRemaining = parseUsageCount(tp.remainingCredits);
+
   const parsedCurrent =
     Result.isSuccess(parsedTotal) &&
     Result.isSuccess(parsedRemaining) &&
@@ -200,6 +216,7 @@ const fetchQwenTokenPlanUsage = (
 ): ReturnType<ProviderDefinition<"qwen">["fetch"]> =>
   Effect.gen(function* runFetchQwenTokenPlanUsage() {
     const commands = yield* ProviderCommandExecutor;
+
     const authRaw = yield* commands.execute({
       acceptedExitCodes: new Set([2]),
       args: ["auth", "status", "--format", "json"],
@@ -207,6 +224,7 @@ const fetchQwenTokenPlanUsage = (
       providerID: "qwen",
       timeoutMs,
     });
+
     const authenticated = yield* Effect.try({
       catch: () =>
         new ProviderResponseDecodeError({
@@ -216,6 +234,7 @@ const fetchQwenTokenPlanUsage = (
         }),
       try: () => parseAuthStatus(authRaw),
     });
+
     if (!authenticated) {
       return yield* new MissingProviderCredentialsError({
         operation: "run-command",
@@ -229,6 +248,7 @@ const fetchQwenTokenPlanUsage = (
       providerID: "qwen",
       timeoutMs,
     });
+
     const tokenPlan = yield* Effect.try({
       catch: () =>
         new ProviderResponseDecodeError({
@@ -238,7 +258,9 @@ const fetchQwenTokenPlanUsage = (
         }),
       try: () => parseTokenPlan(usageRaw),
     });
+
     const window = buildQwenWindow(tokenPlan);
+
     if (!tokenPlan.subscribed || !window) {
       return yield* new ProviderResponseDecodeError({
         cause: "schema",

@@ -18,7 +18,9 @@ type DependencyField =
   | "devDependencies"
   | "optionalDependencies"
   | "peerDependencies";
+
 type DependencyMap = Record<string, string>;
+
 const manifestFilename = "package.json";
 
 interface PackageManifest {
@@ -41,16 +43,21 @@ const resolveCatalog = (dependencies: DependencyMap): DependencyMap =>
       if (!value.startsWith("catalog:")) {
         return [name, value];
       }
+
       const catalogName = value.slice("catalog:".length);
+
       const catalog = catalogName
         ? rootManifest.catalogs?.[catalogName]
         : rootManifest.catalog;
+
       const version = catalog?.[name];
+
       if (!version) {
         throw new Error(
           `Missing catalog entry for ${catalogName || "default"}:${name}`
         );
       }
+
       return [name, version];
     })
   );
@@ -62,8 +69,10 @@ const resolveManifestCatalog = (manifest: PackageManifest): void => {
     "optionalDependencies",
     "peerDependencies",
   ];
+
   for (const field of dependencyFields) {
     const dependencies = manifest[field];
+
     if (dependencies) {
       manifest[field] = resolveCatalog(dependencies);
     }
@@ -72,9 +81,11 @@ const resolveManifestCatalog = (manifest: PackageManifest): void => {
 
 const stagePackage = (directory: { name: string }): void => {
   const packageDirectory = path.join("packages", directory.name);
+
   const manifest: PackageManifest = JSON.parse(
     readFileSync(path.join(packageDirectory, manifestFilename), "utf-8")
   );
+
   const packageSpec = `${manifest.name}@${manifest.version}`;
   const npmCliPath = getNpmCliPath();
 
@@ -92,18 +103,22 @@ const stagePackage = (directory: { name: string }): void => {
       { stdio: "ignore" }
     );
     console.log(`${packageSpec} is already published`);
+
     return;
   } catch {
     console.log(`Staging ${packageSpec} with npm latest`);
   }
 
   const stagedDirectory = mkdtempSync(path.join(tmpdir(), "opencode-plugin-"));
+
   try {
     cpSync(packageDirectory, stagedDirectory, { recursive: true });
     const packageManifestPath = path.join(stagedDirectory, manifestFilename);
+
     const packageManifest: PackageManifest = JSON.parse(
       readFileSync(packageManifestPath, "utf-8")
     );
+
     resolveManifestCatalog(packageManifest);
     writeFileSync(
       packageManifestPath,
@@ -132,8 +147,10 @@ const stagePackage = (directory: { name: string }): void => {
   } catch (error) {
     const details =
       error instanceof Error && "stderr" in error ? String(error.stderr) : "";
+
     process.stderr.write(details);
     const message = `${error instanceof Error ? error.message : String(error)} ${details}`;
+
     if (
       !message.includes("E409") &&
       !message.includes("previously published")
@@ -153,6 +170,7 @@ const hasPendingChangesets = readdirSync(".changeset").some((file) => {
   }
 
   const content = readFileSync(path.join(".changeset", file), "utf-8");
+
   return /^['"][^'"]+['"]\s*:\s*(?:patch|minor|major)$/mu.test(content);
 });
 

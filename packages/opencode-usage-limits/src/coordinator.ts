@@ -151,9 +151,11 @@ const configDiagnosticFor = (
   if (Result.isSuccess(result)) {
     return;
   }
+
   if (result.failure instanceof ConfigDecodeError) {
     return { kind: "config-decode", message: result.failure.message };
   }
+
   return {
     kind: "config-read",
     message: "Usage-limits config could not be read",
@@ -176,6 +178,7 @@ export const usageCoordinator = (
     const lastSuccess = new Map<ProviderID, ProviderUsage>();
     const lastStates = new Map<ProviderID, ProviderState>();
     let lastRefreshAt: Date | null = null;
+
     while (true) {
       const configResult = yield* dependencies.loadConfig.pipe(
         Effect.catchCause((cause) =>
@@ -192,7 +195,9 @@ export const usageCoordinator = (
               )
         )
       );
+
       const configDiagnostic = configDiagnosticFor(configResult);
+
       const config = Result.isFailure(configResult)
         ? DEFAULT_CONFIG
         : configResult.success;
@@ -210,9 +215,11 @@ export const usageCoordinator = (
         showErrors: config.showErrors,
         states: providers.map(([id, provider]) => {
           const previous = lastStates.get(id);
+
           if (!previous) {
             return loadingState(id, provider);
           }
+
           if (previous.status === "ready") {
             return {
               ...previous,
@@ -222,6 +229,7 @@ export const usageCoordinator = (
                 staleAfterMs,
             };
           }
+
           return previous;
         }),
       });
@@ -240,7 +248,9 @@ export const usageCoordinator = (
                 })
           )
         );
+
         const { auth } = authLoad;
+
         const terminalStates = yield* Effect.all(
           providers.map(([id, provider]) =>
             Effect.match(
@@ -258,8 +268,10 @@ export const usageCoordinator = (
             ).pipe(
               Effect.map((result): ProviderState => {
                 const label = provider.label ?? defaultLabelFor(id);
+
                 if ("data" in result) {
                   lastSuccess.set(id, result.data);
+
                   return {
                     data: result.data,
                     id,
@@ -268,7 +280,9 @@ export const usageCoordinator = (
                     status: "ready",
                   };
                 }
+
                 const previous = lastSuccess.get(id);
+
                 const state: ProviderState = {
                   errorKind: errorKind(result.error),
                   id,
@@ -276,17 +290,21 @@ export const usageCoordinator = (
                   message: errorMessage(result.error),
                   status: "error",
                 };
+
                 if (previous) {
                   return { ...state, previous };
                 }
+
                 return state;
               })
             )
           ),
           { concurrency: "unbounded" }
         );
+
         const now = yield* dependencies.now;
         lastRefreshAt = now;
+
         const states = terminalStates.map((state) =>
           state.status === "ready"
             ? {
@@ -297,6 +315,7 @@ export const usageCoordinator = (
               }
             : state
         );
+
         cacheProviderStates(states, lastStates);
         yield* safePublish(dependencies, {
           diagnostics: authLoad.diagnostic ? [authLoad.diagnostic] : [],

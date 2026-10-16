@@ -40,17 +40,21 @@ const commandCodeUrl = (
 ): string => {
   const url = new URL(baseUrl);
   let { pathname } = url;
+
   while (pathname.endsWith("/")) {
     pathname = pathname.slice(0, -1);
   }
+
   url.pathname = `${pathname}${endpoint}`;
   url.hash = "";
   url.searchParams.delete("orgId");
+
   for (const [key, value] of Object.entries(query)) {
     if (value) {
       url.searchParams.set(key, value);
     }
   }
+
   return url.toString();
 };
 
@@ -62,13 +66,17 @@ const keyFromAuth = (
 ): Redacted.Redacted<string> | undefined => {
   const directKey = credential(value.key);
   const directApiKey = credential(value.apiKey);
+
   if (directKey ?? directApiKey) {
     return directKey ?? directApiKey;
   }
+
   const entry = value.commandcode;
+
   if (isRecord(entry)) {
     return credential(entry.key) ?? credential(entry.apiKey);
   }
+
   return undefined;
 };
 
@@ -76,6 +84,7 @@ const whoamiReportsFailure = (payload: JsonObject): boolean => {
   if (isJsonBoolean(payload.success) && !payload.success) {
     return true;
   }
+
   return (
     isRecord(payload.data) &&
     isJsonBoolean(payload.data.success) &&
@@ -91,8 +100,10 @@ const identityFromWhoami = (payload: JsonValue): CommandCodeIdentity | null => {
   if (!isRecord(payload) || whoamiReportsFailure(payload)) {
     return null;
   }
+
   const scope = isRecord(payload.data) ? payload.data : payload;
   const orgValue = scope.org ?? scope.organization;
+
   if (orgValue !== undefined && orgValue !== null) {
     if (
       !isRecord(orgValue) ||
@@ -101,13 +112,18 @@ const identityFromWhoami = (payload: JsonValue): CommandCodeIdentity | null => {
     ) {
       return null;
     }
+
     const { id: orgId } = orgValue;
+
     return { orgId };
   }
+
   const { user } = scope;
+
   if (!isRecord(user) || !isJsonString(user.id) || user.id.trim() === "") {
     return null;
   }
+
   return {};
 };
 
@@ -120,6 +136,7 @@ const decodeFailure = () =>
 
 const resetFromEpochMs = (value: JsonValue | undefined) => {
   const parsed = parseUsageCount(value);
+
   return Result.isFailure(parsed)
     ? null
     : resetInstantOrNull(new Date(parsed.success));
@@ -133,11 +150,14 @@ const commandCodeWindow = (
   if (!isRecord(value)) {
     return null;
   }
+
   const used = parseUsageCount(value.used);
   const cap = parseUsageCount(value.cap);
+
   if (Result.isFailure(used) || Result.isFailure(cap) || cap.success <= 0) {
     return null;
   }
+
   return {
     kind,
     label,
@@ -154,7 +174,9 @@ const summarySpentCredits = (payload: JsonValue | null): number | null => {
   if (!isRecord(payload)) {
     return null;
   }
+
   const spent = parseUsageCount(payload.totalCredits ?? payload.totalCost);
+
   return Result.isFailure(spent) ? null : spent.success;
 };
 
@@ -165,9 +187,11 @@ const commandCodeMonthlyWindow = (
   if (!isRecord(credits)) {
     return null;
   }
+
   const monthly = parseUsageCount(credits.monthlyCredits);
   const purchased = parseUsageCount(credits.purchasedCredits);
   const free = parseUsageCount(credits.freeCredits);
+
   if (
     Result.isFailure(monthly) ||
     Result.isFailure(purchased) ||
@@ -175,6 +199,7 @@ const commandCodeMonthlyWindow = (
   ) {
     return null;
   }
+
   if (spent === null) {
     return {
       kind: "monthly",
@@ -183,10 +208,13 @@ const commandCodeMonthlyWindow = (
       resetsAt: null,
     };
   }
+
   const total = monthly.success + purchased.success + free.success + spent;
+
   if (total <= 0) {
     return null;
   }
+
   return {
     kind: "monthly",
     label: "monthly",
@@ -207,28 +235,35 @@ const fetchCommandCodeUsageEffect = (
     const http = yield* ProviderHttpClient;
     const baseUrl = resolveHttpsBaseUrl(config?.baseUrl, DEFAULT_BASE_URL);
     const isOfficialBaseUrl = baseUrl === DEFAULT_BASE_URL;
+
     const authFileKey = yield* readProviderAuthFileCredential(
       config?.authPath,
       PROVIDER_ID,
       keyFromAuth
     );
+
     const configuredKey = environment.resolveCredential(config?.apiKey);
+
     const authKey = isRecord(openCodeAuth)
       ? keyFromAuth(openCodeAuth, environment.credential)
       : undefined;
+
     const apiKey =
       authFileKey ??
       (isOfficialBaseUrl ? (authKey ?? configuredKey) : configuredKey);
+
     if (!apiKey) {
       return yield* new MissingProviderCredentialsError({
         operation: "fetch-usage",
         providerID: PROVIDER_ID,
       });
     }
+
     const headers = {
       Accept: "application/json",
       Authorization: `Bearer ${Redacted.value(apiKey)}`,
     };
+
     const whoami = yield* http.requestJson({
       headers,
       method: "GET",
@@ -236,10 +271,13 @@ const fetchCommandCodeUsageEffect = (
       timeoutMs,
       url: commandCodeUrl(baseUrl, WHOAMI_PATH, { limits: "1" }),
     });
+
     const identity = identityFromWhoami(whoami);
+
     if (!identity) {
       return yield* decodeFailure();
     }
+
     const payload = yield* http.requestJson({
       headers,
       method: "GET",
@@ -247,6 +285,7 @@ const fetchCommandCodeUsageEffect = (
       timeoutMs,
       url: commandCodeUrl(baseUrl, CREDITS_PATH, { orgId: identity.orgId }),
     });
+
     if (!isRecord(payload) || !isRecord(payload.windowLimits)) {
       return yield* decodeFailure();
     }
@@ -268,15 +307,19 @@ const fetchCommandCodeUsageEffect = (
             : Effect.succeed<JsonValue | null>(null)
         )
       );
+
     const limits = payload.windowLimits;
+
     const windows = [
       commandCodeWindow(limits.fiveHour, "rolling", "5h"),
       commandCodeWindow(limits.weekly, "weekly", "weekly"),
       commandCodeMonthlyWindow(payload.credits, summarySpentCredits(summary)),
     ].filter((window): window is UsageWindow => window !== null);
+
     if (windows.length === 0) {
       return yield* decodeFailure();
     }
+
     return {
       capturedAt: new Date(yield* Clock.currentTimeMillis),
       id: PROVIDER_ID,

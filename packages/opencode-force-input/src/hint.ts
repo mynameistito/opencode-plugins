@@ -77,6 +77,7 @@ export const resolveHintColors = (theme: ForceHintTheme): HintColors => {
       label: theme.text.subdued,
     };
   }
+
   return {
     force: theme.warning ?? theme.text,
     key: theme.text,

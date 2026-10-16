@@ -3,16 +3,20 @@ import { Context, Layer, Redacted, Schema } from "effect";
 import type { JsonValue } from "@/utils.ts";
 
 const environmentReference = /^\{env:(?<name>[^}]+)\}$/iu;
+
 type CredentialInput = JsonValue | Redacted.Redacted<string> | undefined;
 
 const nonEmptySecret = (
   value: CredentialInput
 ): Redacted.Redacted<string> | undefined => {
   const revealed = Redacted.isRedacted(value) ? Redacted.value(value) : value;
+
   if (!Schema.is(Schema.String)(revealed)) {
     return undefined;
   }
+
   const trimmed = revealed.trim();
+
   return trimmed === "" ? undefined : Redacted.make(trimmed);
 };
 
@@ -36,11 +40,14 @@ const makeProviderEnvironment = (
   credential: nonEmptySecret,
   resolveCredential: (value) => {
     const credential = nonEmptySecret(value);
+
     if (!credential) {
-      return;
+      return credential;
     }
+
     const raw = Redacted.value(credential);
     const match = environmentReference.exec(raw);
+
     return match?.groups?.name
       ? nonEmptySecret(environment[match.groups.name])
       : credential;

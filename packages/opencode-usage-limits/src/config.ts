@@ -30,6 +30,7 @@ const CONFIG_PATH = path.join(
   "opencode",
   "usage-limits.jsonc"
 );
+
 /**
  * Resolves OpenCode's default auth-file path for the given runtime platform.
  *
@@ -55,6 +56,7 @@ export const defaultOpenCodeAuthPath = (
     "opencode",
     "auth.json"
   );
+
 const OPENCODE_AUTH_PATH = defaultOpenCodeAuthPath(
   process.platform,
   process.env.XDG_DATA_HOME,
@@ -106,6 +108,7 @@ const authEntryNames = new Set([
   "zai",
   "zai-coding-plan",
 ]);
+
 const authFields = new Set(["access", "accountId", "apiKey", "key"]);
 const directAuthFieldNames = new Set(["apiKey", "key"]);
 
@@ -113,6 +116,7 @@ const hasMalformedAuthField = (input: JsonValue): boolean => {
   if (!isRecord(input)) {
     return true;
   }
+
   return Object.entries(input).some(
     ([key, value]) => authFields.has(key) && !isString(value)
   );
@@ -138,11 +142,13 @@ export const loadConfig = async (
     if (error instanceof Error && isMissingFile(error)) {
       return Result.succeed(DEFAULT_CONFIG);
     }
+
     if (error instanceof SyntaxError) {
       return Result.fail(
         new ConfigDecodeError({ cause: "syntax", operation: "parse-jsonc" })
       );
     }
+
     return Result.fail(
       new ConfigReadError({
         cause: "filesystem",
@@ -167,6 +173,7 @@ export const loadOpenCodeAuth = async (
 ): Promise<OpenCodeAuthLoad> => {
   try {
     const input = await read(OPENCODE_AUTH_PATH);
+
     if (!isRecord(input)) {
       return {
         auth: {},
@@ -176,12 +183,15 @@ export const loadOpenCodeAuth = async (
         },
       };
     }
+
     const auth = parseOpenCodeAuth(input);
+
     const malformed = Object.entries(input).some(([key, value]) =>
       authEntryNames.has(key)
         ? hasMalformedAuthField(value)
         : directAuthFieldNames.has(key) && !isString(value)
     );
+
     return malformed
       ? {
           auth,
@@ -201,6 +211,7 @@ export const loadOpenCodeAuth = async (
         },
       };
     }
+
     if (error instanceof SyntaxError) {
       return {
         auth: {},
@@ -210,6 +221,7 @@ export const loadOpenCodeAuth = async (
         },
       };
     }
+
     return {
       auth: {},
       diagnostic: {

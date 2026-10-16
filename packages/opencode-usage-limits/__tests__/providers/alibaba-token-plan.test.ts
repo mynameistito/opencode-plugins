@@ -16,26 +16,32 @@ const run = (
   version = "bl 1.15.0"
 ) => {
   const calls: ProviderCommandInput[] = [];
+
   const commands = Layer.succeed(ProviderCommandExecutor, {
     execute: (input) => {
       calls.push(input);
+
       if (calls.length === 1) {
         return Effect.succeed(version);
       }
+
       return output instanceof Error
         ? Effect.fail(output)
         : Effect.succeed(output);
     },
   });
+
   const effect = alibabaTokenPlanProvider
     .fetch(config, {}, 4321)
     .pipe(Effect.provide(commands), Effect.provide(ProviderRuntimeLive));
+
   return { calls, effect };
 };
 
 describe("Alibaba Token Plan", () => {
   it("normalizes fractions, millisecond resets and both quota windows", async () => {
     const reset = Date.parse("2026-09-10T12:00:00Z");
+
     const { effect, calls } = run(
       JSON.stringify({
         per1WeekPercentage: 1,
@@ -44,6 +50,7 @@ describe("Alibaba Token Plan", () => {
         per5HourResetTime: reset,
       })
     );
+
     const usage = await Effect.runPromise(effect);
     expect({
       id: usage.id,
@@ -91,6 +98,7 @@ describe("Alibaba Token Plan", () => {
       label: "Solo",
       region: "china",
     });
+
     const usage = await Effect.runPromise(effect);
     expect(usage.label).toBe("Solo");
     expect(usage.windows).toHaveLength(1);
@@ -113,6 +121,7 @@ describe("Alibaba Token Plan", () => {
           per5HourResetTime: reset,
         })
       );
+
       const usage = await Effect.runPromise(effect);
       expect(usage.windows[0]?.resetsAt).toBeNull();
     }
@@ -173,6 +182,7 @@ describe("Alibaba Token Plan", () => {
         "node v20.11.0\nbl version 1.14.3"
       ).effect
     );
+
     expect(Exit.isFailure(result)).toBeTruthy();
     expect(JSON.stringify(result)).toContain('"cause":"unsupported"');
   });
@@ -183,6 +193,7 @@ describe("Alibaba Token Plan", () => {
       undefined,
       "@bailian/cli/1.15.0 darwin-arm64 node-v20.11.0"
     );
+
     const usage = await Effect.runPromise(effect);
     expect(usage.id).toBe("alibaba-token-plan");
     expect(calls).toHaveLength(2);
@@ -192,6 +203,7 @@ describe("Alibaba Token Plan", () => {
     const result = await Effect.runPromiseExit(
       run('{"per1WeekPercentage":0}', undefined, "Bailian CLI").effect
     );
+
     expect(Exit.isFailure(result)).toBeTruthy();
     expect(JSON.stringify(result)).toContain('"cause":"invalid-version"');
   });

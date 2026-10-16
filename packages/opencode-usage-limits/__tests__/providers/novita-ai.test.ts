@@ -74,22 +74,26 @@ describe("Novita AI provider", () => {
     });
 
     installFetchMock(response("10000"));
+
     const dollarUsage = await fetchNovitaAiBalanceUsage(
       { apiKey: "key" },
       {},
       1000
     );
+
     expect(dollarUsage.windows[0]?.quota).toMatchObject({
       remaining: 1,
       unit: "USD",
     });
 
     installFetchMock(response("00010000"));
+
     const paddedUsage = await fetchNovitaAiBalanceUsage(
       { apiKey: "key" },
       {},
       1000
     );
+
     expect(paddedUsage.windows[0]?.quota).toMatchObject({
       remaining: 1,
       unit: "USD",
@@ -180,10 +184,12 @@ describe("Novita AI provider", () => {
       tmpdir(),
       `oc-usage-limits-novita-ai-${crypto.randomUUID()}.json`
     );
+
     await writeFile(
       authPath,
       JSON.stringify({ "novita-ai": { apiKey: "file-key" } })
     );
+
     try {
       const fetchMock = installFetchMock(response("10000"));
       await fetchNovitaAiBalanceUsage(
@@ -215,7 +221,9 @@ describe("Novita AI provider", () => {
       tmpdir(),
       `oc-usage-limits-novita-ai-flat-${crypto.randomUUID()}.json`
     );
+
     await writeFile(authPath, JSON.stringify({ key: "file-key" }));
+
     try {
       const fetchMock = installFetchMock(response("10000"));
       await fetchNovitaAiBalanceUsage({ authPath }, {}, 1000);
@@ -230,7 +238,9 @@ describe("Novita AI provider", () => {
       tmpdir(),
       `oc-usage-limits-novita-ai-empty-${crypto.randomUUID()}.json`
     );
+
     await writeFile(emptyAuthPath, JSON.stringify({ ignored: true }));
+
     try {
       const fetchMock = installFetchMock(response("10000"));
       await fetchNovitaAiBalanceUsage(
@@ -254,11 +264,13 @@ describe("Novita AI provider", () => {
     "classifies Novita AI HTTP %d as a safe transport error",
     async (status, cause) => {
       installFetchMock(Response.json({ error: "secret-key" }, { status }));
+
       const request = fetchNovitaAiBalanceUsage(
         { apiKey: "secret-key" },
         {},
         1000
       );
+
       await expect(request).rejects.toBeInstanceOf(ProviderTransportError);
       await expect(request).rejects.not.toThrow("secret-key");
       await expect(request).rejects.toMatchObject({

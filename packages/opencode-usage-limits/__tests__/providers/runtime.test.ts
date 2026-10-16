@@ -27,6 +27,7 @@ const executeCommand = (args: readonly string[], timeoutMs = 1000) =>
   Effect.runPromise(
     Effect.gen(function* execute() {
       const commands = yield* ProviderCommandExecutor;
+
       return yield* commands.execute({
         args,
         command: process.execPath,
@@ -43,6 +44,7 @@ const executeCommandExit = (
   Effect.runPromiseExit(
     Effect.gen(function* execute() {
       const commands = yield* ProviderCommandExecutor;
+
       return yield* commands.execute({
         acceptedExitCodes,
         args,
@@ -66,10 +68,12 @@ describe("provider runtime services", () => {
     const variable = "OC_USAGE_LIMITS_RUNTIME_TEST_KEY";
     const original = process.env[variable];
     process.env[variable] = "  environment secret  ";
+
     try {
       const credentials = await Effect.runPromise(
         Effect.gen(function* readCredentials() {
           const environment = yield* ProviderEnvironment;
+
           return {
             blank: environment.credential(" \t "),
             environment: environment.resolveCredential(`{env:${variable}}`),
@@ -101,12 +105,14 @@ describe("provider runtime services", () => {
       tmpdir(),
       `oc-usage-limits-${crypto.randomUUID()}.json`
     );
+
     temporaryFiles.push(file);
     await writeFile(file, "x".repeat(1024 * 1024 + 1));
 
     const result = await Effect.runPromise(
       Effect.gen(function* result() {
         const files = yield* ProviderFileSystem;
+
         return yield* files.readText({ path: file, providerID: "codex" });
       }).pipe(Effect.provide(ProviderFileSystemLive), Effect.exit)
     );
@@ -114,6 +120,7 @@ describe("provider runtime services", () => {
     const serializedCause = JSON.stringify(
       Exit.isFailure(result) ? result.cause : undefined
     );
+
     expect(Exit.isFailure(result)).toBeTruthy();
     expect(serializedCause).toContain('"_tag":"ProviderTransportError"');
     expect(serializedCause).toContain('"cause":"output-limit"');
@@ -125,16 +132,20 @@ describe("provider runtime services", () => {
       tmpdir(),
       `oc-usage-limits-${crypto.randomUUID()}.json`
     );
+
     temporaryFiles.push(file);
+
     const content = JSON.stringify({
       accessToken: "token",
       padding: "x".repeat(1024),
     });
+
     await writeFile(file, content);
 
     const result = await Effect.runPromise(
       Effect.gen(function* result() {
         const files = yield* ProviderFileSystem;
+
         return yield* files.readText({ path: file, providerID: "codex" });
       }).pipe(Effect.provide(ProviderFileSystemLive))
     );
@@ -147,6 +158,7 @@ describe("provider runtime services", () => {
       tmpdir(),
       `oc-usage-limits-${crypto.randomUUID()}.json`
     );
+
     temporaryFiles.push(file);
     const content = `{${" ".repeat(1024 * 1024 - 2)}}`;
     await writeFile(file, content);
@@ -154,6 +166,7 @@ describe("provider runtime services", () => {
     const result = await Effect.runPromise(
       Effect.gen(function* result() {
         const files = yield* ProviderFileSystem;
+
         return yield* files.readText({ path: file, providerID: "codex" });
       }).pipe(Effect.provide(ProviderFileSystemLive))
     );
@@ -169,6 +182,7 @@ describe("provider runtime services", () => {
     const result = await Effect.runPromise(
       Effect.gen(function* result() {
         const http = yield* ProviderHttpClient;
+
         return yield* http.requestJson({
           headers: {},
           method: "GET",
@@ -188,9 +202,11 @@ describe("provider runtime services", () => {
     const layer = makeProviderHttpClient(() =>
       Promise.resolve(new Response(null, { status: 200 }))
     );
+
     const result = await Effect.runPromise(
       Effect.gen(function* request() {
         const http = yield* ProviderHttpClient;
+
         return yield* http.requestJson({
           headers: {},
           method: "GET",
@@ -206,11 +222,13 @@ describe("provider runtime services", () => {
 
   it("cancels a response rejected by its declared size", async () => {
     let cancelled = false;
+
     const body = new ReadableStream<Uint8Array>({
       cancel: () => {
         cancelled = true;
       },
     });
+
     const layer = makeProviderHttpClient(() =>
       Promise.resolve(
         new Response(body, {
@@ -223,6 +241,7 @@ describe("provider runtime services", () => {
     const result = await Effect.runPromise(
       Effect.gen(function* result() {
         const http = yield* ProviderHttpClient;
+
         return yield* http.requestJson({
           headers: {},
           method: "GET",
@@ -239,11 +258,13 @@ describe("provider runtime services", () => {
 
   it("cancels a rate-limited response body", async () => {
     let cancelled = false;
+
     const body = new ReadableStream<Uint8Array>({
       cancel: () => {
         cancelled = true;
       },
     });
+
     const layer = makeProviderHttpClient(() =>
       Promise.resolve(new Response(body, { status: 429 }))
     );
@@ -251,6 +272,7 @@ describe("provider runtime services", () => {
     const result = await Effect.runPromise(
       Effect.gen(function* result() {
         const http = yield* ProviderHttpClient;
+
         return yield* http.requestJson({
           headers: {},
           method: "GET",
@@ -278,6 +300,7 @@ describe("provider runtime services", () => {
     const result = await Effect.runPromise(
       Effect.gen(function* request() {
         const http = yield* ProviderHttpClient;
+
         return yield* http.requestJson({
           headers: {},
           method: "GET",
@@ -291,6 +314,7 @@ describe("provider runtime services", () => {
     const cause = JSON.stringify(
       Exit.isFailure(result) ? result.cause : undefined
     );
+
     expect(cause).toContain('"_tag":"ProviderRateLimitError"');
     expect(cause).not.toContain("retryAfterMs");
   });
@@ -308,6 +332,7 @@ describe("provider runtime services", () => {
     const result = await Effect.runPromise(
       Effect.gen(function* request() {
         const http = yield* ProviderHttpClient;
+
         return yield* http.requestJson({
           headers: {},
           method: "GET",
@@ -321,16 +346,19 @@ describe("provider runtime services", () => {
     const cause = JSON.stringify(
       Exit.isFailure(result) ? result.cause : undefined
     );
+
     expect(cause).toContain('"retryAfterMs":2500');
   });
 
   it("cancels a non-success response body", async () => {
     let cancelled = false;
+
     const body = new ReadableStream<Uint8Array>({
       cancel: () => {
         cancelled = true;
       },
     });
+
     const layer = makeProviderHttpClient(() =>
       Promise.resolve(new Response(body, { status: 401 }))
     );
@@ -338,6 +366,7 @@ describe("provider runtime services", () => {
     const result = await Effect.runPromise(
       Effect.gen(function* result() {
         const http = yield* ProviderHttpClient;
+
         return yield* http.requestJson({
           headers: {},
           method: "GET",
@@ -362,6 +391,7 @@ describe("provider runtime services", () => {
         controller.close();
       },
     });
+
     const layer = makeProviderHttpClient(() =>
       Promise.resolve(new Response(body, { status: 200 }))
     );
@@ -369,6 +399,7 @@ describe("provider runtime services", () => {
     const result = await Effect.runPromise(
       Effect.gen(function* result() {
         const http = yield* ProviderHttpClient;
+
         return yield* http.requestJson({
           headers: {},
           method: "GET",
@@ -384,15 +415,18 @@ describe("provider runtime services", () => {
 
   it("reads a response with many small chunks", async () => {
     const whitespace = new Uint8Array([32]);
+
     const body = new ReadableStream<Uint8Array>({
       start: (controller) => {
         for (let index = 0; index < 20_000; index += 1) {
           controller.enqueue(whitespace);
         }
+
         controller.enqueue(new TextEncoder().encode("null"));
         controller.close();
       },
     });
+
     const layer = makeProviderHttpClient(() =>
       Promise.resolve(new Response(body, { status: 200 }))
     );
@@ -400,6 +434,7 @@ describe("provider runtime services", () => {
     const result = await Effect.runPromise(
       Effect.gen(function* result() {
         const http = yield* ProviderHttpClient;
+
         return yield* http.requestJson({
           headers: {},
           method: "GET",
@@ -417,6 +452,7 @@ describe("provider runtime services", () => {
     const result = await Effect.runPromiseExit(
       Effect.gen(function* execute() {
         const commands = yield* ProviderCommandExecutor;
+
         return yield* commands.execute({
           args: [],
           command: path.join(tmpdir(), `missing-${crypto.randomUUID()}`),
@@ -429,6 +465,7 @@ describe("provider runtime services", () => {
     const serializedCause = JSON.stringify(
       Exit.isFailure(result) ? result.cause : undefined
     );
+
     expect(Exit.isFailure(result)).toBeTruthy();
     expect(serializedCause).toContain('"cause":"command"');
   });
@@ -446,9 +483,11 @@ describe("provider runtime services", () => {
     const args = ["-e", 'process.stdout.write("status"); process.exit(2)'];
 
     const rejected = await executeCommandExit(args);
+
     const serializedCause = JSON.stringify(
       Exit.isFailure(rejected) ? rejected.cause : undefined
     );
+
     expect(Exit.isFailure(rejected)).toBeTruthy();
     expect(serializedCause).toContain('"_tag":"ProviderCommandError"');
     expect(serializedCause).toContain('"exitCode":2');
@@ -466,6 +505,7 @@ describe("provider runtime services", () => {
     const serializedCause = JSON.stringify(
       Exit.isFailure(result) ? result.cause : undefined
     );
+
     expect(Exit.isFailure(result)).toBeTruthy();
     expect(serializedCause).toContain('"cause":"output-limit"');
   });
@@ -475,22 +515,27 @@ describe("provider runtime services", () => {
       tmpdir(),
       `oc-usage-limits-command-${crypto.randomUUID()}.txt`
     );
+
     const scriptFile = path.join(
       tmpdir(),
       `oc-usage-limits-command-${crypto.randomUUID()}.cjs`
     );
+
     temporaryFiles.push(file, scriptFile);
+
     const script = `
        const { writeFile } = require("node:fs/promises");
        const file = process.argv[2];
        const write = () => writeFile(file, String(Date.now())).then(() => setTimeout(write, 10));
        write();
      `;
+
     await writeFile(scriptFile, script);
 
     const result = await Effect.runPromiseExit(
       Effect.gen(function* execute() {
         const commands = yield* ProviderCommandExecutor;
+
         return yield* commands.execute({
           args: [scriptFile, file],
           command: process.execPath,
@@ -503,6 +548,7 @@ describe("provider runtime services", () => {
     const serializedCause = JSON.stringify(
       Exit.isFailure(result) ? result.cause : undefined
     );
+
     expect(Exit.isFailure(result)).toBeTruthy();
     expect(serializedCause).toContain('"_tag":"ProviderTimeoutError"');
 
@@ -515,9 +561,11 @@ describe("provider runtime services", () => {
 
   it("classifies an interrupted HTTP request as a timeout", async () => {
     const layer = makeProviderHttpClient(() => Effect.runPromise(Effect.never));
+
     const result = await Effect.runPromise(
       Effect.gen(function* result() {
         const http = yield* ProviderHttpClient;
+
         return yield* http.requestJson({
           headers: {},
           method: "GET",
@@ -535,6 +583,7 @@ describe("provider runtime services", () => {
 
   it("cancels an in-flight response reader when its request times out", async () => {
     let cancelled = false;
+
     const layer = makeProviderHttpClient(() =>
       Promise.resolve(
         new Response(
@@ -551,6 +600,7 @@ describe("provider runtime services", () => {
     const result = await Effect.runPromise(
       Effect.gen(function* request() {
         const http = yield* ProviderHttpClient;
+
         return yield* http.requestJson({
           headers: {},
           method: "GET",
@@ -573,9 +623,11 @@ describe("provider runtime services", () => {
     const layer = makeProviderHttpClient(() =>
       Promise.resolve(new Response(null, { status }))
     );
+
     const result = await Effect.runPromise(
       Effect.gen(function* request() {
         const http = yield* ProviderHttpClient;
+
         return yield* http.requestJson({
           headers: {},
           method: "GET",
@@ -589,18 +641,21 @@ describe("provider runtime services", () => {
     const serializedCause = JSON.stringify(
       Exit.isFailure(result) ? result.cause : undefined
     );
+
     expect(Exit.isFailure(result)).toBeTruthy();
     expect(serializedCause).toContain(`"cause":"${cause}"`);
   });
 
   it("caps streamed HTTP bodies and classifies network failures", async () => {
     let cancelled = false;
+
     const layer = makeProviderHttpClient(() =>
       Promise.resolve(
         new Response(
           new ReadableStream<Uint8Array>({
             cancel: () => {
               cancelled = true;
+
               return Promise.reject(new Error("cancel failed"));
             },
             start: (controller) => {
@@ -611,9 +666,11 @@ describe("provider runtime services", () => {
         )
       )
     );
+
     const capped = await Effect.runPromise(
       Effect.gen(function* request() {
         const http = yield* ProviderHttpClient;
+
         return yield* http.requestJson({
           headers: {},
           method: "GET",
@@ -623,19 +680,24 @@ describe("provider runtime services", () => {
         });
       }).pipe(Effect.provide(layer), Effect.exit)
     );
+
     expect(Exit.isFailure(capped)).toBeTruthy();
     expect(cancelled).toBeTruthy();
+
     const cappedCause = JSON.stringify(
       Exit.isFailure(capped) ? capped.cause : undefined
     );
+
     expect(cappedCause).toContain('"cause":"output-limit"');
 
     const networkLayer = makeProviderHttpClient(() =>
       Promise.reject(new Error("offline"))
     );
+
     const network = await Effect.runPromise(
       Effect.gen(function* request() {
         const http = yield* ProviderHttpClient;
+
         return yield* http.requestJson({
           headers: {},
           method: "GET",
@@ -645,10 +707,13 @@ describe("provider runtime services", () => {
         });
       }).pipe(Effect.provide(networkLayer), Effect.exit)
     );
+
     expect(Exit.isFailure(network)).toBeTruthy();
+
     const networkCause = JSON.stringify(
       Exit.isFailure(network) ? network.cause : undefined
     );
+
     expect(networkCause).toContain('"cause":"network"');
   });
 });
