@@ -1,5 +1,11 @@
 # @mynameistito/opencode-plugins-docs
 
+## 0.0.12
+
+### Patch Changes
+
+- 930a4ae: bump all pkgs
+
 ## 0.0.11
 
 ### Patch Changes
