@@ -1,5 +1,11 @@
 # @mynameistito/opencode-force-input
 
+## 1.1.15
+
+### Patch Changes
+
+- 31a1271: Update @opencode/plugin to 2.1.1
+
 ## 1.1.14
 
 ### Patch Changes
