@@ -1,5 +1,11 @@
 # @mynameistito/opencode-usage-limits
 
+## 1.3.6
+
+### Patch Changes
+
+- 3a4dc61: Update @opencode/plugin to 2.1.2
+
 ## 1.3.5
 
 ### Patch Changes
