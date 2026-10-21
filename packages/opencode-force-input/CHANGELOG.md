@@ -1,5 +1,11 @@
 # @mynameistito/opencode-force-input
 
+## 1.1.17
+
+### Patch Changes
+
+- a92f44e: Mount footer UI through OpenTUI's renderer and register force-submit bindings once during setup
+
 ## 1.1.16
 
 ### Patch Changes
