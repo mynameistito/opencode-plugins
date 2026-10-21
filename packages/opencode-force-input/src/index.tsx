@@ -1,6 +1,6 @@
+/* @jsxImportSource @opentui/solid */
 import { Plugin } from "@opencode/plugin/tui";
 import type { Context } from "@opencode/plugin/tui/context";
-import { createComponent } from "@opentui/solid";
 import type { JSX } from "@opentui/solid";
 
 import { ForceHint } from "./force-hint.tsx";
@@ -87,19 +87,17 @@ interface PromptFooterContributionProps {
  * same `prompt.footer.status` claim, so the binding and its affordance follow
  * TUI context changes together.
  */
-const promptFooterContribution = (
+const PromptFooterContribution = (
   props: PromptFooterContributionProps
-): JSX.Element => {
-  registerForceSubmitLayer(props.context.keymap);
-
-  return createComponent(ForceHint, {
-    data: props.context.data,
-    enabled: hintEnabled(props.context.options),
-    mode: props.slot.mode,
-    sessionID: props.slot.sessionID,
-    theme: props.context.theme,
-  });
-};
+): JSX.Element => (
+  <ForceHint
+    data={props.context.data}
+    enabled={hintEnabled(props.context.options)}
+    mode={props.slot.mode}
+    sessionID={props.slot.sessionID}
+    theme={props.context.theme}
+  />
+);
 
 /**
  * Initializes the OpenCode v2 TUI plugin and registers the composer hint.
@@ -107,12 +105,16 @@ const promptFooterContribution = (
  * @param context - Plugin context surfaces required by the setup lifecycle.
  * @returns A disposer that unregisters the UI slot when the plugin is stopped.
  */
-export const setup = (context: ForceSubmitContext): (() => void) =>
-  context.ui.slot({
+export const setup = (context: ForceSubmitContext): (() => void) => {
+  registerForceSubmitLayer(context.keymap);
+
+  return context.ui.slot({
     append: "prompt.footer.status",
-    render: (slot) =>
-      createComponent(promptFooterContribution, { context, slot }),
+    render: (slot) => (
+      <PromptFooterContribution context={context} slot={slot} />
+    ),
   });
+};
 
 /** OpenCode v2 plugin entrypoint registering the force-input feature. */
 export default Plugin.define({

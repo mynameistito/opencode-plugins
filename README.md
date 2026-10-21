@@ -49,17 +49,19 @@ The documentation site source lives in [`apps/web/docs/`](apps/web/docs/). Start
 
 ## Local Development
 
-Build the workspace and load the source entrypoints from `~/.config/opencode/cli.json`:
+Build the packages you want to test, then add their package directories to your TUI config (`~/.config/opencode/cli.json` on this machine). Preserve the rest of your config and use absolute paths for your checkout:
 
 ```jsonc
 {
   "$schema": "https://opencode.ai/v2/cli.json",
   "plugins": [
-    "/path/to/opencode-plugins/packages/opencode-force-input/src/index.ts",
-    "/path/to/opencode-plugins/packages/opencode-usage-limits/src/index.ts",
+    "/path/to/opencode-plugins/packages/opencode-force-input",
+    "/path/to/opencode-plugins/packages/opencode-usage-limits",
   ],
 }
 ```
+
+Restart OpenCode after editing the config. In a session, confirm the idle `⏎ send` hint appears, start a prompt and confirm it changes to the `steer` hint, then press `Ctrl+Enter` to verify the active run is interrupted and the prompt is submitted.
 
 ## Development
 
