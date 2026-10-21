@@ -50,6 +50,7 @@ interface PermissionResponse {
 
 interface PullRequestFile {
   filename: string;
+  previous_filename: string | null;
 }
 
 const parsePullRequest = (value: JsonValue): PullRequest => {
@@ -152,7 +153,12 @@ const parsePermissionResponse = (value: JsonValue): PermissionResponse => {
 const parsePullRequestFile = (value: JsonValue): PullRequestFile => {
   const item = asRecord(value);
 
-  return { filename: asString(getJsonField(item, "filename")) };
+  return {
+    filename: asString(getJsonField(item, "filename")),
+    previous_filename: asOptionalString(
+      getJsonField(item, "previous_filename")
+    ),
+  };
 };
 
 const payload = parsePayload(await readEvent());
@@ -276,7 +282,11 @@ const pullRequestFiles =
 
 const docsChanged =
   eventName() === "pull_request_target" ||
-  pullRequestFiles.some((file) => file.filename.startsWith("apps/web/"));
+  pullRequestFiles.some(
+    (file) =>
+      file.filename.startsWith("apps/web/") ||
+      file.previous_filename?.startsWith("apps/web/") === true
+  );
 
 await setOutput("docs_changed", String(docsChanged));
 
