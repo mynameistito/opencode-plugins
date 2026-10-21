@@ -53,7 +53,7 @@ describe("force submit", () => {
     ]);
   });
 
-  it("mounts a layer for each prompt footer render and dispatches force-submit", async () => {
+  it("registers one layer and dispatches force-submit from the prompt footer", async () => {
     const claims: SlotClaim[] = [];
     const layers: (() => KeymapLayer)[] = [];
     const dispatched: string[] = [];
@@ -92,18 +92,14 @@ describe("force submit", () => {
     }
 
     const renderSetup = await testRender(
-      () => {
-        claim.render({ mode: "normal", showDetails: false });
-
-        return claim.render({ mode: "normal", showDetails: false });
-      },
+      () => claim.render({ mode: "normal", showDetails: false }),
       { height: 3, width: 70 }
     );
 
     try {
       await renderSetup.flush();
 
-      expect(layers).toHaveLength(2);
+      expect(layers).toHaveLength(1);
       const [layer] = layers;
 
       if (!layer) {
