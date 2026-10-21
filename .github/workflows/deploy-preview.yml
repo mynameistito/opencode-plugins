@@ -32,6 +32,7 @@ jobs:
     outputs:
       pull_request_number: ${{ steps.resolve.outputs.pull_request_number }}
       trusted: ${{ steps.resolve.outputs.trusted }}
+      docs_changed: ${{ steps.resolve.outputs.docs_changed }}
     steps:
       - name: Checkout trusted workflow scripts
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -56,7 +57,7 @@ jobs:
     name: Announce preview approval
     needs: resolve
     if: >-
-      github.event_name == 'workflow_run' && needs.resolve.outputs.pull_request_number != '' && needs.resolve.outputs.trusted != 'true'
+      github.event_name == 'workflow_run' && needs.resolve.outputs.pull_request_number != '' && needs.resolve.outputs.docs_changed == 'true' && needs.resolve.outputs.trusted != 'true'
     runs-on: ubuntu-24.04
     permissions:
       issues: write
@@ -85,7 +86,7 @@ jobs:
   deploy:
     name: Deploy preview (review required)
     needs: resolve
-    if: needs.resolve.outputs.pull_request_number != '' && needs.resolve.outputs.trusted != 'true'
+    if: needs.resolve.outputs.pull_request_number != '' && needs.resolve.outputs.docs_changed == 'true' && needs.resolve.outputs.trusted != 'true'
     runs-on: ubuntu-24.04
     # Required reviewers protect the Cloudflare credentials when the PR author
     # does not have write access and the deployment executes pull-request code.
@@ -110,7 +111,7 @@ jobs:
   deploy-trusted:
     name: Deploy preview (trusted author)
     needs: resolve
-    if: needs.resolve.outputs.pull_request_number != '' && needs.resolve.outputs.trusted == 'true'
+    if: needs.resolve.outputs.pull_request_number != '' && needs.resolve.outputs.docs_changed == 'true' && needs.resolve.outputs.trusted == 'true'
     runs-on: ubuntu-24.04
     # A write-level PR author is trusted to run pull-request code with the
     # repository's Cloudflare credentials, so no reviewer gate is needed.

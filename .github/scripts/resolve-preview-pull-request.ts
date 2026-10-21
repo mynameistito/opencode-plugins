@@ -48,6 +48,10 @@ interface PermissionResponse {
   role_name: string | null;
 }
 
+interface PullRequestFile {
+  filename: string;
+}
+
 const parsePullRequest = (value: JsonValue): PullRequest => {
   const item = asRecord(value);
   const base = asRecord(getJsonField(item, "base"));
@@ -143,6 +147,12 @@ const parsePermissionResponse = (value: JsonValue): PermissionResponse => {
     permission: asOptionalString(getJsonField(item, "permission")),
     role_name: asOptionalString(getJsonField(item, "role_name")),
   };
+};
+
+const parsePullRequestFile = (value: JsonValue): PullRequestFile => {
+  const item = asRecord(value);
+
+  return { filename: asString(getJsonField(item, "filename")) };
 };
 
 const payload = parsePayload(await readEvent());
@@ -254,6 +264,26 @@ if (eventName() === "workflow_run" && !matchesWorkflowRun(pullRequest)) {
     `The pull request head moved past ${headSha} while resolving; there is nothing to deploy for this run.`
   );
   process.exit(0);
+}
+
+const pullRequestFiles =
+  eventName() === "pull_request_target"
+    ? []
+    : await githubPaginate(
+        `/repos/${githubRepository.owner}/${githubRepository.repo}/pulls/${pullRequest.number}/files`,
+        parsePullRequestFile
+      );
+
+const docsChanged =
+  eventName() === "pull_request_target" ||
+  pullRequestFiles.some((file) => file.filename.startsWith("apps/web/"));
+
+await setOutput("docs_changed", String(docsChanged));
+
+if (!docsChanged && eventName() === "workflow_run") {
+  console.info(
+    `Pull request #${pullRequest.number} does not change apps/web; skipping documentation preview deployment.`
+  );
 }
 
 const username = pullRequest.user?.login ?? null;
