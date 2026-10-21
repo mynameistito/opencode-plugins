@@ -78,7 +78,7 @@
     "@opentui/solid": "0.6.6",
     "@typescript/native": "npm:typescript@^7.0.2",
     "effect": "4.0.5",
-    "solid-js": "1.9.17",
+    "solid-js": "1.9.12",
     "typescript": "npm:@typescript/typescript6@^6.0.2",
     "alchemy": "2.0.0-beta.83",
     "blume": "2.2.3",
