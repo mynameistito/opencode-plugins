@@ -1,5 +1,11 @@
 # @mynameistito/opencode-force-input
 
+## 1.1.19
+
+### Patch Changes
+
+- 621c51b: Use OpenCode 2.1.3 theme tokens in the prompt hint
+
 ## 1.1.18
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @mynameistito/opencode-usage-limits
 
+## 1.3.8
+
+### Patch Changes
+
+- 621c51b: Use OpenCode 2.1.3 theme tokens for usage colors
+
 ## 1.3.7
 
 ### Patch Changes
