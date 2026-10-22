@@ -466,6 +466,35 @@ describe(UsageLimitsPanel, () => {
     }
   });
 
+  it("renders footer usage with previous structured theme tokens", async () => {
+    const previousTheme = {
+      text: {
+        default: color,
+        feedback: {
+          error: { default: color },
+          success: { default: color },
+          warning: { default: color },
+        },
+        subdued: color,
+      },
+    };
+
+    const setup = await testRender(
+      () => (
+        <BottomUsage showBar theme={previousTheme} window={usageWindow()} />
+      ),
+      { height: 4, width: 80 }
+    );
+
+    try {
+      await setup.flush();
+      expect(setup.captureCharFrame()).toContain("5h");
+      expect(setup.captureCharFrame()).toContain("42%");
+    } finally {
+      setup.renderer.destroy();
+    }
+  });
+
   it("renders footer balances without a percentage or progress bar", async () => {
     const setup = await testRender(
       () => (
