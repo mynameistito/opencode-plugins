@@ -19,6 +19,14 @@ type FiredEvent = SessionExecutionEvent | "session.retry.scheduled";
 
 const v2Theme = {
   text: {
+    action: { primary: { base: RGBA.fromInts(154, 176, 255) } },
+    base: RGBA.fromInts(208, 208, 208),
+    muted: RGBA.fromInts(128, 128, 128),
+  },
+} as const;
+
+const previousV2Theme = {
+  text: {
     action: { primary: { default: RGBA.fromInts(154, 176, 255) } },
     default: RGBA.fromInts(208, 208, 208),
     subdued: RGBA.fromInts(128, 128, 128),
@@ -133,11 +141,9 @@ describe("hint options and colors", () => {
     expect(hintEnabled({ hint: false })).toBeFalsy();
   });
 
-  it("resolves structured and legacy theme colors", () => {
+  it("resolves current, previous, and legacy theme colors", () => {
     const structured = resolveHintColors(v2Theme);
-    expect(structured.key).toBe(v2Theme.text.default);
-    expect(structured.label).toBe(v2Theme.text.subdued);
-    expect(structured.force).toBe(v2Theme.text.action.primary.default);
+    const previous = resolveHintColors(previousV2Theme);
 
     const legacy = {
       text: RGBA.fromInts(1, 2, 3),
@@ -149,11 +155,16 @@ describe("hint options and colors", () => {
 
     const bareColor = RGBA.fromInts(9, 9, 9);
     const bare = resolveHintColors({ text: bareColor });
-    expect([structured, flat, bare]).toStrictEqual([
+    expect([structured, previous, flat, bare]).toStrictEqual([
       {
-        force: v2Theme.text.action.primary.default,
-        key: v2Theme.text.default,
-        label: v2Theme.text.subdued,
+        force: v2Theme.text.action.primary.base,
+        key: v2Theme.text.base,
+        label: v2Theme.text.muted,
+      },
+      {
+        force: previousV2Theme.text.action.primary.default,
+        key: previousV2Theme.text.default,
+        label: previousV2Theme.text.subdued,
       },
       {
         force: legacy.warning,

@@ -31,13 +31,13 @@ const color = RGBA.fromValues(1, 2, 3, 255);
 
 const theme: UsageTheme = {
   text: {
-    default: color,
+    base: color,
     feedback: {
-      error: { default: color },
-      success: { default: color },
-      warning: { default: color },
+      error: { base: color },
+      success: { base: color },
+      warning: { base: color },
     },
-    subdued: color,
+    muted: color,
   },
 };
 

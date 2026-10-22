@@ -19,16 +19,19 @@ import {
 } from "@/usage.ts";
 
 const color = RGBA.fromValues(1, 2, 3, 255);
+const errorColor = RGBA.fromValues(220, 40, 40, 255);
+const warningColor = RGBA.fromValues(220, 160, 40, 255);
+const successColor = RGBA.fromValues(40, 180, 80, 255);
 
 const theme = {
   text: {
-    default: color,
+    base: color,
     feedback: {
-      error: { default: color },
-      success: { default: color },
-      warning: { default: color },
+      error: { base: errorColor },
+      success: { base: successColor },
+      warning: { base: warningColor },
     },
-    subdued: color,
+    muted: color,
   },
 };
 
@@ -466,6 +469,35 @@ describe(UsageLimitsPanel, () => {
     }
   });
 
+  it("renders footer usage with previous structured theme tokens", async () => {
+    const previousTheme = {
+      text: {
+        default: color,
+        feedback: {
+          error: { default: color },
+          success: { default: color },
+          warning: { default: color },
+        },
+        subdued: color,
+      },
+    };
+
+    const setup = await testRender(
+      () => (
+        <BottomUsage showBar theme={previousTheme} window={usageWindow()} />
+      ),
+      { height: 4, width: 80 }
+    );
+
+    try {
+      await setup.flush();
+      expect(setup.captureCharFrame()).toContain("5h");
+      expect(setup.captureCharFrame()).toContain("42%");
+    } finally {
+      setup.renderer.destroy();
+    }
+  });
+
   it("renders footer balances without a percentage or progress bar", async () => {
     const setup = await testRender(
       () => (
@@ -492,4 +524,42 @@ describe(UsageLimitsPanel, () => {
       setup.renderer.destroy();
     }
   });
+
+  it.each([
+    { expectedColor: errorColor, usedPercent: 90 },
+    { expectedColor: warningColor, usedPercent: 70 },
+    { expectedColor: successColor, usedPercent: 42 },
+  ])(
+    "uses the matching theme color at $usedPercent%",
+    async ({ usedPercent, expectedColor }) => {
+      const setup = await testRender(
+        () => (
+          <BottomUsage
+            showBar
+            theme={theme}
+            window={usageWindow({
+              quota: percentageQuota(
+                Result.getOrThrow(parseUsagePercentage(usedPercent))
+              ),
+            })}
+          />
+        ),
+        { height: 2, width: 80 }
+      );
+
+      try {
+        await setup.flush();
+
+        const bar = setup
+          .captureSpans()
+          .lines.flatMap((line) => line.spans)
+          .find((span) => span.text.startsWith("["));
+
+        expect(bar).toBeDefined();
+        expect(bar?.fg.equals(expectedColor)).toBeTruthy();
+      } finally {
+        setup.renderer.destroy();
+      }
+    }
+  );
 });

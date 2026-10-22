@@ -19,7 +19,19 @@ import type {
 } from "@/types.ts";
 import { quotaUsedPercent } from "@/usage.ts";
 
-interface V2Theme {
+interface CurrentV2Theme {
+  readonly text: {
+    readonly base: RGBA;
+    readonly muted: RGBA;
+    readonly feedback: {
+      readonly warning: { readonly base: RGBA };
+      readonly error: { readonly base: RGBA };
+      readonly success: { readonly base: RGBA };
+    };
+  };
+}
+
+interface PreviousV2Theme {
   readonly text: {
     readonly default: RGBA;
     readonly subdued: RGBA;
@@ -39,7 +51,7 @@ interface LegacyTheme {
   readonly success: RGBA;
 }
 
-export type UsageTheme = V2Theme | LegacyTheme;
+export type UsageTheme = CurrentV2Theme | PreviousV2Theme | LegacyTheme;
 
 interface ThemeColors {
   readonly text: RGBA;
@@ -49,29 +61,47 @@ interface ThemeColors {
   readonly success: RGBA;
 }
 
-/** Local boundary for v2 theme data while the v2 plugin package is unavailable. */
-const isV2Theme = (theme: UsageTheme): theme is V2Theme =>
+/** Identifies the current structured theme tokens. */
+const isCurrentV2Theme = (theme: UsageTheme): theme is CurrentV2Theme =>
   typeof theme.text === "object" &&
   theme.text !== null &&
+  "base" in theme.text &&
+  "feedback" in theme.text;
+
+/** Identifies the earlier structured theme tokens. */
+const isPreviousV2Theme = (theme: UsageTheme): theme is PreviousV2Theme =>
+  typeof theme.text === "object" &&
+  theme.text !== null &&
+  "default" in theme.text &&
   "feedback" in theme.text;
 
 const resolveTheme = (theme: UsageTheme): ThemeColors => {
-  if (!isV2Theme(theme)) {
+  if (isCurrentV2Theme(theme)) {
     return {
-      error: theme.error,
-      subdued: theme.textMuted,
-      success: theme.success,
-      text: theme.text,
-      warning: theme.warning,
+      error: theme.text.feedback.error.base,
+      subdued: theme.text.muted,
+      success: theme.text.feedback.success.base,
+      text: theme.text.base,
+      warning: theme.text.feedback.warning.base,
+    };
+  }
+
+  if (isPreviousV2Theme(theme)) {
+    return {
+      error: theme.text.feedback.error.default,
+      subdued: theme.text.subdued,
+      success: theme.text.feedback.success.default,
+      text: theme.text.default,
+      warning: theme.text.feedback.warning.default,
     };
   }
 
   return {
-    error: theme.text.feedback.error.default,
-    subdued: theme.text.subdued,
-    success: theme.text.feedback.success.default,
-    text: theme.text.default,
-    warning: theme.text.feedback.warning.default,
+    error: theme.error,
+    subdued: theme.textMuted,
+    success: theme.success,
+    text: theme.text,
+    warning: theme.warning,
   };
 };
 
