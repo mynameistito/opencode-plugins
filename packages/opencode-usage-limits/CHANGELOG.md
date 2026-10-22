@@ -1,5 +1,11 @@
 # @mynameistito/opencode-usage-limits
 
+## 1.3.7
+
+### Patch Changes
+
+- 1ddd965: Use the OpenTUI-compatible solid-js 1.9.12 version.
+
 ## 1.3.6
 
 ### Patch Changes

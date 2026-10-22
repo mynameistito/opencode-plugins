@@ -1,5 +1,11 @@
 # @mynameistito/opencode-force-input
 
+## 1.1.18
+
+### Patch Changes
+
+- 1ddd965: Use the OpenTUI-compatible solid-js 1.9.12 version.
+
 ## 1.1.17
 
 ### Patch Changes
