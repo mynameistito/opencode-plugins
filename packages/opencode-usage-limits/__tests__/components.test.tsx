@@ -19,14 +19,17 @@ import {
 } from "@/usage.ts";
 
 const color = RGBA.fromValues(1, 2, 3, 255);
+const errorColor = RGBA.fromValues(220, 40, 40, 255);
+const warningColor = RGBA.fromValues(220, 160, 40, 255);
+const successColor = RGBA.fromValues(40, 180, 80, 255);
 
 const theme = {
   text: {
     base: color,
     feedback: {
-      error: { base: color },
-      success: { base: color },
-      warning: { base: color },
+      error: { base: errorColor },
+      success: { base: successColor },
+      warning: { base: warningColor },
     },
     muted: color,
   },
@@ -521,4 +524,42 @@ describe(UsageLimitsPanel, () => {
       setup.renderer.destroy();
     }
   });
+
+  it.each([
+    { expectedColor: errorColor, usedPercent: 90 },
+    { expectedColor: warningColor, usedPercent: 70 },
+    { expectedColor: successColor, usedPercent: 42 },
+  ])(
+    "uses the matching theme color at $usedPercent%",
+    async ({ usedPercent, expectedColor }) => {
+      const setup = await testRender(
+        () => (
+          <BottomUsage
+            showBar
+            theme={theme}
+            window={usageWindow({
+              quota: percentageQuota(
+                Result.getOrThrow(parseUsagePercentage(usedPercent))
+              ),
+            })}
+          />
+        ),
+        { height: 2, width: 80 }
+      );
+
+      try {
+        await setup.flush();
+
+        const bar = setup
+          .captureSpans()
+          .lines.flatMap((line) => line.spans)
+          .find((span) => span.text.startsWith("["));
+
+        expect(bar).toBeDefined();
+        expect(bar?.fg.equals(expectedColor)).toBeTruthy();
+      } finally {
+        setup.renderer.destroy();
+      }
+    }
+  );
 });
