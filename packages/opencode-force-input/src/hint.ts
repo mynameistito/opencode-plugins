@@ -30,7 +30,15 @@ export interface ForceHintData {
   };
 }
 
-interface V2Theme {
+interface CurrentV2Theme {
+  readonly text: {
+    readonly base: RGBA;
+    readonly muted: RGBA;
+    readonly action: { readonly primary: { readonly base: RGBA } };
+  };
+}
+
+interface PreviousV2Theme {
   readonly text: {
     readonly default: RGBA;
     readonly subdued: RGBA;
@@ -45,10 +53,10 @@ interface LegacyTheme {
 }
 
 /**
- * Theme shapes seen across OpenCode v2 builds: the structured v2 theme and the
- * older flat one. Both are accepted so the hint renders on either host.
+ * Theme token shapes seen across OpenCode v2 builds, plus the older flat
+ * theme shape. Both are accepted so the hint renders across host versions.
  */
-export type ForceHintTheme = V2Theme | LegacyTheme;
+export type ForceHintTheme = CurrentV2Theme | PreviousV2Theme | LegacyTheme;
 
 export interface HintColors {
   /** Accent color for the force-submit action. */
@@ -59,8 +67,12 @@ export interface HintColors {
   readonly label: RGBA;
 }
 
-/** Distinguishes the structured v2 theme from the older flat one. */
-const isV2Theme = (theme: ForceHintTheme): theme is V2Theme =>
+/** Identifies the current structured theme tokens. */
+const isCurrentV2Theme = (theme: ForceHintTheme): theme is CurrentV2Theme =>
+  "base" in theme.text;
+
+/** Identifies the earlier structured theme tokens. */
+const isPreviousV2Theme = (theme: ForceHintTheme): theme is PreviousV2Theme =>
   "default" in theme.text;
 
 /**
@@ -70,7 +82,15 @@ const isV2Theme = (theme: ForceHintTheme): theme is V2Theme =>
  * @returns Colors for the force action, key label, and explanatory copy.
  */
 export const resolveHintColors = (theme: ForceHintTheme): HintColors => {
-  if (isV2Theme(theme)) {
+  if (isCurrentV2Theme(theme)) {
+    return {
+      force: theme.text.action.primary.base,
+      key: theme.text.base,
+      label: theme.text.muted,
+    };
+  }
+
+  if (isPreviousV2Theme(theme)) {
     return {
       force: theme.text.action.primary.default,
       key: theme.text.default,
