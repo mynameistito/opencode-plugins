@@ -72,7 +72,7 @@
   "catalog": {
     "@types/node": "26.6.5",
     "@effect/platform-bun": "4.0.0",
-    "@effect/platform-node": "4.0.0",
+    "@effect/platform-node": "4.0.5",
     "@opencode/plugin": "2.1.4",
     "@opentui/core": "0.6.6",
     "@opentui/solid": "0.6.6",
