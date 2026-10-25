@@ -141,7 +141,7 @@
     },
   },
   "catalog": {
-    "@effect/platform-bun": "4.0.0",
+    "@effect/platform-bun": "4.0.5",
     "@effect/platform-node": "4.0.0",
     "@opencode/plugin": "2.1.4",
     "@opentui/core": "0.6.6",
