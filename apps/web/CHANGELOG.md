@@ -1,5 +1,11 @@
 # @mynameistito/opencode-plugins-docs
 
+## 0.0.13
+
+### Patch Changes
+
+- c43a9d2: Migrate the docs site's Alchemy resources and deployment integration to the current supported provider and action versions.
+
 ## 0.0.12
 
 ### Patch Changes
