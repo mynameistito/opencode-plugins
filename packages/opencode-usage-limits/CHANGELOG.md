@@ -1,5 +1,12 @@
 # @mynameistito/opencode-usage-limits
 
+## 1.3.9
+
+### Patch Changes
+
+- beb4184: Update the plugin's Effect runtime dependency.
+- 1a911f2: Update @opencode/plugin to 2.1.4
+
 ## 1.3.8
 
 ### Patch Changes
