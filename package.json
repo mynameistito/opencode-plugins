@@ -81,7 +81,7 @@
     "solid-js": "1.9.12",
     "typescript": "npm:@typescript/typescript6@^6.0.2",
     "alchemy": "2.0.0-beta.84",
-    "blume": "2.2.3",
+    "blume": "2.2.4",
     "react-grab": "^0.2.0",
     "@alchemy.run/cloudflare": "2.0.0-beta.84"
   }
