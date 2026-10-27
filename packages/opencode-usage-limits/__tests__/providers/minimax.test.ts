@@ -531,6 +531,8 @@ describe("MiniMax provider", () => {
   it.each([["current_interval_remaining_percent", "80"]])(
     "rejects invalid required model field: %s",
     async (field, value) => {
+      const override = { [field]: value };
+
       installFetchMock(
         Response.json(
           successEnvelope([
@@ -542,7 +544,7 @@ describe("MiniMax provider", () => {
               model_name: "general",
               remains_time: 1000,
               weekly_remains_time: 2000,
-              [field]: value,
+              ...override,
             },
           ])
         )
@@ -564,6 +566,8 @@ describe("MiniMax provider", () => {
   ] as const)(
     "ignores invalid optional model field: %s",
     async (field, value, labels, nullResetLabels) => {
+      const override = { [field]: value };
+
       installFetchMock(
         Response.json(
           successEnvelope([
@@ -575,7 +579,7 @@ describe("MiniMax provider", () => {
               model_name: "general",
               remains_time: 1000,
               weekly_remains_time: 2000,
-              [field]: value,
+              ...override,
             },
           ])
         )
