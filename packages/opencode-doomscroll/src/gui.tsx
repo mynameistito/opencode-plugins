@@ -210,11 +210,15 @@ export default Plugin.define({
     const openX = (
       session: NonNullable<ReturnType<typeof findSession>>
     ): void => {
-      if (
-        queuedOpen.has(session.key) ||
-        pending.has(session.key) ||
-        tabs.has(session.key)
-      ) {
+      const request = pending.get(session.key);
+
+      if (request) {
+        request.closeRequested = false;
+
+        return;
+      }
+
+      if (queuedOpen.has(session.key) || tabs.has(session.key)) {
         return;
       }
 
@@ -237,7 +241,13 @@ export default Plugin.define({
       }
 
       queuedOpen.delete(session.key);
-      pending.set(session.key, { closeRequested: false });
+      const openRequest: PendingOpen = { closeRequested: false };
+      pending.set(session.key, openRequest);
+      setTimeout(() => {
+        if (pending.get(session.key) === openRequest) {
+          pending.delete(session.key);
+        }
+      }, 10_000);
 
       try {
         live.value.open(session, X_HOME_URL);
