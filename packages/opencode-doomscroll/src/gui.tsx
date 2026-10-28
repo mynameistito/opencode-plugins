@@ -99,14 +99,14 @@ export default Plugin.define({
       const session = findSession(sessionID);
 
       if (!session) {
-        return;
+        return null;
       }
 
       try {
         const info = await session.server.client.session.get({ sessionID });
 
         if (info.parentID && !info.fork) {
-          return;
+          return null;
         }
       } catch {
         // The desktop's shell session reference is the fallback if the server
