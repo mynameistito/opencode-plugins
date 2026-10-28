@@ -95,6 +95,27 @@ export default Plugin.define({
             session.id === sessionID && session.server.id === "sidecar"
         );
 
+    const findTopLevelSession = async (sessionID: string) => {
+      const session = findSession(sessionID);
+
+      if (!session) {
+        return;
+      }
+
+      try {
+        const info = await session.server.client.session.get({ sessionID });
+
+        if (info.parentID && !info.fork) {
+          return;
+        }
+      } catch {
+        // The desktop's shell session reference is the fallback if the server
+        // cannot provide session metadata during a connection transition.
+      }
+
+      return session;
+    };
+
     const queuedOpen = new Map<
       string,
       NonNullable<ReturnType<typeof findSession>>
@@ -324,12 +345,12 @@ export default Plugin.define({
       (data) => {
         const subscriptions = [
           ...START_EVENTS.map((type) =>
-            data.on(type, (event) => {
+            data.on(type, async (event) => {
               if (!autoOpen()) {
                 return;
               }
 
-              const session = findSession(event.data.sessionID);
+              const session = await findTopLevelSession(event.data.sessionID);
 
               if (session) {
                 openReels(session);
@@ -337,8 +358,8 @@ export default Plugin.define({
             })
           ),
           ...STOP_EVENTS.map((type) =>
-            data.on(type, (event) => {
-              const session = findSession(event.data.sessionID);
+            data.on(type, async (event) => {
+              const session = await findTopLevelSession(event.data.sessionID);
 
               if (session) {
                 closeReels(session);
