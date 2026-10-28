@@ -2,14 +2,14 @@
   "$schema": "https://json.schemastore.org/package.json",
   "name": "@mynameistito/opencode-doomscroll",
   "version": "0.1.0",
-  "description": "Open Instagram Reels in OpenCode Desktop while a session is running.",
+  "description": "Open X in OpenCode Desktop while a session is running.",
   "keywords": [
     "ai-coding",
     "desktop",
-    "instagram",
     "opencode",
     "opencode-plugin",
-    "reels"
+    "twitter",
+    "x"
   ],
   "homepage": "https://github.com/mynameistito/opencode-plugins/tree/main/packages/opencode-doomscroll#readme",
   "bugs": {

@@ -7,11 +7,11 @@ import {
 import { Browser } from "@opencode/plugin/gui/browser";
 import { createSignal } from "solid-js";
 
-import { BrowserPane } from "./reels-ipc";
-import type { BrowserPaneEvent, BrowserTab } from "./reels-ipc";
+import { BrowserPane } from "./doomscroll-ipc";
+import type { BrowserPaneEvent, BrowserTab } from "./doomscroll-ipc";
 
-const REELS_URL = "https://www.instagram.com/reels/";
-const OPEN_REELS_KEY = "command.openReels";
+const X_HOME_URL = "https://x.com/home";
+const OPEN_X_KEY = "command.openX";
 const CLOSE_FAILED_KEY = "toast.closeFailed";
 const OPEN_FAILED_KEY = "toast.openFailed";
 const TOAST_ERROR = "error" as const;
@@ -23,7 +23,7 @@ const STOP_EVENTS = [
   "session.execution.interrupted",
 ] as const;
 
-interface ReelsTab {
+interface DoomscrollTab {
   readonly binding: string;
   readonly tabID: string;
 }
@@ -60,12 +60,12 @@ const matchesTab = (
 export default Plugin.define({
   i18n: {
     en: {
-      "command.openReels": "Open Instagram Reels",
-      "settings.autoOpen": "Open Reels when a session starts",
+      "command.openX": "Open X",
+      "settings.autoOpen": "Open X when a session starts",
       "settings.autoOpenDescription":
-        "Pause or resume automatic Reels opening for this window.",
+        "Pause or resume automatic X opening for this window.",
       "settings.description":
-        "Reels open in OpenCode's browser and the tab closes when the session run ends.",
+        "X opens in OpenCode's browser and the tab closes when the session run ends.",
       "settings.title": "Doomscroll",
       "toast.browserUnavailable":
         "The built-in Browser plugin is off or unavailable. Enable it in Extensions, then try again.",
@@ -84,7 +84,7 @@ export default Plugin.define({
     const browser = ctx.use(Browser);
     const browserPane = ctx.use(BrowserPane);
     const pending = new Map<string, PendingOpen>();
-    const tabs = new Map<string, ReelsTab>();
+    const tabs = new Map<string, DoomscrollTab>();
     const states = new Map<string, ReadonlyMap<string, string>>();
 
     const findSession = (sessionID: string) =>
@@ -123,15 +123,15 @@ export default Plugin.define({
 
     const closeTab = async (
       sessionKey: string,
-      reelsTab: ReelsTab
+      doomscrollTab: DoomscrollTab
     ): Promise<void> => {
       const live = browserPane();
 
       if (live.status !== "active") {
-        tabs.set(sessionKey, reelsTab);
+        tabs.set(sessionKey, doomscrollTab);
         ctx.toast.show({
           description:
-            "OpenCode's browser connection is unavailable, so the Reels tab may still be open.",
+            "OpenCode's browser connection is unavailable, so the X tab may still be open.",
           title: ctx.t(CLOSE_FAILED_KEY),
           variant: TOAST_ERROR,
         });
@@ -141,11 +141,11 @@ export default Plugin.define({
 
       try {
         await live.value.command({
-          binding: reelsTab.binding,
-          command: { tabID: reelsTab.tabID, type: "tabs.close" },
+          binding: doomscrollTab.binding,
+          command: { tabID: doomscrollTab.tabID, type: "tabs.close" },
         });
         setTimeout(() => {
-          if (tabs.get(sessionKey) !== reelsTab) {
+          if (tabs.get(sessionKey) !== doomscrollTab) {
             return;
           }
 
@@ -184,12 +184,12 @@ export default Plugin.define({
       const previous = states.get(binding);
       states.set(binding, new Map(browserTabs.map((tab) => [tab.id, tab.url])));
 
-      for (const [sessionKey, reelsTab] of tabs) {
-        if (reelsTab.binding !== binding) {
+      for (const [sessionKey, doomscrollTab] of tabs) {
+        if (doomscrollTab.binding !== binding) {
           continue;
         }
 
-        if (!browserTabs.some((tab) => tab.id === reelsTab.tabID)) {
+        if (!browserTabs.some((tab) => tab.id === doomscrollTab.tabID)) {
           tabs.delete(sessionKey);
         }
       }
@@ -201,11 +201,11 @@ export default Plugin.define({
 
         if (opened) {
           pending.delete(sessionKey);
-          const reelsTab = { binding, tabID: opened.id };
-          tabs.set(sessionKey, reelsTab);
+          const doomscrollTab = { binding, tabID: opened.id };
+          tabs.set(sessionKey, doomscrollTab);
 
           if (request.closeRequested) {
-            void closeTab(sessionKey, reelsTab);
+            void closeTab(sessionKey, doomscrollTab);
           }
 
           return;
@@ -213,7 +213,7 @@ export default Plugin.define({
       }
     };
 
-    const openReels = (
+    const openX = (
       session: NonNullable<ReturnType<typeof findSession>>
     ): void => {
       if (
@@ -246,7 +246,7 @@ export default Plugin.define({
       pending.set(session.key, { closeRequested: false });
 
       try {
-        live.value.open(session, REELS_URL);
+        live.value.open(session, X_HOME_URL);
       } catch (error: unknown) {
         pending.delete(session.key);
 
@@ -261,7 +261,7 @@ export default Plugin.define({
       }
     };
 
-    const closeReels = (
+    const closeX = (
       session: NonNullable<ReturnType<typeof findSession>>
     ): void => {
       const request = pending.get(session.key);
@@ -271,26 +271,26 @@ export default Plugin.define({
         request.closeRequested = true;
       }
 
-      const reelsTab = tabs.get(session.key);
+      const doomscrollTab = tabs.get(session.key);
 
-      if (reelsTab) {
-        void closeTab(session.key, reelsTab);
+      if (doomscrollTab) {
+        void closeTab(session.key, doomscrollTab);
       }
     };
 
     ctx.add(Command, (): Command => ({
       enabled: ctx.app.platform === "desktop" && !!ctx.sessions.current(),
-      id: "open-reels",
-      keywords: "instagram reels doomscroll break",
+      id: "open-x",
+      keywords: "x twitter doomscroll break",
       run: () => {
         const session = ctx.sessions.current();
 
         if (session) {
-          openReels(session);
+          openX(session);
         }
       },
       section: "session",
-      title: ctx.t(OPEN_REELS_KEY),
+      title: ctx.t(OPEN_X_KEY),
     }));
 
     ctx.add(SettingsPage, {
@@ -321,7 +321,7 @@ export default Plugin.define({
         queuedOpen.clear();
 
         for (const session of sessions) {
-          openReels(session);
+          openX(session);
         }
       },
       {
@@ -353,7 +353,7 @@ export default Plugin.define({
               const session = await findTopLevelSession(event.data.sessionID);
 
               if (session) {
-                openReels(session);
+                openX(session);
               }
             })
           ),
@@ -362,7 +362,7 @@ export default Plugin.define({
               const session = await findTopLevelSession(event.data.sessionID);
 
               if (session) {
-                closeReels(session);
+                closeX(session);
               }
             })
           ),

@@ -1,6 +1,6 @@
 # @mynameistito/opencode-doomscroll
 
-An experimental OpenCode Desktop GUI plugin that opens Instagram Reels in OpenCode's built-in browser when a session starts running. It closes the tab it opened when the run ends. OpenCode does not automate scrolling or interact with Instagram.
+An experimental OpenCode Desktop GUI plugin that opens X's home timeline in OpenCode's built-in browser when a session starts running. It closes the tab it opened when the run ends. OpenCode does not automate scrolling or interact with X.
 
 ## Local development
 
@@ -25,7 +25,7 @@ An experimental OpenCode Desktop GUI plugin that opens Instagram Reels in OpenCo
 
    Merge that plugin entry into your existing global config rather than replacing other settings. The Desktop app reads `opencode.json`, not `cli.json`.
 
-3. Restart OpenCode Desktop. Start a session; when it begins running, the plugin opens `https://www.instagram.com/reels/` in OpenCode's browser pane. The tab closes when the run succeeds, fails, or is interrupted. Sign in in the browser pane if Instagram asks.
+3. Restart OpenCode Desktop. Start a session; when it begins running, the plugin opens `https://x.com/home` in OpenCode's browser pane. The tab closes when the run succeeds, fails, or is interrupted. Sign in in the browser pane if X asks.
 
 For live development, leave this running while Desktop is open:
 
@@ -34,7 +34,7 @@ cd packages/opencode-doomscroll
 bun run dev
 ```
 
-Each rebuild reloads the GUI plugin. Pause automatic opening from the Doomscroll settings page; this switch applies to the current window. You can open Reels manually from the command palette with “Open Instagram Reels”.
+Each rebuild reloads the GUI plugin. Pause automatic opening from the Doomscroll settings page; this switch applies to the current window. You can open X manually from the command palette with “Open X”.
 
 To keep automatic opening disabled after a restart, configure the plugin entry with an option:
 
