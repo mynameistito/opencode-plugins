@@ -45,21 +45,15 @@ const matchesTab = (
 
   const isNewTab = previous !== undefined && !previous.has(tab.id);
   const hasMarker = tab.url.includes(request.marker);
-
-  const isFocusedInstagramTab =
-    tab.id === focusedTabID &&
-    /^https:\/\/(?:[\w-]+\.)*instagram\.com\//iu.test(tab.url);
-  // Browser.open can first publish a blank/loading tab, then update its URL in a
-  // later state event. Remember that tab ID now so the later state can confirm it.
-
-  const isFocusedBlankTab =
-    tab.id === focusedTabID && (tab.url === "about:blank" || tab.url === "");
+  // Browser.open selects the new tab. Match its ID even if the first state is
+  // blank or a redirect has already changed its URL.
+  const isNewFocusedTab = isNewTab && tab.id === focusedTabID;
 
   if (!hasMarker && !isNewTab) {
     return false;
   }
 
-  if (hasMarker || isFocusedInstagramTab || isFocusedBlankTab) {
+  if (hasMarker || isNewFocusedTab) {
     request.candidateTabID = tab.id;
 
     return true;
