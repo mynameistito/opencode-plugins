@@ -16,6 +16,9 @@
     },
     "apps/web": {
       "entry": ["alchemy.run.ts", "blume.config.ts"]
+    },
+    "packages/opencode-doomscroll": {
+      "entry": ["src/gui.tsx"]
     }
   }
 }
