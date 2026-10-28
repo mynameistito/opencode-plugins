@@ -30,7 +30,6 @@ interface ReelsTab {
 
 interface PendingOpen {
   candidateTabID?: string;
-  readonly marker: string;
   closeRequested: boolean;
 }
 
@@ -45,16 +44,11 @@ const matchesTab = (
   }
 
   const isNewTab = previous !== undefined && !previous.has(tab.id);
-  const hasMarker = tab.url.includes(request.marker);
   // Browser.open selects the new tab. Match its ID even if the first state is
   // blank or a redirect has already changed its URL.
   const isNewFocusedTab = isNewTab && tab.id === focusedTabID;
 
-  if (!hasMarker && !isNewTab) {
-    return false;
-  }
-
-  if (hasMarker || isNewFocusedTab) {
+  if (isNewFocusedTab) {
     request.candidateTabID = tab.id;
 
     return true;
@@ -227,12 +221,11 @@ export default Plugin.define({
         return;
       }
 
-      const marker = `__doomscroll=${crypto.randomUUID()}`;
       queuedOpen.delete(session.key);
-      pending.set(session.key, { closeRequested: false, marker });
+      pending.set(session.key, { closeRequested: false });
 
       try {
-        live.value.open(session, `${REELS_URL}?${marker}`);
+        live.value.open(session, REELS_URL);
       } catch (error: unknown) {
         pending.delete(session.key);
 
