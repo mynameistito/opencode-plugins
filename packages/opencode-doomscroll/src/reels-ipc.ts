@@ -78,19 +78,53 @@ const BrowserPaneEventSchema = Schema.Struct({
 
 export type BrowserPaneEvent = typeof BrowserPaneEventSchema.Type;
 
-// The built-in Desktop browser pane accepts the same browser action used by
-// browser.tabs.close. Keeping the Ipc narrow avoids duplicating its full protocol.
+const binding = Schema.String;
+const tabID = Schema.String;
+const BrowserAction = Schema.Unknown;
+
+// This mirrors the built-in Browser pane IPC. Keep the full method surface here:
+// both plugins resolve the same IPC ID, and the Browser plugin needs register()
+// before it can attach a session's pane.
 export const BrowserPane = Ipc.define({
   events: { event: BrowserPaneEventSchema },
   id: "browser.pane",
   methods: {
+    clearSite: { input: Schema.Struct({ binding, tabID }) },
+    close: { input: Schema.Struct({ binding }) },
     command: {
       input: Schema.Struct({
-        binding: Schema.String,
-        command: Schema.Struct({
-          tabID: Schema.String,
-          type: Schema.Literal("tabs.close"),
-        }),
+        binding,
+        command: BrowserAction,
+      }),
+    },
+    highlight: {
+      input: Schema.Struct({
+        binding,
+        ref: Schema.optional(Schema.String),
+        tabID,
+      }),
+    },
+    inspect: {
+      input: Schema.Struct({ binding, enabled: Schema.Boolean, tabID }),
+    },
+    load: { input: Schema.Struct({ binding, tabID }) },
+    register: {
+      input: Schema.Struct({
+        binding,
+        restore: Schema.optional(BrowserState),
+        server: Schema.String,
+        session: Schema.String,
+      }),
+    },
+    site: {
+      input: Schema.Struct({ binding, tabID }),
+      output: Schema.Struct({ cookies: Schema.Int }),
+    },
+    zoom: {
+      input: Schema.Struct({
+        binding,
+        tabID,
+        zoom: Schema.Literals(["in", "out", "reset"]),
       }),
     },
   },
