@@ -13,6 +13,7 @@ import type { BrowserPaneEvent, BrowserTab } from "./reels-ipc";
 const REELS_URL = "https://www.instagram.com/reels/";
 const OPEN_REELS_KEY = "command.openReels";
 const CLOSE_FAILED_KEY = "toast.closeFailed";
+const OPEN_FAILED_KEY = "toast.openFailed";
 const TOAST_ERROR = "error" as const;
 const START_EVENTS = ["session.execution.started"] as const;
 
@@ -72,6 +73,8 @@ export default Plugin.define({
       "settings.description":
         "Reels open in OpenCode's browser and the tab closes when the session run ends.",
       "settings.title": "Doomscroll",
+      "toast.browserUnavailable":
+        "The built-in Browser plugin is off or unavailable. Enable it in Extensions, then try again.",
       "toast.closeFailed": "Could not close the Doomscroll tab",
       "toast.closeUnconfirmed":
         "OpenCode accepted the close request, but the browser still reports this tab as open.",
@@ -97,6 +100,11 @@ export default Plugin.define({
           (session) =>
             session.id === sessionID && session.server.id === "sidecar"
         );
+
+    const queuedOpen = new Map<
+      string,
+      NonNullable<ReturnType<typeof findSession>>
+    >();
 
     const closeTab = async (
       sessionKey: string,
@@ -193,24 +201,34 @@ export default Plugin.define({
     const openReels = (
       session: NonNullable<ReturnType<typeof findSession>>
     ): void => {
+      if (
+        queuedOpen.has(session.key) ||
+        pending.has(session.key) ||
+        tabs.has(session.key)
+      ) {
+        return;
+      }
+
       const live = browser();
+
+      if (live.status === "pending") {
+        queuedOpen.set(session.key, session);
+
+        return;
+      }
 
       if (live.status !== "active") {
         ctx.toast.show({
-          description:
-            "OpenCode's browser is unavailable for this session. Open the session in Desktop and try again.",
-          title: ctx.t("toast.openFailed"),
+          description: ctx.t("toast.browserUnavailable"),
+          title: ctx.t(OPEN_FAILED_KEY),
           variant: TOAST_ERROR,
         });
 
         return;
       }
 
-      if (pending.has(session.key) || tabs.has(session.key)) {
-        return;
-      }
-
       const marker = `__doomscroll=${crypto.randomUUID()}`;
+      queuedOpen.delete(session.key);
       pending.set(session.key, { closeRequested: false, marker });
 
       try {
@@ -223,7 +241,7 @@ export default Plugin.define({
 
         ctx.toast.show({
           description: failure.message,
-          title: ctx.t("toast.openFailed"),
+          title: ctx.t(OPEN_FAILED_KEY),
           variant: TOAST_ERROR,
         });
       }
@@ -233,6 +251,7 @@ export default Plugin.define({
       session: NonNullable<ReturnType<typeof findSession>>
     ): void => {
       const request = pending.get(session.key);
+      queuedOpen.delete(session.key);
 
       if (request) {
         request.closeRequested = true;
@@ -280,6 +299,32 @@ export default Plugin.define({
     });
 
     createKeyed(browserPane, (live) => live.on("event", onBrowserEvent));
+
+    createKeyed(
+      browser,
+      () => {
+        const sessions = [...queuedOpen.values()];
+        queuedOpen.clear();
+
+        for (const session of sessions) {
+          openReels(session);
+        }
+      },
+      {
+        otherwise: () => {
+          if (browser().status !== "inactive" || queuedOpen.size === 0) {
+            return;
+          }
+
+          ctx.toast.show({
+            description: ctx.t("toast.browserUnavailable"),
+            title: ctx.t(OPEN_FAILED_KEY),
+            variant: TOAST_ERROR,
+          });
+          queuedOpen.clear();
+        },
+      }
+    );
 
     createKeyed(
       () => ctx.servers.get("sidecar")?.data,
