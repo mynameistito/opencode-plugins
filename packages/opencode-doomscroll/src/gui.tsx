@@ -29,33 +29,19 @@ interface DoomscrollTab {
 }
 
 interface PendingOpen {
-  candidateTabID?: string;
   closeRequested: boolean;
 }
 
 const matchesTab = (
   tab: BrowserTab,
   previous: ReadonlyMap<string, string> | undefined,
-  request: PendingOpen,
-  focusedTabID: string | null
-): boolean => {
-  if (request.candidateTabID === tab.id) {
-    return true;
-  }
-
-  const isNewTab = previous !== undefined && !previous.has(tab.id);
-  // Browser.open selects the new tab. Match its ID even if the first state is
-  // blank or a redirect has already changed its URL.
-  const isNewFocusedTab = isNewTab && tab.id === focusedTabID;
-
-  if (isNewFocusedTab) {
-    request.candidateTabID = tab.id;
-
-    return true;
-  }
-
-  return false;
-};
+  focusedTabID: string | null,
+  allowFocusFallback: boolean
+): boolean =>
+  allowFocusFallback &&
+  previous !== undefined &&
+  !previous.has(tab.id) &&
+  tab.id === focusedTabID;
 
 export default Plugin.define({
   i18n: {
@@ -196,7 +182,7 @@ export default Plugin.define({
 
       for (const [sessionKey, request] of pending) {
         const opened = browserTabs.find((tab) =>
-          matchesTab(tab, previous, request, state.focusedTabID)
+          matchesTab(tab, previous, state.focusedTabID, pending.size === 1)
         );
 
         if (opened) {
