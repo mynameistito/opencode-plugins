@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json.schemastore.org/package.json",
+  "name": "@mynameistito/opencode-doomscroll",
+  "version": "0.1.0",
+  "description": "Open Instagram Reels in OpenCode Desktop while a session is running.",
+  "keywords": [
+    "ai-coding",
+    "desktop",
+    "instagram",
+    "opencode",
+    "opencode-plugin",
+    "reels"
+  ],
+  "homepage": "https://github.com/mynameistito/opencode-plugins/tree/main/packages/opencode-doomscroll#readme",
+  "bugs": {
+    "url": "https://github.com/mynameistito/opencode-plugins/issues"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "Tito",
+    "email": "github@mynameistito.com",
+    "url": "https://github.com/mynameistito"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mynameistito/opencode-plugins.git",
+    "directory": "packages/opencode-doomscroll"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "type": "module",
+  "exports": {
+    "./gui-experimental": "./dist/gui-experimental.cjs"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch",
+    "typecheck": "tsc --noEmit",
+    "prepack": "bun run build"
+  },
+  "dependencies": {
+    "@opencode/plugin": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "effect": "4.0.1",
+    "solid-js": "catalog:",
+    "typescript": "catalog:",
+    "vite": "^8.0.0",
+    "vite-plugin-solid": "2.11.14"
+  },
+  "packageManager": "bun@1.4.2"
+}

@@ -5,6 +5,7 @@ import path from "node:path";
 const packages = new Map([
   ["docs", "@mynameistito/opencode-plugins-docs"],
   ["force-input", "@mynameistito/opencode-force-input"],
+  ["doomscroll", "@mynameistito/opencode-doomscroll"],
   ["usage-limits", "@mynameistito/opencode-usage-limits"],
 ]);
 
@@ -18,7 +19,7 @@ const summary = summaryParts.join(" ").trim();
 
 if (!packageName || !type || !types.has(type) || !summary) {
   console.error(
-    'Usage: bun run changeset-add <docs|force-input|usage-limits> <patch|minor|major> "summary"'
+    'Usage: bun run changeset-add <docs|force-input|doomscroll|usage-limits> <patch|minor|major> "summary"'
   );
   process.exit(1);
 }
