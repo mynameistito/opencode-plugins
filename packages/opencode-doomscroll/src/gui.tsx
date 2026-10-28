@@ -161,14 +161,17 @@ export default Plugin.define({
       }
 
       const { state } = event;
-
-      if (!state) {
-        return;
-      }
-
-      const { tabs: browserTabs } = state;
+      const browserTabs = state?.tabs ?? [];
       const previous = states.get(binding);
-      states.set(binding, new Map(browserTabs.map((tab) => [tab.id, tab.url])));
+
+      if (state) {
+        states.set(
+          binding,
+          new Map(browserTabs.map((tab) => [tab.id, tab.url]))
+        );
+      } else {
+        states.delete(binding);
+      }
 
       for (const [sessionKey, doomscrollTab] of tabs) {
         if (doomscrollTab.binding !== binding) {
@@ -182,7 +185,12 @@ export default Plugin.define({
 
       for (const [sessionKey, request] of pending) {
         const opened = browserTabs.find((tab) =>
-          matchesTab(tab, previous, state.focusedTabID, pending.size === 1)
+          matchesTab(
+            tab,
+            previous,
+            state?.focusedTabID ?? null,
+            pending.size === 1
+          )
         );
 
         if (opened) {
