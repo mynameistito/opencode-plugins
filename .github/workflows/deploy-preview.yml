@@ -105,6 +105,8 @@ jobs:
           production-stage: prod
           production-url: https://opencode-plugins.mynameistito.com
           use-adopt: false
+          preview-assets-directory: site
+          preview-assets-config: '{"htmlHandling":"drop-trailing-slash","notFoundHandling":"404-page"}'
           pull-request-number: ${{ needs.resolve.outputs.pull_request_number }}
           allow-fork-commits: true
 
@@ -149,4 +151,6 @@ jobs:
           production-stage: prod
           production-url: https://opencode-plugins.mynameistito.com
           use-adopt: false
+          preview-assets-directory: site
+          preview-assets-config: '{"htmlHandling":"drop-trailing-slash","notFoundHandling":"404-page"}'
           pull-request-number: ${{ needs.resolve.outputs.pull_request_number }}
