@@ -1,5 +1,11 @@
 # @mynameistito/opencode-plugins-docs
 
+## 0.0.14
+
+### Patch Changes
+
+- 95f5a43: Update documentation workspace dependencies
+
 ## 0.0.13
 
 ### Patch Changes
