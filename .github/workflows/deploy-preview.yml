@@ -99,7 +99,7 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          worker-name: opencode-plugins-docs
+          worker-name: opencode-plugins-docs-prod
           deploy-command: cd apps/web && bunx --no-install alchemy deploy --stage "$STAGE" --yes
           destroy-command: cd apps/web && bunx --no-install alchemy destroy --stage "$STAGE" --yes
           production-stage: prod
@@ -145,7 +145,7 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          worker-name: opencode-plugins-docs
+          worker-name: opencode-plugins-docs-prod
           deploy-command: cd apps/web && bunx --no-install alchemy deploy --stage "$STAGE" --yes
           destroy-command: cd apps/web && bunx --no-install alchemy destroy --stage "$STAGE" --yes
           production-stage: prod
