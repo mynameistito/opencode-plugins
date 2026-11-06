@@ -57,7 +57,7 @@ jobs:
         with:
           version: 2.39.0
         env:
-          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_TARGET_SERVICE_ACCOUNT_TOKEN }}
           GH_APP_ID: op://i56qshgciuy4cdg4pjrilaeriy/42szi44u2t6lu4d5jnr3a2hbae/fbthjszlbqsoyfn4itfgesd3dy
           GH_APP_PRIVATE_KEY: op://i56qshgciuy4cdg4pjrilaeriy/42szi44u2t6lu4d5jnr3a2hbae/github-app.pem
       - name: Create repository-scoped App token
