@@ -8,14 +8,15 @@ on:
 name: Release
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
-permissions:
-  contents: write
-  id-token: write
-  pull-requests: write
+permissions: {}
 
 jobs:
   release:
     if: github.event_name != 'workflow_dispatch' || github.ref != 'refs/heads/chore/modernisation-20261106'
+    permissions:
+      contents: write
+      id-token: write
+      pull-requests: write
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
@@ -85,9 +86,7 @@ jobs:
 
   validate_target_vault:
     if: >-
-      github.event_name == 'workflow_dispatch' &&
-      github.repository == 'mynameistito/opencode-plugins' &&
-      github.ref == 'refs/heads/chore/modernisation-20261106'
+      github.event_name == 'workflow_dispatch' && github.repository == 'mynameistito/opencode-plugins' && github.ref == 'refs/heads/chore/modernisation-20261106'
     permissions: {}
     runs-on: ubuntu-24.04
     steps:
