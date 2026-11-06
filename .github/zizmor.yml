@@ -15,4 +15,5 @@ rules:
       - deploy-preview.yml:21
   adhoc-packages:
     ignore:
-      - release.yml:35
+      # Existing pinned npm upgrade is required for staged publishing.
+      - release.yml:37
