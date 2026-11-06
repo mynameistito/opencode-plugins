@@ -1,5 +1,3 @@
-# yaml-language-server: $schema=https://www.schemastore.org/github-workflow.json
-
 on:
   push:
     branches:
@@ -8,13 +6,15 @@ on:
 name: Release
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
-permissions:
-  contents: write
-  id-token: write
-  pull-requests: write
+permissions: {}
 
 jobs:
   release:
+    if: github.event_name != 'workflow_dispatch' || github.ref != 'refs/heads/chore/modernisation-20261106'
+    permissions:
+      contents: write
+      id-token: write
+      pull-requests: write
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
@@ -57,9 +57,9 @@ jobs:
         with:
           version: 2.39.0
         env:
-          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
-          GH_APP_ID: op://uhub4xx3iwwsaxj3robdosm2hu/spbjca2lethbsiz6menimq7afm/ID
-          GH_APP_PRIVATE_KEY: op://uhub4xx3iwwsaxj3robdosm2hu/spbjca2lethbsiz6menimq7afm/github-app.pem
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_TARGET_SERVICE_ACCOUNT_TOKEN }}
+          GH_APP_ID: op://i56qshgciuy4cdg4pjrilaeriy/7aa4yniajfri3k6tafs5z63sje/github_app_id
+          GH_APP_PRIVATE_KEY: op://i56qshgciuy4cdg4pjrilaeriy/7aa4yniajfri3k6tafs5z63sje/github_app_private_key
       - name: Create repository-scoped App token
         id: app-token
         uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
@@ -81,3 +81,26 @@ jobs:
           commit-message: "chore: release packages"
         env:
           GIT_EXECUTABLE: /usr/bin/git
+
+  validate_target_vault:
+    if: >-
+      github.event_name == 'workflow_dispatch' && github.repository == 'mynameistito/opencode-plugins' && github.ref == 'refs/heads/chore/modernisation-20261106'
+    permissions: {}
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Load canonical references
+        id: onepassword
+        uses: 1Password/load-secrets-action@70062d7a876d3eb6334754fa26efd2fbd90c32f2 # v5.0.1
+        with:
+          version: 2.39.0
+        env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_TARGET_SERVICE_ACCOUNT_TOKEN }}
+          GH_APP_ID: op://i56qshgciuy4cdg4pjrilaeriy/7aa4yniajfri3k6tafs5z63sje/github_app_id
+          GH_APP_PRIVATE_KEY: op://i56qshgciuy4cdg4pjrilaeriy/7aa4yniajfri3k6tafs5z63sje/github_app_private_key
+      - name: Check canonical references are available
+        env:
+          GH_APP_ID: ${{ steps.onepassword.outputs.GH_APP_ID }}
+          GH_APP_PRIVATE_KEY: ${{ steps.onepassword.outputs.GH_APP_PRIVATE_KEY }}
+        run: |
+          test -n "$GH_APP_ID"
+          test -n "$GH_APP_PRIVATE_KEY"
