@@ -26,7 +26,7 @@
     "@types/bun": "1.4.4",
     "@types/node": "catalog:",
     "@typescript/native": "catalog:",
-    "@vitest/coverage-v8": "5.0.5",
+    "@vitest/coverage-v8": "5.1.0",
     "eslint-plugin-github": "6.1.2",
     "eslint-plugin-sonarjs": "^4.2.2",
     "knip": "6.43.0",
