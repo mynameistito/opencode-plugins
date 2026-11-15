@@ -1,5 +1,14 @@
 # @mynameistito/opencode-usage-limits
 
+## 1.3.10
+
+### Patch Changes
+
+- 95f5a43: Update workspace tooling and OpenTUI dependencies
+- 81fa8f8: Update @opencode/plugin to 2.2.5
+- f7e83a8: Update @opencode/plugin to 2.2.0
+- c099774: Upgrade the Effect runtime to 4.1.4
+
 ## 1.3.9
 
 ### Patch Changes
