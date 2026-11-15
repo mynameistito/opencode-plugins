@@ -1,5 +1,13 @@
 # @mynameistito/opencode-force-input
 
+## 1.1.21
+
+### Patch Changes
+
+- 95f5a43: Update workspace tooling and OpenTUI dependencies
+- 81fa8f8: Update @opencode/plugin to 2.2.5
+- f7e83a8: Update @opencode/plugin to 2.2.0
+
 ## 1.1.20
 
 ### Patch Changes

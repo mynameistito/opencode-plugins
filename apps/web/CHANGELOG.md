@@ -1,5 +1,12 @@
 # @mynameistito/opencode-plugins-docs
 
+## 0.0.14
+
+### Patch Changes
+
+- c099774: Upgrade deployment to Alchemy beta.87 and Effect 4.1.4
+- 95f5a43: Update documentation workspace dependencies
+
 ## 0.0.13
 
 ### Patch Changes
